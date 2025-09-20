@@ -43,6 +43,7 @@ const SidebarNav = () => {
       <NavLink to="/friends">Friends</NavLink>
       <NavLink to="/attendance">Attendance</NavLink>
       <NavLink to="/programs">Programs</NavLink>
+      <NavLink to="/participants">Participants</NavLink> {/* New NavLink */}
     </nav>
   );
 

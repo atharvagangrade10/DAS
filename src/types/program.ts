@@ -1,20 +1,22 @@
-export interface Program {
+export interface Session {
   id: string;
-  program_name: string; // Changed from 'name' to 'program_name'
-  description: string;
-  start_date: string; // ISO date string, e.g., "YYYY-MM-DD"
-  end_date: string;   // ISO date string, e.g., "YYYY-MM-DD"
-  num_sessions: number;
+  program_id: string;
+  name: string;
+  date: string;
 }
 
-export interface Session {
-  id: string; // Changed from 'session_id' to 'id'
-  name: string; // Added 'name' field
-  date: string; // ISO date string, e.g., "YYYY-MM-DD"
+export interface Program {
+  id: string;
+  program_name: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  num_sessions: number;
+  sessions?: Session[];
 }
 
 export interface ProgramCreate {
-  program_name: string; // Changed from 'name' to 'program_name'
+  program_name: string;
   description: string;
   start_date: string;
   end_date: string;
@@ -22,7 +24,7 @@ export interface ProgramCreate {
 }
 
 export interface ProgramUpdate {
-  program_name?: string; // Changed from 'name' to 'program_name'
+  program_name?: string;
   description?: string;
   start_date?: string;
   end_date?: string;
@@ -30,6 +32,6 @@ export interface ProgramUpdate {
 }
 
 export interface SessionUpdate {
-  session_id: string; // This still refers to the backend's expected ID for updates
+  session_id: string;
   new_date: string;
 }

@@ -59,7 +59,7 @@ const formSchema = z.object({
   address: z.string().optional(),
   age: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
-    z.number().nullable().int().min(0, "Age cannot be negative").optional(),
+    z.number().int().min(0, "Age cannot be negative").nullable().optional(),
   ),
   devotee_friend: z.string().optional(), // This will be the name of the devotee friend
   gender: z.enum(["Male", "Female", "Other"]).optional(),

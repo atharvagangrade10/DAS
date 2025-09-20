@@ -158,6 +158,30 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     return changesDetected;
   }, [sessions, sessionDates, initialSessionDates]);
 
+  const onSubmit = () => {
+    if (!sessions) return;
+
+    const updates: SessionUpdate[] = [];
+    sessions.forEach((session) => {
+      const current = sessionDates[session.id];
+      const initial = initialSessionDates[session.id];
+
+      if (current && initial && format(current, "yyyy-MM-dd") !== format(initial, "yyyy-MM-dd")) {
+        updates.push({
+          session_id: session.id,
+          new_date: format(current, "yyyy-MM-dd"),
+        });
+      }
+    });
+
+    if (updates.length > 0) {
+      updateMutation.mutate(updates);
+    } else {
+      toast.info("No changes to save.");
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">

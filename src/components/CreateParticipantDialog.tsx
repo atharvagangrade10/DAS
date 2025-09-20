@@ -46,7 +46,11 @@ interface CreateParticipantDialogProps {
 
 const formSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
-  phone: z.string().optional(),
+  phone: z.string()
+    .optional()
+    .refine((val) => !val || /^\d{10}$/.test(val), {
+      message: "Phone number must be 10 digits",
+    }),
   address: z.string().optional(),
   age: z.preprocess(
     (val) => (val === "" ? null : Number(val)),

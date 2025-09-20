@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils"; // Import cn utility
 
 interface PhoneDialerProps {
   phoneNumber: string;
@@ -24,9 +25,16 @@ const PhoneDialer: React.FC<PhoneDialerProps> = ({ phoneNumber, participantName 
     }
   };
 
+  const isPhoneNumberInvalid = phoneNumber && phoneNumber.length !== 10;
+
   return (
     <div className="flex items-center space-x-2">
-      <span className="text-sm text-gray-700 dark:text-gray-300">{phoneNumber || "N/A"}</span>
+      <span className={cn(
+        "text-sm",
+        isPhoneNumberInvalid ? "text-red-500 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
+      )}>
+        {phoneNumber || "N/A"}
+      </span>
       {phoneNumber && (
         <Button
           variant="outline"

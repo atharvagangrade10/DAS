@@ -8,7 +8,8 @@ export interface Program {
 }
 
 export interface Session {
-  session_id: string;
+  id: string; // Changed from 'session_id' to 'id'
+  name: string; // Added 'name' field
   date: string; // ISO date string, e.g., "YYYY-MM-DD"
 }
 
@@ -29,6 +30,6 @@ export interface ProgramUpdate {
 }
 
 export interface SessionUpdate {
-  session_id: string;
+  session_id: string; // This still refers to the backend's expected ID for updates
   new_date: string;
 }

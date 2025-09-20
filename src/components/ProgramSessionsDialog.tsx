@@ -31,15 +31,10 @@ const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
   if (!response.ok) {
     throw new Error("Failed to fetch program sessions");
   }
-  // Assuming the API returns an array of objects with session_id and date
   const data = await response.json();
-  // If the API returns an empty object, we'll return an empty array.
-  // If it returns an array, we'll use it.
   if (Array.isArray(data)) {
     return data;
   }
-  // If the API returns an object with a key that contains the array, adjust here.
-  // For now, assuming it's directly an array or an empty object.
   return [];
 };
 
@@ -83,7 +78,9 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     onSuccess: (data) => {
       const datesMap: Record<string, Date> = {};
       data.forEach((session) => {
-        datesMap[session.session_id] = parseISO(session.date);
+        if (session.id) { // Use session.id
+          datesMap[session.id] = parseISO(session.date);
+        }
       });
       setSessionDates(datesMap);
       setInitialSessionDates(datesMap); // Store initial dates for comparison
@@ -117,8 +114,8 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
   const hasChanges = React.useMemo(() => {
     if (!sessions) return false;
     return sessions.some(session => {
-      const current = sessionDates[session.session_id];
-      const initial = initialSessionDates[session.session_id];
+      const current = sessionDates[session.id]; // Use session.id
+      const initial = initialSessionDates[session.id]; // Use session.id
       return current && initial && format(current, "yyyy-MM-dd") !== format(initial, "yyyy-MM-dd");
     });
   }, [sessions, sessionDates, initialSessionDates]);
@@ -127,13 +124,13 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     const updates: SessionUpdate[] = sessions
       ? sessions
           .filter(session => {
-            const current = sessionDates[session.session_id];
-            const initial = initialSessionDates[session.session_id];
+            const current = sessionDates[session.id]; // Use session.id
+            const initial = initialSessionDates[session.id]; // Use session.id
             return current && initial && format(current, "yyyy-MM-dd") !== format(initial, "yyyy-MM-dd");
           })
           .map((session) => ({
-            session_id: session.session_id,
-            new_date: format(sessionDates[session.session_id], "yyyy-MM-dd"),
+            session_id: session.id, // Map session.id to session_id for the API
+            new_date: format(sessionDates[session.id], "yyyy-MM-dd"), // Use session.id
           }))
       : [];
 
@@ -149,7 +146,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Manage Sessions for {program.name}</DialogTitle>
+          <DialogTitle>Manage Sessions for {program.program_name}</DialogTitle>
           <DialogDescription>
             View and update the dates for each session of this program.
           </DialogDescription>
@@ -165,19 +162,19 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
               <p className="text-red-500">Error: {error.message}</p>
             ) : sessions && sessions.length > 0 ? (
               sessions.map((session) => (
-                <div key={session.session_id} className="flex items-center justify-between gap-2">
-                  <span className="font-medium">Session {session.session_id.substring(0, 8)}:</span>
+                <div key={session.id} className="flex items-center justify-between gap-2">
+                  <span className="font-medium">{session.name || `Session ${session.id.substring(0, 8)}`}:</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
                         className={cn(
                           "w-[200px] pl-3 text-left font-normal",
-                          !sessionDates[session.session_id] && "text-muted-foreground"
+                          !sessionDates[session.id] && "text-muted-foreground" // Use session.id
                         )}
                       >
-                        {sessionDates[session.session_id] ? (
-                          format(sessionDates[session.session_id], "PPP")
+                        {sessionDates[session.id] ? ( // Use session.id
+                          format(sessionDates[session.id], "PPP") // Use session.id
                         ) : (
                           <span>Pick a date</span>
                         )}
@@ -187,8 +184,8 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={sessionDates[session.session_id]}
-                        onSelect={(date) => handleDateChange(session.session_id, date)}
+                        selected={sessionDates[session.id]} // Use session.id
+                        onSelect={(date) => handleDateChange(session.id, date)} // Use session.id
                         initialFocus
                       />
                     </PopoverContent>

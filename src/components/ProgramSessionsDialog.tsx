@@ -79,21 +79,20 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
       const currentDatesMap: Record<string, Date> = {};
       const initialDatesMap: Record<string, Date> = {};
       data.forEach((session) => {
-        if (session.id && session.date) { // Ensure session.id and session.date exist
+        if (session.id && session.date) {
           const parsedDate = parseISO(session.date);
           const normalizedDate = startOfDay(parsedDate);
-          if (!isNaN(normalizedDate.getTime())) { // Check if date is valid
+          if (!isNaN(normalizedDate.getTime())) {
             currentDatesMap[session.id] = normalizedDate;
-            initialDatesMap[session.id] = new Date(normalizedDate); // Deep copy the Date object for initial state
+            // Create a new Date object from the timestamp to ensure it's a true copy
+            initialDatesMap[session.id] = new Date(normalizedDate.getTime());
           } else {
-            // Log an error if the date string is invalid
             console.error(`ProgramSessionsDialog: Invalid date string for session ${session.id}: "${session.date}"`);
             toast.error(`Invalid date for session ${session.name || session.id}`, {
               description: `Could not parse date: "${session.date}"`,
             });
           }
         } else {
-          // Log an error if session.id or session.date is missing
           console.error(`ProgramSessionsDialog: Session missing ID or date:`, session);
           toast.error(`Missing data for a session`, {
             description: `Session ID or date is missing.`,
@@ -124,18 +123,22 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     if (newDate) {
       setSessionDates((prev) => ({
         ...prev,
-        [sessionId]: startOfDay(newDate), // Normalize to start of day
+        [sessionId]: startOfDay(newDate),
       }));
     }
   };
 
   const hasChanges = React.useMemo(() => {
-    if (!sessions) return false;
+    if (!sessions || Object.keys(initialSessionDates).length === 0) {
+      return false;
+    }
     return sessions.some(session => {
       const current = sessionDates[session.id];
       const initial = initialSessionDates[session.id];
-      // Compare formatted dates to ensure only day, month, year are considered
-      return current && initial && format(current, "yyyy-MM-dd") !== format(initial, "yyyy-MM-dd");
+      if (!current || !initial) {
+        return false;
+      }
+      return format(current, "yyyy-MM-dd") !== format(initial, "yyyy-MM-dd");
     });
   }, [sessions, sessionDates, initialSessionDates]);
 

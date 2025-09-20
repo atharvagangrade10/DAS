@@ -27,14 +27,19 @@ interface ProgramSessionsDialogProps {
 }
 
 const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
+  console.log(`ProgramSessionsDialog: Attempting to fetch sessions for program ID: ${programId}`); // New Debug
   const response = await fetch(`http://127.0.0.1:8000/program/${programId}/sessions`);
   if (!response.ok) {
-    throw new Error("Failed to fetch program sessions");
+    const errorText = await response.text(); // Get raw error text
+    console.error(`ProgramSessionsDialog: API fetch failed with status ${response.status}: ${errorText}`); // New Debug
+    throw new Error(`Failed to fetch program sessions: ${errorText}`);
   }
   const data = await response.json();
+  console.log("ProgramSessionsDialog: Raw API response data:", data); // New Debug
   if (Array.isArray(data)) {
     return data;
   }
+  console.warn("ProgramSessionsDialog: API response is not an array, returning empty array."); // New Debug
   return [];
 };
 
@@ -76,28 +81,28 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     queryFn: () => fetchProgramSessions(program.id),
     enabled: isOpen, // Only fetch when dialog is open
     onSuccess: (data) => {
-      console.log("ProgramSessionsDialog: API fetched sessions data:", data); // Debug 1
-      console.log("ProgramSessionsDialog: API fetched sessions data length:", data.length); // New Debug
+      console.log("ProgramSessionsDialog: API fetched sessions data (onSuccess):", data); // Debug 1
+      console.log("ProgramSessionsDialog: API fetched sessions data length (onSuccess):", data.length); // New Debug
       const currentDatesMap: Record<string, Date> = {};
       const initialDatesMap: Record<string, Date> = {};
       data.forEach((session) => {
-        console.log("ProgramSessionsDialog: Processing session:", session); // New Debug
+        console.log("ProgramSessionsDialog: Processing session (onSuccess):", session); // New Debug
         if (session.id && session.date) {
           const parsedDate = parseISO(session.date);
-          console.log(`ProgramSessionsDialog: Session ${session.id} date "${session.date}" parsed to:`, parsedDate); // New Debug
+          console.log(`ProgramSessionsDialog: Session ${session.id} date "${session.date}" parsed to (onSuccess):`, parsedDate); // New Debug
           const normalizedDate = startOfDay(parsedDate);
           if (!isNaN(normalizedDate.getTime())) {
             currentDatesMap[session.id] = normalizedDate;
             // Create a new Date object from the timestamp to ensure it's a true copy
             initialDatesMap[session.id] = new Date(normalizedDate.getTime());
           } else {
-            console.error(`ProgramSessionsDialog: Invalid date string for session ${session.id}: "${session.date}"`);
+            console.error(`ProgramSessionsDialog: Invalid date string for session ${session.id}: "${session.date}" (onSuccess)`);
             toast.error(`Invalid date for session ${session.name || session.id}`, {
               description: `Could not parse date: "${session.date}"`,
             });
           }
         } else {
-          console.error(`ProgramSessionsDialog: Session missing ID or date:`, session);
+          console.error(`ProgramSessionsDialog: Session missing ID or date (onSuccess):`, session);
           toast.error(`Missing data for a session`, {
             description: `Session ID or date is missing.`,
           });
@@ -105,8 +110,14 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
       });
       setSessionDates(currentDatesMap);
       setInitialSessionDates(initialDatesMap);
-      console.log("ProgramSessionsDialog: Initial sessionDates state:", currentDatesMap); // Debug 2
-      console.log("ProgramSessionsDialog: Initial initialSessionDates state:", initialDatesMap); // Debug 3
+      console.log("ProgramSessionsDialog: Initial sessionDates state (onSuccess):", currentDatesMap); // Debug 2
+      console.log("ProgramSessionsDialog: Initial initialSessionDates state (onSuccess):", initialDatesMap); // Debug 3
+    },
+    onError: (err: Error) => { // Explicitly log errors from useQuery
+      console.error("ProgramSessionsDialog: useQuery error:", err);
+      toast.error("Error loading program sessions", {
+        description: err.message,
+      });
     },
   });
 

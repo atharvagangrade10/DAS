@@ -16,7 +16,7 @@ import { Program, Session, SessionUpdate } from "@/types/program";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfDay } from "date-fns"; // Import startOfDay
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -78,8 +78,8 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     onSuccess: (data) => {
       const datesMap: Record<string, Date> = {};
       data.forEach((session) => {
-        if (session.id) { // Use session.id
-          datesMap[session.id] = parseISO(session.date);
+        if (session.id) {
+          datesMap[session.id] = startOfDay(parseISO(session.date)); // Normalize to start of day
         }
       });
       setSessionDates(datesMap);
@@ -106,7 +106,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     if (newDate) {
       setSessionDates((prev) => ({
         ...prev,
-        [sessionId]: newDate,
+        [sessionId]: startOfDay(newDate), // Normalize to start of day
       }));
     }
   };
@@ -114,8 +114,9 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
   const hasChanges = React.useMemo(() => {
     if (!sessions) return false;
     return sessions.some(session => {
-      const current = sessionDates[session.id]; // Use session.id
-      const initial = initialSessionDates[session.id]; // Use session.id
+      const current = sessionDates[session.id];
+      const initial = initialSessionDates[session.id];
+      // Compare formatted dates to ensure only day, month, year are considered
       return current && initial && format(current, "yyyy-MM-dd") !== format(initial, "yyyy-MM-dd");
     });
   }, [sessions, sessionDates, initialSessionDates]);
@@ -124,13 +125,13 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     const updates: SessionUpdate[] = sessions
       ? sessions
           .filter(session => {
-            const current = sessionDates[session.id]; // Use session.id
-            const initial = initialSessionDates[session.id]; // Use session.id
+            const current = sessionDates[session.id];
+            const initial = initialSessionDates[session.id];
             return current && initial && format(current, "yyyy-MM-dd") !== format(initial, "yyyy-MM-dd");
           })
           .map((session) => ({
-            session_id: session.id, // Map session.id to session_id for the API
-            new_date: format(sessionDates[session.id], "yyyy-MM-dd"), // Use session.id
+            session_id: session.id,
+            new_date: format(sessionDates[session.id], "yyyy-MM-dd"),
           }))
       : [];
 
@@ -170,11 +171,11 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
                         variant={"outline"}
                         className={cn(
                           "w-[200px] pl-3 text-left font-normal",
-                          !sessionDates[session.id] && "text-muted-foreground" // Use session.id
+                          !sessionDates[session.id] && "text-muted-foreground"
                         )}
                       >
-                        {sessionDates[session.id] ? ( // Use session.id
-                          format(sessionDates[session.id], "PPP") // Use session.id
+                        {sessionDates[session.id] ? (
+                          format(sessionDates[session.id], "PPP")
                         ) : (
                           <span>Pick a date</span>
                         )}
@@ -184,8 +185,8 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={sessionDates[session.id]} // Use session.id
-                        onSelect={(date) => handleDateChange(session.id, date)} // Use session.id
+                        selected={sessionDates[session.id]}
+                        onSelect={(date) => handleDateChange(session.id, date)}
                         initialFocus
                       />
                     </PopoverContent>

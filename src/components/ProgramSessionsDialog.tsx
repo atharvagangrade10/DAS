@@ -27,19 +27,19 @@ interface ProgramSessionsDialogProps {
 }
 
 const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
-  console.log(`ProgramSessionsDialog: Attempting to fetch sessions for program ID: ${programId}`); // New Debug
+  console.log(`ProgramSessionsDialog: Attempting to fetch sessions for program ID: ${programId}`);
   const response = await fetch(`http://127.0.0.1:8000/program/${programId}/sessions`);
   if (!response.ok) {
-    const errorText = await response.text(); // Get raw error text
-    console.error(`ProgramSessionsDialog: API fetch failed with status ${response.status}: ${errorText}`); // New Debug
+    const errorText = await response.text();
+    console.error(`ProgramSessionsDialog: API fetch failed with status ${response.status}: ${errorText}`);
     throw new Error(`Failed to fetch program sessions: ${errorText}`);
   }
   const data = await response.json();
-  console.log("ProgramSessionsDialog: Raw API response data:", data); // New Debug
+  console.log("ProgramSessionsDialog: Raw API response data:", data);
   if (Array.isArray(data)) {
     return data;
   }
-  console.warn("ProgramSessionsDialog: API response is not an array, returning empty array."); // New Debug
+  console.warn("ProgramSessionsDialog: API response is not an array, returning empty array.");
   return [];
 };
 
@@ -72,6 +72,10 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
   const [sessionDates, setSessionDates] = React.useState<Record<string, Date>>({});
   const [initialSessionDates, setInitialSessionDates] = React.useState<Record<string, Date>>({});
 
+  console.log("ProgramSessionsDialog: Render - program.id:", program.id, "isOpen:", isOpen); // NEW DEBUG
+  console.log("ProgramSessionsDialog: Render - current sessionDates keys:", Object.keys(sessionDates).length); // NEW DEBUG
+  console.log("ProgramSessionsDialog: Render - current initialSessionDates keys:", Object.keys(initialSessionDates).length); // NEW DEBUG
+
   const {
     data: sessions,
     isLoading,
@@ -81,15 +85,16 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     queryFn: () => fetchProgramSessions(program.id),
     enabled: isOpen, // Only fetch when dialog is open
     onSuccess: (data) => {
-      console.log("ProgramSessionsDialog: API fetched sessions data (onSuccess):", data); // Debug 1
-      console.log("ProgramSessionsDialog: API fetched sessions data length (onSuccess):", data.length); // New Debug
+      console.log("ProgramSessionsDialog: >>> Entering onSuccess callback <<<"); // NEW CRITICAL DEBUG
+      console.log("ProgramSessionsDialog: API fetched sessions data (onSuccess):", data);
+      console.log("ProgramSessionsDialog: API fetched sessions data length (onSuccess):", data.length);
       const currentDatesMap: Record<string, Date> = {};
       const initialDatesMap: Record<string, Date> = {};
       data.forEach((session) => {
-        console.log("ProgramSessionsDialog: Processing session (onSuccess):", session); // New Debug
+        console.log("ProgramSessionsDialog: Processing session (onSuccess):", session);
         if (session.id && session.date) {
           const parsedDate = parseISO(session.date);
-          console.log(`ProgramSessionsDialog: Session ${session.id} date "${session.date}" parsed to (onSuccess):`, parsedDate); // New Debug
+          console.log(`ProgramSessionsDialog: Session ${session.id} date "${session.date}" parsed to (onSuccess):`, parsedDate);
           const normalizedDate = startOfDay(parsedDate);
           if (!isNaN(normalizedDate.getTime())) {
             currentDatesMap[session.id] = normalizedDate;
@@ -110,16 +115,18 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
       });
       setSessionDates(currentDatesMap);
       setInitialSessionDates(initialDatesMap);
-      console.log("ProgramSessionsDialog: Initial sessionDates state (onSuccess):", currentDatesMap); // Debug 2
-      console.log("ProgramSessionsDialog: Initial initialSessionDates state (onSuccess):", initialDatesMap); // Debug 3
+      console.log("ProgramSessionsDialog: Initial sessionDates state (onSuccess):", currentDatesMap);
+      console.log("ProgramSessionsDialog: Initial initialSessionDates state (onSuccess):", initialDatesMap);
     },
-    onError: (err: Error) => { // Explicitly log errors from useQuery
+    onError: (err: Error) => {
       console.error("ProgramSessionsDialog: useQuery error:", err);
       toast.error("Error loading program sessions", {
         description: err.message,
       });
     },
   });
+
+  console.log("ProgramSessionsDialog: useQuery hook returned - sessions:", sessions, "isLoading:", isLoading, "error:", error); // NEW DEBUG
 
   const updateMutation = useMutation({
     mutationFn: (updates: SessionUpdate[]) =>
@@ -144,7 +151,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
           ...prev,
           [sessionId]: normalizedNewDate,
         };
-        console.log("ProgramSessionsDialog: handleDateChange - updated sessionDates:", updated); // Debug 4
+        console.log("ProgramSessionsDialog: handleDateChange - updated sessionDates:", updated);
         return updated;
       });
     }
@@ -152,23 +159,23 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
 
   const hasChanges = React.useMemo(() => {
     if (!sessions || Object.keys(initialSessionDates).length === 0) {
-      console.log("ProgramSessionsDialog: hasChanges - No sessions or initial dates. Returning false."); // Debug 5
+      console.log("ProgramSessionsDialog: hasChanges - No sessions or initial dates. Returning false.");
       return false;
     }
     const changesDetected = sessions.some(session => {
       const current = sessionDates[session.id];
       const initial = initialSessionDates[session.id];
       if (!current || !initial) {
-        console.log(`ProgramSessionsDialog: hasChanges - Missing current or initial date for session ${session.id}. Skipping.`); // Debug 6
+        console.log(`ProgramSessionsDialog: hasChanges - Missing current or initial date for session ${session.id}. Skipping.`);
         return false;
       }
       const currentFormatted = format(current, "yyyy-MM-dd");
       const initialFormatted = format(initial, "yyyy-MM-dd");
       const changed = currentFormatted !== initialFormatted;
-      console.log(`ProgramSessionsDialog: hasChanges - Session ${session.id}: Current=${currentFormatted}, Initial=${initialFormatted}, Changed=${changed}`); // Debug 7
+      console.log(`ProgramSessionsDialog: hasChanges - Session ${session.id}: Current=${currentFormatted}, Initial=${initialFormatted}, Changed=${changed}`);
       return changed;
     });
-    console.log("ProgramSessionsDialog: hasChanges - Final result:", changesDetected); // Debug 8
+    console.log("ProgramSessionsDialog: hasChanges - Final result:", changesDetected);
     return changesDetected;
   }, [sessions, sessionDates, initialSessionDates]);
 

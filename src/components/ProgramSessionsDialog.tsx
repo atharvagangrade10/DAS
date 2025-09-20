@@ -77,11 +77,14 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     enabled: isOpen, // Only fetch when dialog is open
     onSuccess: (data) => {
       console.log("ProgramSessionsDialog: API fetched sessions data:", data); // Debug 1
+      console.log("ProgramSessionsDialog: API fetched sessions data length:", data.length); // New Debug
       const currentDatesMap: Record<string, Date> = {};
       const initialDatesMap: Record<string, Date> = {};
       data.forEach((session) => {
+        console.log("ProgramSessionsDialog: Processing session:", session); // New Debug
         if (session.id && session.date) {
           const parsedDate = parseISO(session.date);
+          console.log(`ProgramSessionsDialog: Session ${session.id} date "${session.date}" parsed to:`, parsedDate); // New Debug
           const normalizedDate = startOfDay(parsedDate);
           if (!isNaN(normalizedDate.getTime())) {
             currentDatesMap[session.id] = normalizedDate;

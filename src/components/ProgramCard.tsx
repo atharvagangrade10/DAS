@@ -20,7 +20,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-2xl font-semibold">{program.name}</CardTitle>
+        <CardTitle className="text-2xl font-semibold">{program.program_name}</CardTitle>
         <div className="flex space-x-2">
           <Button variant="ghost" size="icon" onClick={() => setIsSessionsDialogOpen(true)}>
             <CalendarDays className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />

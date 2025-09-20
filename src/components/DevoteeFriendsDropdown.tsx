@@ -19,6 +19,10 @@ interface DevoteeFriend {
   email: string;
 }
 
+interface DevoteeFriendsDropdownProps {
+  onSelectFriend: (friendName: string | null) => void;
+}
+
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
   const response = await fetch("http://127.0.0.1:8000/register/devoteefriends");
   if (!response.ok) {
@@ -27,7 +31,7 @@ const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
   return response.json();
 };
 
-const DevoteeFriendsDropdown = () => {
+const DevoteeFriendsDropdown: React.FC<DevoteeFriendsDropdownProps> = ({ onSelectFriend }) => {
   const { data, isLoading, error } = useQuery<DevoteeFriend[], Error>({
     queryKey: ["devoteeFriends"],
     queryFn: fetchDevoteeFriends,
@@ -40,6 +44,11 @@ const DevoteeFriendsDropdown = () => {
       });
     }
   }, [error]);
+
+  const handleValueChange = (value: string) => {
+    const selectedFriend = data?.find(friend => friend.id === value);
+    onSelectFriend(selectedFriend ? selectedFriend.name : null);
+  };
 
   if (isLoading) {
     return (
@@ -71,7 +80,7 @@ const DevoteeFriendsDropdown = () => {
   return (
     <div className="space-y-2">
       <Label htmlFor="devotee-friends">Select a Devotee Friend</Label>
-      <Select>
+      <Select onValueChange={handleValueChange}>
         <SelectTrigger id="devotee-friends" className="w-[280px]">
           <SelectValue placeholder="Select a friend" />
         </SelectTrigger>

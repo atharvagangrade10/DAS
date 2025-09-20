@@ -37,7 +37,7 @@ interface CreateProgramDialogProps {
 }
 
 const formSchema = z.object({
-  name: z.string().min(1, "Program name is required"),
+  program_name: z.string().min(1, "Program name is required"), // Changed to program_name
   description: z.string().optional(),
   start_date: z.date({ required_error: "Start date is required" }),
   end_date: z.date({ required_error: "End date is required" }),
@@ -73,11 +73,11 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      program_name: "", // Changed to program_name
       description: "",
       start_date: undefined,
       end_date: undefined,
-      num_sessions: 1, // Default to 1 session
+      num_sessions: 1,
     },
   });
 
@@ -98,11 +98,11 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const programData: ProgramCreate = {
-      name: values.name,
+      program_name: values.program_name, // Changed to program_name
       description: values.description || "",
       start_date: format(values.start_date, "yyyy-MM-dd"),
       end_date: format(values.end_date, "yyyy-MM-dd"),
-      num_sessions: values.num_sessions!, // num_sessions is now guaranteed to be a number
+      num_sessions: values.num_sessions!,
     };
     mutation.mutate(programData);
   };
@@ -120,7 +120,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
             <FormField
               control={form.control}
-              name="name"
+              name="program_name" // Changed to program_name
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Program Name</FormLabel>

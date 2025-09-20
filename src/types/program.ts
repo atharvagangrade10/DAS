@@ -1,10 +1,10 @@
 export interface Program {
   id: string;
-  name: string;
+  program_name: string; // Changed from 'name' to 'program_name'
   description: string;
   start_date: string; // ISO date string, e.g., "YYYY-MM-DD"
   end_date: string;   // ISO date string, e.g., "YYYY-MM-DD"
-  num_sessions: number; // Added num_sessions
+  num_sessions: number;
 }
 
 export interface Session {
@@ -13,19 +13,19 @@ export interface Session {
 }
 
 export interface ProgramCreate {
-  name: string;
+  program_name: string; // Changed from 'name' to 'program_name'
   description: string;
   start_date: string;
   end_date: string;
-  num_sessions: number; // Added num_sessions
+  num_sessions: number;
 }
 
 export interface ProgramUpdate {
-  name?: string;
+  program_name?: string; // Changed from 'name' to 'program_name'
   description?: string;
   start_date?: string;
   end_date?: string;
-  num_sessions?: number; // Added num_sessions
+  num_sessions?: number;
 }
 
 export interface SessionUpdate {

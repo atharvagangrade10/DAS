@@ -77,16 +77,31 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     enabled: isOpen, // Only fetch when dialog is open
     onSuccess: (data) => {
       const currentDatesMap: Record<string, Date> = {};
-      const initialDatesMap: Record<string, Date> = {}; // Separate map for initial dates
+      const initialDatesMap: Record<string, Date> = {};
       data.forEach((session) => {
-        if (session.id) {
-          const normalizedDate = startOfDay(parseISO(session.date));
-          currentDatesMap[session.id] = normalizedDate;
-          initialDatesMap[session.id] = new Date(normalizedDate); // Deep copy the Date object for initial state
+        if (session.id && session.date) { // Ensure session.id and session.date exist
+          const parsedDate = parseISO(session.date);
+          const normalizedDate = startOfDay(parsedDate);
+          if (!isNaN(normalizedDate.getTime())) { // Check if date is valid
+            currentDatesMap[session.id] = normalizedDate;
+            initialDatesMap[session.id] = new Date(normalizedDate); // Deep copy the Date object for initial state
+          } else {
+            // Log an error if the date string is invalid
+            console.error(`ProgramSessionsDialog: Invalid date string for session ${session.id}: "${session.date}"`);
+            toast.error(`Invalid date for session ${session.name || session.id}`, {
+              description: `Could not parse date: "${session.date}"`,
+            });
+          }
+        } else {
+          // Log an error if session.id or session.date is missing
+          console.error(`ProgramSessionsDialog: Session missing ID or date:`, session);
+          toast.error(`Missing data for a session`, {
+            description: `Session ID or date is missing.`,
+          });
         }
       });
       setSessionDates(currentDatesMap);
-      setInitialSessionDates(initialDatesMap); // Set initialDatesMap
+      setInitialSessionDates(initialDatesMap);
     },
   });
 

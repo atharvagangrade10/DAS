@@ -16,7 +16,7 @@ import { Program, Session, SessionUpdate } from "@/types/program";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO, startOfDay } from "date-fns"; // Import startOfDay
+import { format, parseISO, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -76,14 +76,17 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     queryFn: () => fetchProgramSessions(program.id),
     enabled: isOpen, // Only fetch when dialog is open
     onSuccess: (data) => {
-      const datesMap: Record<string, Date> = {};
+      const currentDatesMap: Record<string, Date> = {};
+      const initialDatesMap: Record<string, Date> = {}; // Separate map for initial dates
       data.forEach((session) => {
         if (session.id) {
-          datesMap[session.id] = startOfDay(parseISO(session.date)); // Normalize to start of day
+          const normalizedDate = startOfDay(parseISO(session.date));
+          currentDatesMap[session.id] = normalizedDate;
+          initialDatesMap[session.id] = new Date(normalizedDate); // Deep copy the Date object for initial state
         }
       });
-      setSessionDates(datesMap);
-      setInitialSessionDates(datesMap); // Store initial dates for comparison
+      setSessionDates(currentDatesMap);
+      setInitialSessionDates(initialDatesMap); // Set initialDatesMap
     },
   });
 

@@ -6,22 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import PhoneDialer from "./PhoneDialer";
 import EditParticipantDialog from "./EditParticipantDialog";
-
-interface Participant {
-  id: string;
-  full_name: string;
-  phone: string;
-  address: string;
-  age: number | null;
-  gender: string;
-  devotee_friend_name: string;
-}
+import { Participant } from "@/types/participant"; // Import Participant type
 
 interface ParticipantCardProps {
   participant: Participant;
+  onParticipantUpdate?: (updatedParticipant: Participant) => void; // New prop
 }
 
-const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant }) => {
+const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onParticipantUpdate }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
   return (
@@ -48,6 +40,7 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant }) => {
         participant={participant}
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        onUpdateSuccess={onParticipantUpdate} // Pass the callback
       />
     </Card>
   );

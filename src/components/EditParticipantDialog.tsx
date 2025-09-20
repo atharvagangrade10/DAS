@@ -31,16 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-
-interface Participant {
-  id: string;
-  full_name: string;
-  phone: string;
-  address: string;
-  age: number | null;
-  gender: string;
-  devotee_friend_name: string; // This is the name, not the ID
-}
+import { Participant } from "@/types/participant"; // Import Participant type
 
 interface DevoteeFriend {
   id: string;
@@ -51,6 +42,7 @@ interface EditParticipantDialogProps {
   participant: Participant;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdateSuccess?: (updatedParticipant: Participant) => void; // New prop
 }
 
 const formSchema = z.object({
@@ -76,7 +68,7 @@ const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
 const updateParticipant = async (
   participantId: string,
   data: z.infer<typeof formSchema>,
-) => {
+): Promise<Participant> => { // Specify return type
   const response = await fetch(
     `http://127.0.0.1:8000/participants/${participantId}`,
     {
@@ -88,7 +80,8 @@ const updateParticipant = async (
     },
   );
   if (!response.ok) {
-    throw new Error("Failed to update participant");
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to update participant");
   }
   return response.json();
 };
@@ -97,6 +90,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
   participant,
   isOpen,
   onOpenChange,
+  onUpdateSuccess, // Destructure new prop
 }) => {
   const queryClient = useQueryClient();
 
@@ -136,10 +130,14 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
   const mutation = useMutation({
     mutationFn: (data: z.infer<typeof formSchema>) =>
       updateParticipant(participant.id, data),
-    onSuccess: () => {
+    onSuccess: (data) => { // data here is the updated participant
       toast.success("Participant updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["participants"] });
+      queryClient.invalidateQueries({ queryKey: ["participantsSearch"] }); // Invalidate search queries
       onOpenChange(false); // Close dialog on success
+      if (onUpdateSuccess) {
+        onUpdateSuccess(data); // Call the success callback with updated data
+      }
     },
     onError: (error: Error) => {
       toast.error("Failed to update participant", {

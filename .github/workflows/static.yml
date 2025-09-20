@@ -1,41 +1,38 @@
 name: Deploy Vite App to GitHub Pages
 
+# Ensure the workflow runs on push to main
 on:
   push:
     branches:
-      - main  # Or the branch you want to deploy from
+      - main
+
+# Set permissions to allow id-token requests
+permissions:
+  contents: read        # Default for most actions
+  pages: write          # Required for Pages deployment
+  id-token: write       # Required to fix your error
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20  # Or your preferred version
+          node-version: 20
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # Step 4: Build the Vite app
       - name: Build Vite app
         run: npm run build
 
-      # Step 5: Deploy to GitHub Pages
       - name: Vite Github Pages Deployer
         uses: skywarth/vite-github-pages-deployer@v1.5.0
         with:
-          public_base_path: "/"          # Base path of your app
-          build_path: "./dist"           # Vite build output folder
-          install_phase_node_env: "dev"  # Node env for install
-          build_phase_node_env: "production" # Node env for build
-          package_manager: "npm"         # npm or yarn
-          artifact_name: "github-pages"
-          debug_mode: false
-          working_path: "./"             # Root directory of your project
+          public_base_path: "/"
+          build_path: "./dist"
+          package_manager: "npm"

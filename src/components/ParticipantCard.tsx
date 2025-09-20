@@ -7,6 +7,7 @@ import { Pencil } from "lucide-react";
 import PhoneDialer from "./PhoneDialer";
 import EditParticipantDialog from "./EditParticipantDialog";
 import { Participant } from "@/types/participant"; // Import Participant type
+import AttendedProgramsList from "./AttendedProgramsList"; // Import new component
 
 interface ParticipantCardProps {
   participant: Participant;
@@ -34,6 +35,9 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
         <p><strong>Age:</strong> {participant.age || "N/A"}</p>
         <p><strong>Gender:</strong> {participant.gender || "N/A"}</p>
         <p><strong>Devotee Friend:</strong> {participant.devotee_friend_name || "None"}</p>
+        
+        {/* Attended Programs List */}
+        <AttendedProgramsList participantId={participant.id} />
       </CardContent>
 
       <EditParticipantDialog

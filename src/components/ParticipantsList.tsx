@@ -22,7 +22,7 @@ interface ParticipantsListProps {
 
 const fetchParticipantsByDevoteeFriend = async (devoteeFriendName: string): Promise<Participant[]> => {
   const encodedName = encodeURIComponent(devoteeFriendName);
-  const response = await fetch(`http://127.0.0.1:8000/participants/by-devotee-friend/${encodedName}`);
+  const response = await fetch(`https://das-backend-o43a.onrender.com/participants/by-devotee-friend/${encodedName}`);
   if (!response.ok) {
     throw new Error("Failed to fetch participants");
   }

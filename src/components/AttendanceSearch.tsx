@@ -18,7 +18,7 @@ interface AttendanceSearchProps {
 const fetchParticipants = async (query: string): Promise<Participant[]> => {
   if (!query) return [];
   const response = await fetch(
-    `http://127.0.0.1:8000/participants/search?query=${encodeURIComponent(query)}`,
+    `https://das-backend-o43a.onrender.com/participants/search?query=${encodeURIComponent(query)}`,
   );
   if (!response.ok) {
     throw new Error("Failed to search for participants");

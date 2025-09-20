@@ -28,7 +28,7 @@ interface MarkAttendanceCardProps {
 }
 
 const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch("http://127.0.0.1:8000/program/");
+  const response = await fetch("https://das-backend-o43a.onrender.com/program/");
   if (!response.ok) {
     throw new Error("Failed to fetch programs");
   }
@@ -42,7 +42,7 @@ const markAttendance = async (attendanceData: {
   status: string;
   marked_by: string;
 }) => {
-  const response = await fetch("http://127.0.0.1:8000/attendance/mark", {
+  const response = await fetch("https://das-backend-o43a.onrender.com/attendance/mark", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(attendanceData),

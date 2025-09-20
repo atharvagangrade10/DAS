@@ -58,7 +58,7 @@ const formSchema = z.object({
 });
 
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch("http://127.0.0.1:8000/register/devoteefriends");
+  const response = await fetch("https://das-backend-o43a.onrender.com/register/devoteefriends");
   if (!response.ok) {
     throw new Error("Failed to fetch devotee friends");
   }
@@ -70,7 +70,7 @@ const updateParticipant = async (
   data: z.infer<typeof formSchema>,
 ): Promise<Participant> => { // Specify return type
   const response = await fetch(
-    `http://127.0.0.1:8000/participants/${participantId}`,
+    `https://das-backend-o43a.onrender.com/participants/${participantId}`,
     {
       method: "PUT",
       headers: {

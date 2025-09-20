@@ -51,7 +51,7 @@ const formSchema = z.object({
 });
 
 const createProgram = async (programData: ProgramCreate): Promise<Program> => {
-  const response = await fetch("http://127.0.0.1:8000/program/create", {
+  const response = await fetch("https://das-backend-o43a.onrender.com/program/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

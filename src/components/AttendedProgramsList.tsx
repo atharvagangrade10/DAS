@@ -22,7 +22,7 @@ const fetchAttendedPrograms = async (
   participantId: string,
 ): Promise<AttendedProgram[]> => {
   const response = await fetch(
-    `http://127.0.0.1:8000/participants/${participantId}/attended-programs`,
+    `https://das-backend-o43a.onrender.com/participants/${participantId}/attended-programs`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch attended programs");

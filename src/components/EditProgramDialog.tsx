@@ -56,7 +56,7 @@ const updateProgram = async (
   programData: ProgramUpdate,
 ): Promise<Program> => {
   const response = await fetch(
-    `http://127.0.0.1:8000/program/update/${programId}`,
+    `https://das-backend-o43a.onrender.com/program/update/${programId}`,
     {
       method: "PUT",
       headers: {

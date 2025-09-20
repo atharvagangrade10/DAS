@@ -28,7 +28,7 @@ interface ProgramSessionsDialogProps {
 
 const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
   console.log(`ProgramSessionsDialog: Attempting to fetch sessions for program ID: ${programId}`);
-  const response = await fetch(`http://127.0.0.1:8000/program/${programId}/sessions`);
+  const response = await fetch(`https://das-backend-o43a.onrender.com/program/${programId}/sessions`);
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`ProgramSessionsDialog: API fetch failed with status ${response.status}: ${errorText}`);
@@ -48,7 +48,7 @@ const updateProgramSessionsDates = async (
   updates: SessionUpdate[],
 ): Promise<any> => {
   const response = await fetch(
-    `http://127.0.0.1:8000/program/${programId}/sessions/update-dates`,
+    `https://das-backend-o43a.onrender.com/program/${programId}/sessions/update-dates`,
     {
       method: "PUT",
       headers: {

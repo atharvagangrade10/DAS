@@ -6,16 +6,18 @@ const Friends = () => {
   const [selectedDevoteeFriendName, setSelectedDevoteeFriendName] = React.useState<string | null>(null);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Friends Page</h1>
-      <p className="text-lg text-gray-700 mb-6">Manage your devotee friends and their associated participants.</p>
+    <div className="container mx-auto p-6 sm:p-8"> {/* Increased padding */}
+      <h1 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">Friends Management</h1> {/* Larger title */}
+      <p className="text-lg text-gray-700 dark:text-gray-300 mb-8 max-w-2xl"> {/* Adjusted margin and max-width */}
+        Select a devotee friend from the dropdown to view and manage their associated participants.
+      </p>
       
-      <div className="max-w-md mb-8">
+      <div className="max-w-md mb-10"> {/* Increased margin-bottom */}
         <DevoteeFriendsDropdown onSelectFriend={setSelectedDevoteeFriendName} />
       </div>
 
       {selectedDevoteeFriendName && (
-        <div className="max-w-2xl">
+        <div className="max-w-3xl mt-8"> {/* Increased max-width and margin-top */}
           <ParticipantsList devoteeFriendName={selectedDevoteeFriendName} />
         </div>
       )}

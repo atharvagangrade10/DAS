@@ -2,9 +2,9 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import ParticipantCard from "./ParticipantCard"; // Import the new ParticipantCard
 
 interface Participant {
   id: string;
@@ -69,17 +69,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({ devoteeFriendName }
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold">Participants for {devoteeFriendName}</h2>
       {data.map((participant) => (
-        <Card key={participant.id}>
-          <CardHeader>
-            <CardTitle>{participant.full_name}</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <p><strong>Phone:</strong> {participant.phone || "N/A"}</p>
-            <p><strong>Email:</strong> {participant.address || "N/A"}</p> {/* Assuming address is email for now based on sample */}
-            <p><strong>Age:</strong> {participant.age || "N/A"}</p>
-            <p><strong>Gender:</strong> {participant.gender || "N/A"}</p>
-          </CardContent>
-        </Card>
+        <ParticipantCard key={participant.id} participant={participant} />
       ))}
     </div>
   );

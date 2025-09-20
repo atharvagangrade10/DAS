@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import Friends from "./pages/Friends";
 import Attendance from "./pages/Attendance";
 import Programs from "./pages/Programs";
+import Layout from "./components/Layout"; // Import the new Layout component
 
 const queryClient = new QueryClient();
 
@@ -18,10 +19,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/programs" element={<Programs />} />
+          <Route path="/" element={<Layout />}> {/* Use Layout for nested routes */}
+            <Route index element={<Index />} /> {/* Default content for the layout */}
+            <Route path="friends" element={<Friends />} />
+            <Route path="attendance" element={<Attendance />} />
+            <Route path="programs" element={<Programs />} />
+          </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

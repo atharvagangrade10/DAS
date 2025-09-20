@@ -1,11 +1,15 @@
 import React from 'react';
 import AttendanceSearch from '@/components/AttendanceSearch';
 import MarkAttendanceCard from '@/components/MarkAttendanceCard';
-import ParticipantCard from '@/components/ParticipantCard'; // Import ParticipantCard
+import ParticipantCard from '@/components/ParticipantCard';
+import CreateParticipantDialog from '@/components/CreateParticipantDialog'; // Import new component
 import { Participant } from '@/types/participant';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 const Attendance = () => {
   const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
+  const [isCreateParticipantDialogOpen, setIsCreateParticipantDialogOpen] = React.useState(false);
 
   const handleAttendanceMarked = () => {
     setSelectedParticipant(null); // Clear selected participant after attendance is marked
@@ -13,6 +17,11 @@ const Attendance = () => {
 
   const handleParticipantUpdate = (updatedParticipant: Participant) => {
     setSelectedParticipant(updatedParticipant); // Update the selected participant with new data
+  };
+
+  const handleParticipantCreationSuccess = (newParticipant: Participant) => {
+    setSelectedParticipant(newParticipant); // Set the newly created participant for attendance marking
+    setIsCreateParticipantDialogOpen(false); // Close the creation dialog
   };
 
   return (
@@ -24,8 +33,14 @@ const Attendance = () => {
         </p>
       </div>
 
-      <div className="max-w-md">
-        <AttendanceSearch onParticipantSelect={setSelectedParticipant} />
+      <div className="flex flex-col sm:flex-row gap-4 max-w-md">
+        <div className="flex-1">
+          <AttendanceSearch onParticipantSelect={setSelectedParticipant} />
+        </div>
+        <Button onClick={() => setIsCreateParticipantDialogOpen(true)} className="flex items-center gap-2">
+          <PlusCircle className="h-5 w-5" />
+          Add New Participant
+        </Button>
       </div>
 
       {selectedParticipant && (
@@ -33,7 +48,7 @@ const Attendance = () => {
           <div className="max-w-md">
             <ParticipantCard 
               participant={selectedParticipant} 
-              onParticipantUpdate={handleParticipantUpdate} // Pass the update handler
+              onParticipantUpdate={handleParticipantUpdate} 
             />
           </div>
           <div className="max-w-md">
@@ -44,6 +59,12 @@ const Attendance = () => {
           </div>
         </>
       )}
+
+      <CreateParticipantDialog
+        isOpen={isCreateParticipantDialogOpen}
+        onOpenChange={setIsCreateParticipantDialogOpen}
+        onCreationSuccess={handleParticipantCreationSuccess}
+      />
     </div>
   );
 };

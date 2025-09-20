@@ -46,36 +46,36 @@ const SidebarNav = () => {
     </nav>
   );
 
-  if (isMobile) {
-    return (
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50">
-            <MenuIcon className="h-6 w-6" />
-            <span className="sr-only">Toggle navigation</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0 bg-sidebar-background">
+  return (
+    <>
+      {isMobile ? (
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50">
+              <MenuIcon className="h-6 w-6" />
+              <span className="sr-only">Toggle navigation</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar-background">
+            <div className="flex h-16 items-center border-b px-4">
+              <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary"> {/* Changed to text-sidebar-primary */}
+                DAS
+              </Link>
+            </div>
+            {navItems}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <div className="hidden md:flex flex-col h-screen w-64 border-r bg-sidebar-background text-sidebar-foreground">
           <div className="flex h-16 items-center border-b px-4">
-            <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary-foreground">
+            <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary"> {/* Changed to text-sidebar-primary */}
               DAS
             </Link>
           </div>
           {navItems}
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  return (
-    <div className="hidden md:flex flex-col h-screen w-64 border-r bg-sidebar-background text-sidebar-foreground">
-      <div className="flex h-16 items-center border-b px-4">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary-foreground">
-          DAS
-        </Link>
-      </div>
-      {navItems}
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 

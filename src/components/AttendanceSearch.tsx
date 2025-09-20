@@ -37,33 +37,36 @@ const AttendanceSearch: React.FC<AttendanceSearchProps> = ({
   });
 
   return (
-    <Command className="rounded-lg border shadow-md">
+    <Command className="rounded-lg border shadow-md" shouldFilter={false}>
       <CommandInput
         placeholder="Search by name or phone..."
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
-        <CommandEmpty>
-          {isLoading ? "Searching..." : "No results found."}
-        </CommandEmpty>
-        {participants?.map((participant) => (
-          <CommandItem
-            key={participant.id}
-            onSelect={() => {
-              onParticipantSelect(participant);
-              setQuery(""); // Clear search after selection
-            }}
-            className="cursor-pointer"
-          >
-            <div>
-              <p className="font-medium">{participant.full_name}</p>
-              <p className="text-sm text-muted-foreground">
-                {participant.phone || "No phone number"}
-              </p>
-            </div>
-          </CommandItem>
-        ))}
+        {isLoading ? (
+          <CommandEmpty>Searching...</CommandEmpty>
+        ) : participants && participants.length > 0 ? (
+          participants.map((participant) => (
+            <CommandItem
+              key={participant.id}
+              onSelect={() => {
+                onParticipantSelect(participant);
+                setQuery(""); // Clear search after selection
+              }}
+              className="cursor-pointer"
+            >
+              <div>
+                <p className="font-medium">{participant.full_name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {participant.phone || "No phone number"}
+                </p>
+              </div>
+            </CommandItem>
+          ))
+        ) : (
+          <CommandEmpty>No results found.</CommandEmpty>
+        )}
       </CommandList>
     </Command>
   );

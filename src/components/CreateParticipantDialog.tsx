@@ -69,7 +69,7 @@ const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
 const createParticipant = async (
   data: z.infer<typeof formSchema>,
 ): Promise<Participant> => {
-  const response = await fetch("http://127.0.0.1:8000/participants/create", {
+  const response = await fetch("http://127.0.0.1:8000/register/participant", { // Updated endpoint
     method: "POST",
     headers: {
       "Content-Type": "application/json",

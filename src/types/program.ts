@@ -4,6 +4,7 @@ export interface Program {
   description: string;
   start_date: string; // ISO date string, e.g., "YYYY-MM-DD"
   end_date: string;   // ISO date string, e.g., "YYYY-MM-DD"
+  num_sessions: number; // Added num_sessions
 }
 
 export interface Session {
@@ -16,6 +17,7 @@ export interface ProgramCreate {
   description: string;
   start_date: string;
   end_date: string;
+  num_sessions: number; // Added num_sessions
 }
 
 export interface ProgramUpdate {
@@ -23,6 +25,7 @@ export interface ProgramUpdate {
   description?: string;
   start_date?: string;
   end_date?: string;
+  num_sessions?: number; // Added num_sessions
 }
 
 export interface SessionUpdate {

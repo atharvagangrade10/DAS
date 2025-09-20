@@ -41,6 +41,10 @@ const formSchema = z.object({
   description: z.string().optional(),
   start_date: z.date({ required_error: "Start date is required" }),
   end_date: z.date({ required_error: "End date is required" }),
+  num_sessions: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number().int().min(1, "Number of sessions must be at least 1").optional(),
+  ).refine(val => val !== undefined, { message: "Number of sessions is required" }),
 }).refine((data) => data.end_date >= data.start_date, {
   message: "End date cannot be before start date.",
   path: ["end_date"],
@@ -73,6 +77,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
       description: "",
       start_date: undefined,
       end_date: undefined,
+      num_sessions: 1, // Default to 1 session
     },
   });
 
@@ -97,6 +102,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
       description: values.description || "",
       start_date: format(values.start_date, "yyyy-MM-dd"),
       end_date: format(values.end_date, "yyyy-MM-dd"),
+      num_sessions: values.num_sessions!, // num_sessions is now guaranteed to be a number
     };
     mutation.mutate(programData);
   };
@@ -210,6 +216,24 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="num_sessions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Number of Sessions</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                      min="1"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

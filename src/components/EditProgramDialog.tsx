@@ -42,6 +42,10 @@ const formSchema = z.object({
   description: z.string().optional(),
   start_date: z.date({ required_error: "Start date is required" }),
   end_date: z.date({ required_error: "End date is required" }),
+  num_sessions: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z.number().int().min(1, "Number of sessions must be at least 1").optional(),
+  ),
 }).refine((data) => data.end_date >= data.start_date, {
   message: "End date cannot be before start date.",
   path: ["end_date"],
@@ -81,6 +85,7 @@ const EditProgramDialog: React.FC<EditProgramDialogProps> = ({
       description: program.description || "",
       start_date: parseISO(program.start_date),
       end_date: parseISO(program.end_date),
+      num_sessions: program.num_sessions,
     },
   });
 
@@ -91,6 +96,7 @@ const EditProgramDialog: React.FC<EditProgramDialogProps> = ({
         description: program.description || "",
         start_date: parseISO(program.start_date),
         end_date: parseISO(program.end_date),
+        num_sessions: program.num_sessions,
       });
     }
   }, [program, form]);
@@ -116,6 +122,7 @@ const EditProgramDialog: React.FC<EditProgramDialogProps> = ({
       description: values.description || "",
       start_date: format(values.start_date, "yyyy-MM-dd"),
       end_date: format(values.end_date, "yyyy-MM-dd"),
+      num_sessions: values.num_sessions,
     };
     mutation.mutate(programData);
   };
@@ -229,6 +236,24 @@ const EditProgramDialog: React.FC<EditProgramDialogProps> = ({
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="num_sessions"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Number of Sessions</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                      min="1"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -224,7 +224,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
             ) : sessions && sessions.length > 0 ? (
               sessions.map((session) => (
                 <div key={session.id} className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{session.name || `Session ${session.id.substring(0, 8)}`}:</span>
+                  <span className="font-medium">{session.name || `Unnamed Session`}:</span> {/* Improved fallback */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -264,6 +264,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
             onClick={onSubmit}
             disabled={updateMutation.isPending || !hasChanges}
           >
+            {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {/* Loading indicator */}
             {updateMutation.isPending ? "Saving..." : "Save changes"}
           </Button>
         </DialogFooter>

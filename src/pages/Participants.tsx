@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Participant } from '@/types/participant';
+import { Program, Session } from '@/types/program'; // Import Program and Session types
 import CreateParticipantDialog from '@/components/CreateParticipantDialog';
 import ParticipantCard from '@/components/ParticipantCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import ExportToExcelButton from '@/components/ExportToExcelButton'; // Import the new component
 
 interface DevoteeFriend {
   id: string;
@@ -39,10 +41,30 @@ const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
   return response.json();
 };
 
+const fetchPrograms = async (): Promise<Program[]> => {
+  const response = await fetch("https://das-backend-o43a.onrender.com/program/");
+  if (!response.ok) {
+    throw new Error("Failed to fetch programs");
+  }
+  return response.json();
+};
+
+const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
+  if (!programId) return [];
+  const response = await fetch(`https://das-backend-o43a.onrender.com/program/${programId}/sessions`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch program sessions");
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+};
+
 const ParticipantsPage = () => {
   const queryClient = useQueryClient();
   const [isCreateParticipantDialogOpen, setIsCreateParticipantDialogOpen] = React.useState(false);
   const [selectedDevoteeFriendName, setSelectedDevoteeFriendName] = React.useState<string | null>(null);
+  const [selectedProgramId, setSelectedProgramId] = React.useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
 
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
     queryKey: ["allParticipants"],
@@ -54,6 +76,17 @@ const ParticipantsPage = () => {
     queryFn: fetchDevoteeFriends,
   });
 
+  const { data: programs, isLoading: isLoadingPrograms, error: programsError } = useQuery<Program[], Error>({
+    queryKey: ["programs"],
+    queryFn: fetchPrograms,
+  });
+
+  const { data: sessions, isLoading: isLoadingSessions, error: sessionsError } = useQuery<Session[], Error>({
+    queryKey: ["programSessions", selectedProgramId],
+    queryFn: () => fetchProgramSessions(selectedProgramId!),
+    enabled: !!selectedProgramId,
+  });
+
   React.useEffect(() => {
     if (participantsError) {
       toast.error("Error loading participants", { description: participantsError.message });
@@ -61,7 +94,13 @@ const ParticipantsPage = () => {
     if (friendsError) {
       toast.error("Error loading devotee friends for filter", { description: friendsError.message });
     }
-  }, [participantsError, friendsError]);
+    if (programsError) {
+      toast.error("Error loading programs for filter", { description: programsError.message });
+    }
+    if (sessionsError) {
+      toast.error("Error loading sessions for filter", { description: sessionsError.message });
+    }
+  }, [participantsError, friendsError, programsError, sessionsError]);
 
   const handleParticipantCreationSuccess = (newParticipant: Participant) => {
     queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
@@ -73,13 +112,18 @@ const ParticipantsPage = () => {
     let currentParticipants = allParticipants;
 
     // Filter by Devotee Friend
-    if (selectedDevoteeFriendName && selectedDevoteeFriendName !== "All") {
-      currentParticipants = currentParticipants.filter(p => p.devotee_friend_name === selectedDevoteeFriendName);
+    if (selectedDevoteeFriendName) {
+      if (selectedDevoteeFriendName === "None") {
+        currentParticipants = currentParticipants.filter(p => !p.devotee_friend_name || p.devotee_friend_name === "None");
+      } else if (selectedDevoteeFriendName !== "All") {
+        currentParticipants = currentParticipants.filter(p => p.devotee_friend_name === selectedDevoteeFriendName);
+      }
     }
 
-    // Program and Session filtering would require more complex logic,
-    // potentially fetching attendance records for each participant or
-    // a dedicated backend endpoint. For now, these filters are placeholders.
+    // NOTE: Filtering by Program and Session attendance is not fully implemented
+    // due to the need for a backend endpoint to efficiently query participants
+    // based on their attendance records. The dropdowns are functional for selection.
+    // If you need this filtering, please consider adding a backend API for it.
 
     return currentParticipants;
   }, [allParticipants, selectedDevoteeFriendName]);
@@ -98,15 +142,16 @@ const ParticipantsPage = () => {
         <div className="flex-1 max-w-xs">
           <Label htmlFor="devotee-friend-filter">Filter by Devotee Friend</Label>
           <Select
-            onValueChange={(value) => setSelectedDevoteeFriendName(value === "All" ? null : value)}
+            onValueChange={(value) => setSelectedDevoteeFriendName(value)}
             value={selectedDevoteeFriendName || "All"}
             disabled={isLoadingFriends}
           >
             <SelectTrigger id="devotee-friend-filter">
-              <SelectValue placeholder="Select a devotee friend" />
+              <SelectValue placeholder="Select a friend" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All Devotee Friends</SelectItem>
+              <SelectItem value="None">No Devotee Friend</SelectItem>
               {devoteeFriends?.map((friend) => (
                 <SelectItem key={friend.id} value={friend.name}>
                   {friend.name}
@@ -116,28 +161,49 @@ const ParticipantsPage = () => {
           </Select>
         </div>
 
-        {/* Placeholder for Program Filter */}
+        {/* Program Filter */}
         <div className="flex-1 max-w-xs">
-          <Label htmlFor="program-filter" className="text-muted-foreground">Filter by Program (Advanced)</Label>
-          <Select disabled>
+          <Label htmlFor="program-filter">Filter by Program</Label>
+          <Select
+            onValueChange={(value) => {
+              setSelectedProgramId(value === "All" ? null : value);
+              setSelectedSessionId(null); // Reset session when program changes
+            }}
+            value={selectedProgramId || "All"}
+            disabled={isLoadingPrograms}
+          >
             <SelectTrigger id="program-filter">
               <SelectValue placeholder="Select a program" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="placeholder" disabled>Requires advanced filtering logic</SelectItem>
+              <SelectItem value="All">All Programs</SelectItem>
+              {programs?.map((program) => (
+                <SelectItem key={program.id} value={program.id}>
+                  {program.program_name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Placeholder for Session Filter */}
+        {/* Session Filter */}
         <div className="flex-1 max-w-xs">
-          <Label htmlFor="session-filter" className="text-muted-foreground">Filter by Session (Advanced)</Label>
-          <Select disabled>
+          <Label htmlFor="session-filter">Filter by Session</Label>
+          <Select
+            onValueChange={(value) => setSelectedSessionId(value === "All" ? null : value)}
+            value={selectedSessionId || "All"}
+            disabled={!selectedProgramId || isLoadingSessions}
+          >
             <SelectTrigger id="session-filter">
               <SelectValue placeholder="Select a session" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="placeholder" disabled>Requires advanced filtering logic</SelectItem>
+              <SelectItem value="All">All Sessions</SelectItem>
+              {sessions?.map((session) => (
+                <SelectItem key={session.id} value={session.id}>
+                  {session.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -146,6 +212,7 @@ const ParticipantsPage = () => {
           <PlusCircle className="h-5 w-5" />
           Add New Participant
         </Button>
+        <ExportToExcelButton data={filteredParticipants} fileName="participants_data" />
       </div>
 
       {isLoadingParticipants ? (

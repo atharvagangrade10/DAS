@@ -26,15 +26,27 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
           <span className="sr-only">Edit participant</span>
         </Button>
       </CardHeader>
-      <CardContent className="grid gap-2">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">Phone:</p>
+      <CardContent className="grid gap-2 text-sm">
+        <div className="flex items-center gap-2">
+          <p className="font-medium">Phone:</p>
           <PhoneDialer phoneNumber={participant.phone} participantName={participant.full_name} />
         </div>
-        <p><strong>Address:</strong> {participant.address || "N/A"}</p>
-        <p><strong>Age:</strong> {participant.age || "N/A"}</p>
-        <p><strong>Gender:</strong> {participant.gender || "N/A"}</p>
-        <p><strong>Devotee Friend:</strong> {participant.devotee_friend_name || "None"}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">Address:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.address || "N/A"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">Age:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.age || "N/A"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">Gender:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.gender || "N/A"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">Devotee Friend:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.devotee_friend_name || "None"}</p>
+        </div>
         
         {/* Attended Programs List */}
         <AttendedProgramsList participantId={participant.id} />

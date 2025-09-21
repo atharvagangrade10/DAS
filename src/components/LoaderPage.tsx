@@ -3,6 +3,7 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // New import
 
 interface LoaderPageProps {
   onLoadingComplete: () => void;
@@ -71,7 +72,8 @@ const LoaderPage: React.FC<LoaderPageProps> = ({ onLoadingComplete }) => {
 
       // Switch Database
       try {
-        setLoadingMessage("Switching database...");
+        // Keep the loading message general, do not explicitly state "Switching database..."
+        setLoadingMessage("Hare Krishna, please wait. Your DAS is loading DATA..."); 
         const switchDbResponse = await fetch(SWITCH_DATABASE_URL, {
           method: "POST",
           headers: {
@@ -102,20 +104,27 @@ const LoaderPage: React.FC<LoaderPageProps> = ({ onLoadingComplete }) => {
   }, [onLoadingComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 text-center">
-      {error ? (
-        <div className="text-red-500 text-lg font-semibold">
-          <p className="mb-4">Error: {error}</p>
-          <p>Please check your internet connection or contact support.</p>
-        </div>
-      ) : (
-        <>
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            {loadingMessage}
-          </p>
-        </>
-      )}
+    <div className="flex items-center justify-center h-screen bg-background text-foreground p-4">
+      <Card className="w-full max-w-md text-center shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Application Loading</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center p-6">
+          {error ? (
+            <div className="text-red-500 text-lg font-semibold">
+              <p className="mb-4">Error: {error}</p>
+              <p>Please check your internet connection or contact support.</p>
+            </div>
+          ) : (
+            <>
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                {loadingMessage}
+              </p>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

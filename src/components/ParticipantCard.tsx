@@ -47,6 +47,10 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
           <p className="font-medium">Devotee Friend:</p>
           <p className="text-gray-700 dark:text-gray-300">{participant.devotee_friend_name || "None"}</p>
         </div>
+        <div className="flex items-center gap-2"> {/* New display for chanting_rounds */}
+          <p className="font-medium">Chanting Rounds:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.chanting_rounds !== null && participant.chanting_rounds !== undefined ? participant.chanting_rounds : "N/A"}</p>
+        </div>
         
         {/* Attended Programs List */}
         <AttendedProgramsList participantId={participant.id} />

@@ -60,6 +60,10 @@ const formSchema = z.object({
   gender: z.enum(["Male", "Female", "Other"], {
     required_error: "Gender is required",
   }),
+  chanting_rounds: z.preprocess( // New field
+    (val) => (val === "" ? null : Number(val)),
+    z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
+  ),
 });
 
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
@@ -111,6 +115,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
       age: undefined,
       devotee_friend: "None",
       gender: "Male", // Default gender
+      chanting_rounds: undefined, // Default for new field
     },
   });
 
@@ -120,6 +125,8 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
       toast.success("Participant created successfully!");
       queryClient.invalidateQueries({ queryKey: ["participants"] });
       queryClient.invalidateQueries({ queryKey: ["participantsSearch"] });
+      queryClient.invalidateQueries({ queryKey: ["allParticipants"] }); // Invalidate all participants list
+      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] }); // Invalidate attended programs too
       onOpenChange(false);
       form.reset();
       onCreationSuccess(data); // Pass the new participant data back
@@ -252,6 +259,24 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField // New FormField for chanting_rounds
+              control={form.control}
+              name="chanting_rounds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Chanting Rounds</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                      min="0"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

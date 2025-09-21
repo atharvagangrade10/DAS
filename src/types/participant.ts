@@ -24,4 +24,5 @@ export interface Participant {
   age: number | null;
   gender: string;
   devotee_friend_name: string;
+  chanting_rounds: number | null; // New field
 }

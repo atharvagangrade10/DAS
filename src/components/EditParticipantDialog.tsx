@@ -59,6 +59,10 @@ const formSchema = z.object({
   ),
   devotee_friend: z.string().optional(), // This will be the name of the devotee friend
   gender: z.enum(["Male", "Female", "Other"]).optional(),
+  chanting_rounds: z.preprocess( // New field
+    (val) => (val === "" ? null : Number(val)),
+    z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
+  ),
 });
 
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
@@ -115,6 +119,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
       age: participant.age || undefined,
       devotee_friend: participant.devotee_friend_name || "None",
       gender: (participant.gender as "Male" | "Female" | "Other") || "Male",
+      chanting_rounds: participant.chanting_rounds || undefined, // Default for new field
     },
   });
 
@@ -127,6 +132,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
         age: participant.age || undefined,
         devotee_friend: participant.devotee_friend_name || "None",
         gender: (participant.gender as "Male" | "Female" | "Other") || "Male",
+        chanting_rounds: participant.chanting_rounds || undefined, // Reset for new field
       });
     }
   }, [participant, form]);
@@ -138,6 +144,8 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
       toast.success("Participant updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["participants"] });
       queryClient.invalidateQueries({ queryKey: ["participantsSearch"] }); // Invalidate search queries
+      queryClient.invalidateQueries({ queryKey: ["allParticipants"] }); // Invalidate all participants list
+      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] }); // Invalidate attended programs too
       onOpenChange(false); // Close dialog on success
       if (onUpdateSuccess) {
         onUpdateSuccess(data); // Call the success callback with updated data
@@ -268,6 +276,24 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField // New FormField for chanting_rounds
+              control={form.control}
+              name="chanting_rounds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Chanting Rounds</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                      min="0"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

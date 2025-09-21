@@ -8,31 +8,50 @@ import NotFound from "./pages/NotFound";
 import Friends from "./pages/Friends";
 import Attendance from "./pages/Attendance";
 import Programs from "./pages/Programs";
-import ParticipantsPage from "./pages/Participants"; // Import the new Participants page
-import Layout from "./components/Layout"; // Import the new Layout component
+import ParticipantsPage from "./pages/Participants";
+import Layout from "./components/Layout";
+import LoaderPage from "./components/LoaderPage"; // Import the new LoaderPage
+import React from "react"; // Import React for useState
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}> {/* Use Layout for nested routes */}
-            <Route index element={<Index />} /> {/* Default content for the layout */}
-            <Route path="friends" element={<Friends />} />
-            <Route path="attendance" element={<Attendance />} />
-            <Route path="programs" element={<Programs />} />
-            <Route path="participants" element={<ParticipantsPage />} /> {/* New route for Participants */}
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [isAppReady, setIsAppReady] = React.useState(false);
+
+  const handleLoadingComplete = () => {
+    setIsAppReady(true);
+  };
+
+  if (!isAppReady) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Toaster />
+        <Sonner />
+        <LoaderPage onLoadingComplete={handleLoadingComplete} />
+      </QueryClientProvider>
+    );
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Index />} />
+              <Route path="friends" element={<Friends />} />
+              <Route path="attendance" element={<Attendance />} />
+              <Route path="programs" element={<Programs />} />
+              <Route path="participants" element={<ParticipantsPage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

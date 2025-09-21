@@ -10,12 +10,14 @@ interface ExportToExcelButtonProps {
   data: any[];
   fileName: string;
   sheetName?: string;
+  disabled?: boolean; // Added disabled prop
 }
 
 const ExportToExcelButton: React.FC<ExportToExcelButtonProps> = ({
   data,
   fileName,
   sheetName = "Sheet1",
+  disabled = false, // Default to false
 }) => {
   const handleExport = () => {
     if (!data || data.length === 0) {
@@ -42,7 +44,7 @@ const ExportToExcelButton: React.FC<ExportToExcelButtonProps> = ({
   };
 
   return (
-    <Button onClick={handleExport} className="flex items-center gap-2">
+    <Button onClick={handleExport} className="flex items-center gap-2" disabled={disabled}>
       <FileDown className="h-5 w-5" />
       Export to Excel
     </Button>

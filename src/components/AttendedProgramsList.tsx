@@ -4,26 +4,15 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AttendedProgram } from "@/types/participant";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Import Card components
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { fetchAttendedPrograms } from "@/utils/api"; // Import from new api utility
 
 interface AttendedProgramsListProps {
   participantId: string;
 }
-
-const fetchAttendedPrograms = async (
-  participantId: string,
-): Promise<AttendedProgram[]> => {
-  const response = await fetch(
-    `https://das-backend-o43a.onrender.com/participants/${participantId}/attended-programs`,
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch attended programs");
-  }
-  return response.json();
-};
 
 const AttendedProgramsList: React.FC<AttendedProgramsListProps> = ({
   participantId,

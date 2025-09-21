@@ -5,8 +5,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { Participant } from '@/types/participant';
-import { Program, Session } from '@/types/program'; // Import Program and Session types
+import { AttendedProgram, Participant } from '@/types/participant'; // Import AttendedProgram
+import { Program, Session } from '@/types/program';
 import CreateParticipantDialog from '@/components/CreateParticipantDialog';
 import ParticipantCard from '@/components/ParticipantCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,46 +18,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import ExportToExcelButton from '@/components/ExportToExcelButton'; // Import the new component
+import ExportToExcelButton from '@/components/ExportToExcelButton';
+import { format, parseISO } from 'date-fns'; // Import date-fns for formatting
+
+import {
+  fetchAllParticipants,
+  fetchDevoteeFriends,
+  fetchPrograms,
+  fetchProgramSessions,
+  fetchAttendedPrograms, // Import the new fetch function
+} from "@/utils/api"; // Import from new api utility
 
 interface DevoteeFriend {
   id: string;
   name: string;
 }
 
-const fetchAllParticipants = async (): Promise<Participant[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/register/participants");
-  if (!response.ok) {
-    throw new Error("Failed to fetch participants");
-  }
-  return response.json();
-};
-
-const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/register/devoteefriends");
-  if (!response.ok) {
-    throw new Error("Failed to fetch devotee friends");
-  }
-  return response.json();
-};
-
-const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/program/");
-  if (!response.ok) {
-    throw new Error("Failed to fetch programs");
-  }
-  return response.json();
-};
-
-const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
-  if (!programId) return [];
-  const response = await fetch(`https://das-backend-o43a.onrender.com/program/${programId}/sessions`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch program sessions");
-  }
-  const data = await response.json();
-  return Array.isArray(data) ? data : [];
-};
+// Define a type for the data we'll export, including flattened attended program info
+interface ExportParticipantData extends Participant {
+  attended_programs_summary: string;
+  attended_sessions_details: string;
+}
 
 const ParticipantsPage = () => {
   const queryClient = useQueryClient();
@@ -87,6 +68,31 @@ const ParticipantsPage = () => {
     enabled: !!selectedProgramId,
   });
 
+  // New query to fetch all attended programs for all participants
+  const { data: allAttendedProgramsMap, isLoading: isLoadingAllAttendedPrograms, error: allAttendedProgramsError } = useQuery<Record<string, AttendedProgram[]>, Error>({
+    queryKey: ["allAttendedPrograms"],
+    queryFn: async () => {
+      if (!allParticipants) return {};
+      const promises = allParticipants.map(async (participant) => {
+        try {
+          const programs = await fetchAttendedPrograms(participant.id);
+          return { participantId: participant.id, programs };
+        } catch (e) {
+          console.error(`Failed to fetch attended programs for participant ${participant.id}:`, e);
+          return { participantId: participant.id, programs: [] };
+        }
+      });
+      const results = await Promise.all(promises);
+      return results.reduce((acc, curr) => {
+        acc[curr.participantId] = curr.programs;
+        return acc;
+      }, {});
+    },
+    enabled: !!allParticipants && allParticipants.length > 0, // Only run if participants are loaded
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+
   React.useEffect(() => {
     if (participantsError) {
       toast.error("Error loading participants", { description: participantsError.message });
@@ -100,10 +106,14 @@ const ParticipantsPage = () => {
     if (sessionsError) {
       toast.error("Error loading sessions for filter", { description: sessionsError.message });
     }
-  }, [participantsError, friendsError, programsError, sessionsError]);
+    if (allAttendedProgramsError) {
+      toast.error("Error loading attended programs for export", { description: allAttendedProgramsError.message });
+    }
+  }, [participantsError, friendsError, programsError, sessionsError, allAttendedProgramsError]);
 
   const handleParticipantCreationSuccess = (newParticipant: Participant) => {
     queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
+    queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] }); // Invalidate attended programs too
     setIsCreateParticipantDialogOpen(false);
   };
 
@@ -120,13 +130,53 @@ const ParticipantsPage = () => {
       }
     }
 
-    // NOTE: Filtering by Program and Session attendance is not fully implemented
-    // due to the need for a backend endpoint to efficiently query participants
-    // based on their attendance records. The dropdowns are functional for selection.
-    // If you need this filtering, please consider adding a backend API for it.
+    // Filter by Program and Session attendance
+    if (selectedProgramId && selectedProgramId !== "All" && allAttendedProgramsMap) {
+      currentParticipants = currentParticipants.filter(participant => {
+        const attendedPrograms = allAttendedProgramsMap[participant.id] || [];
+        const hasAttendedProgram = attendedPrograms.some(ap => ap.program_id === selectedProgramId);
+
+        if (selectedSessionId && selectedSessionId !== "All") {
+          // If a specific session is selected, check if they attended that session within the program
+          return hasAttendedProgram && attendedPrograms.some(ap => 
+            ap.program_id === selectedProgramId && 
+            ap.sessions_attended.some(sa => sa.session_id === selectedSessionId)
+          );
+        }
+        // If no specific session is selected, just check if they attended the program
+        return hasAttendedProgram;
+      });
+    }
 
     return currentParticipants;
-  }, [allParticipants, selectedDevoteeFriendName]);
+  }, [allParticipants, selectedDevoteeFriendName, selectedProgramId, selectedSessionId, allAttendedProgramsMap]);
+
+  // Combine data for export, flattening attended programs into strings
+  const dataForExport: ExportParticipantData[] = React.useMemo(() => {
+    if (!filteredParticipants || !allAttendedProgramsMap) return [];
+
+    return filteredParticipants.map(participant => {
+      const attendedPrograms = allAttendedProgramsMap[participant.id] || [];
+      
+      const attended_programs_summary = attendedPrograms.map(program => 
+        `${program.program_name} (${program.sessions_attended.length} sessions)`
+      ).join("; ");
+
+      const attended_sessions_details = attendedPrograms.map(program => 
+        `${program.program_name}: ${program.sessions_attended.map(session => 
+          `${session.session_name} (${format(parseISO(session.session_date), "yyyy-MM-dd")}, ${session.status})`
+        ).join(", ")}`
+      ).join("; ");
+
+      return {
+        ...participant,
+        attended_programs_summary: attended_programs_summary || "N/A",
+        attended_sessions_details: attended_sessions_details || "N/A",
+      };
+    });
+  }, [filteredParticipants, allAttendedProgramsMap]);
+
+  const isExportButtonDisabled = isLoadingParticipants || isLoadingAllAttendedPrograms;
 
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-8">
@@ -212,10 +262,10 @@ const ParticipantsPage = () => {
           <PlusCircle className="h-5 w-5" />
           Add New Participant
         </Button>
-        <ExportToExcelButton data={filteredParticipants} fileName="participants_data" />
+        <ExportToExcelButton data={dataForExport} fileName="participants_data" disabled={isExportButtonDisabled} />
       </div>
 
-      {isLoadingParticipants ? (
+      {isLoadingParticipants || isLoadingAllAttendedPrograms ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-48 w-full" />

@@ -57,7 +57,7 @@ const SidebarNav = () => {
               <span className="sr-only">Toggle navigation</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar-background">
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar-background bg-background"> {/* Added bg-background */}
             <div className="flex h-16 items-center border-b px-4">
               <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary"> {/* Changed to text-sidebar-primary */}
                 DAS

@@ -24,7 +24,7 @@ import { Program } from "@/types/program";
 
 interface MarkAttendanceCardProps {
   participant: Participant;
-  onAttendanceMarked: () => void;
+  onAttendanceMarked: (participantId: string) => void; // Updated prop type
 }
 
 const fetchPrograms = async (): Promise<Program[]> => {
@@ -73,7 +73,7 @@ const MarkAttendanceCard: React.FC<MarkAttendanceCardProps> = ({
     mutationFn: markAttendance,
     onSuccess: () => {
       toast.success(`Attendance marked for ${participant.full_name}`);
-      onAttendanceMarked();
+      onAttendanceMarked(participant.id); // Pass participant.id to the callback
     },
     onError: (error: Error) => {
       toast.error("Failed to mark attendance", {

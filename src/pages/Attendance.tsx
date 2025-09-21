@@ -1,18 +1,24 @@
+"use client";
+
 import React from 'react';
 import AttendanceSearch from '@/components/AttendanceSearch';
 import MarkAttendanceCard from '@/components/MarkAttendanceCard';
 import ParticipantCard from '@/components/ParticipantCard';
-import CreateParticipantDialog from '@/components/CreateParticipantDialog'; // Import new component
+import CreateParticipantDialog from '@/components/CreateParticipantDialog';
 import { Participant } from '@/types/participant';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query'; // Import useQueryClient
 
 const Attendance = () => {
+  const queryClient = useQueryClient(); // Initialize query client
   const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
   const [isCreateParticipantDialogOpen, setIsCreateParticipantDialogOpen] = React.useState(false);
 
-  const handleAttendanceMarked = () => {
-    setSelectedParticipant(null); // Clear selected participant after attendance is marked
+  const handleAttendanceMarked = (participantId: string) => {
+    // Invalidate the query for attended programs for the specific participant
+    queryClient.invalidateQueries({ queryKey: ["attendedPrograms", participantId] });
+    // Do NOT clear selectedParticipant, so the card remains visible
   };
 
   const handleParticipantUpdate = (updatedParticipant: Participant) => {

@@ -72,9 +72,9 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
   const [sessionDates, setSessionDates] = React.useState<Record<string, Date>>({});
   const [initialSessionDates, setInitialSessionDates] = React.useState<Record<string, Date>>({});
 
-  console.log("ProgramSessionsDialog: Render - program.id:", program.id, "isOpen:", isOpen); // NEW DEBUG
-  console.log("ProgramSessionsDialog: Render - current sessionDates keys:", Object.keys(sessionDates).length); // NEW DEBUG
-  console.log("ProgramSessionsDialog: Render - current initialSessionDates keys:", Object.keys(initialSessionDates).length); // NEW DEBUG
+  console.log("ProgramSessionsDialog: Render - program.id:", program.id, "isOpen:", isOpen);
+  console.log("ProgramSessionsDialog: Render - current sessionDates keys:", Object.keys(sessionDates).length);
+  console.log("ProgramSessionsDialog: Render - current initialSessionDates keys:", Object.keys(initialSessionDates).length);
 
   const {
     data: sessions,
@@ -85,7 +85,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     queryFn: () => fetchProgramSessions(program.id),
     enabled: isOpen, // Only fetch when dialog is open
     onSuccess: (data) => {
-      console.log("ProgramSessionsDialog: >>> Entering onSuccess callback <<<"); // NEW CRITICAL DEBUG
+      console.log("ProgramSessionsDialog: >>> Entering onSuccess callback <<<");
       console.log("ProgramSessionsDialog: API fetched sessions data (onSuccess):", data);
       console.log("ProgramSessionsDialog: API fetched sessions data length (onSuccess):", data.length);
       const currentDatesMap: Record<string, Date> = {};
@@ -126,7 +126,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     },
   });
 
-  console.log("ProgramSessionsDialog: useQuery hook returned - sessions:", sessions, "isLoading:", isLoading, "error:", error); // NEW DEBUG
+  console.log("ProgramSessionsDialog: useQuery hook returned - sessions:", sessions, "isLoading:", isLoading, "error:", error);
 
   const updateMutation = useMutation({
     mutationFn: (updates: SessionUpdate[]) =>
@@ -222,37 +222,41 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
             ) : error ? (
               <p className="text-red-500">Error: {error.message}</p>
             ) : sessions && sessions.length > 0 ? (
-              sessions.map((session) => (
-                <div key={session.id} className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{session.name || `Unnamed Session`}:</span> {/* Improved fallback */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[200px] pl-3 text-left font-normal",
-                          !sessionDates[session.id] && "text-muted-foreground"
-                        )}
-                      >
-                        {sessionDates[session.id] ? (
-                          format(sessionDates[session.id], "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={sessionDates[session.id]}
-                        onSelect={(date) => handleDateChange(session.id, date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              ))
+              sessions.map((session) => {
+                const sessionDate = sessionDates[session.id];
+                console.log(`ProgramSessionsDialog: Rendering session ${session.id} (${session.name}). Date in state:`, sessionDate);
+                return (
+                  <div key={session.id} className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{session.name || `Unnamed Session`}:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[200px] pl-3 text-left font-normal",
+                            !sessionDate && "text-muted-foreground"
+                          )}
+                        >
+                          {sessionDate ? (
+                            format(sessionDate, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={sessionDate}
+                          onSelect={(date) => handleDateChange(session.id, date)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                );
+              })
             ) : (
               <p className="text-gray-500">No sessions found for this program.</p>
             )}
@@ -264,7 +268,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
             onClick={onSubmit}
             disabled={updateMutation.isPending || !hasChanges}
           >
-            {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {/* Loading indicator */}
+            {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {updateMutation.isPending ? "Saving..." : "Save changes"}
           </Button>
         </DialogFooter>

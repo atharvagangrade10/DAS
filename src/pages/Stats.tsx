@@ -14,6 +14,7 @@ import {
 import { Participant, AttendedProgram } from "@/types/participant";
 import { Program } from "@/types/program";
 import { format, parseISO } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
 
 interface DevoteeFriend {
   id: string;
@@ -78,29 +79,34 @@ const Stats = () => {
   const totalDevoteeFriends = devoteeFriends?.length || 0;
   const participantsWithoutDevoteeFriend = allParticipants?.filter(p => !p.devotee_friend_name || p.devotee_friend_name === "None").length || 0;
 
-  // Aggregate session attendance
-  const sessionAttendanceCounts = React.useMemo(() => {
-    const counts: Record<string, { name: string; date: string; count: number }> = {};
+  // Aggregate session attendance, grouped by program
+  const programSessionAttendance = React.useMemo(() => {
+    const programAttendance: Record<string, { program_name: string; sessions: Record<string, { name: string; date: string; count: number }> }> = {};
+
     if (allAttendedProgramsMap && programs) {
-      // Create a map of all sessions for easy lookup
-      const allSessionsMap: Record<string, { name: string; date: string }> = {};
-      programs.forEach(program => {
-        program.sessions?.forEach(session => {
-          allSessionsMap[session.id] = { name: session.name, date: session.date };
-        });
-      });
+      // Create a map of all programs for easy lookup
+      const programsMap = new Map(programs.map(p => [p.id, p]));
 
       Object.values(allAttendedProgramsMap).forEach(attendedPrograms => {
-        attendedPrograms.forEach(program => {
-          program.sessions_attended.forEach(session => {
-            if (counts[session.session_id]) {
-              counts[session.session_id].count++;
+        attendedPrograms.forEach(attendedProgram => {
+          const programId = attendedProgram.program_id;
+          const programDetails = programsMap.get(programId);
+
+          if (!programAttendance[programId]) {
+            programAttendance[programId] = {
+              program_name: programDetails?.program_name || attendedProgram.program_name,
+              sessions: {},
+            };
+          }
+
+          attendedProgram.sessions_attended.forEach(session => {
+            const sessionId = session.session_id;
+            if (programAttendance[programId].sessions[sessionId]) {
+              programAttendance[programId].sessions[sessionId].count++;
             } else {
-              // Use session info from allSessionsMap if available, otherwise from attended session
-              const sessionInfo = allSessionsMap[session.session_id] || { name: session.session_name, date: session.session_date };
-              counts[session.session_id] = {
-                name: sessionInfo.name,
-                date: sessionInfo.date,
+              programAttendance[programId].sessions[sessionId] = {
+                name: session.session_name,
+                date: session.session_date,
                 count: 1,
               };
             }
@@ -108,8 +114,15 @@ const Stats = () => {
         });
       });
     }
-    // Sort sessions by date
-    return Object.values(counts).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Convert sessions from object to sorted array for each program
+    const sortedProgramAttendance = Object.values(programAttendance).map(program => ({
+      ...program,
+      sessions: Object.values(program.sessions).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    }));
+
+    // Sort programs by name
+    return sortedProgramAttendance.sort((a, b) => a.program_name.localeCompare(b.program_name));
   }, [allAttendedProgramsMap, programs]);
 
   const isLoading = isLoadingParticipants || isLoadingFriends || isLoadingPrograms || isLoadingAllAttendedPrograms;
@@ -170,20 +183,31 @@ const Stats = () => {
 
           <Card className="lg:col-span-3 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg font-medium">Session Attendance Overview</CardTitle>
+              <CardTitle className="text-lg font-medium">Program and Session Attendance Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              {sessionAttendanceCounts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-60 overflow-y-auto pr-2">
-                  {sessionAttendanceCounts.map((session, index) => (
-                    <div key={session.name + session.date + index} className="flex justify-between items-center p-2 border rounded-md">
-                      <span className="text-sm font-medium">{session.name} ({format(parseISO(session.date), "MMM dd")})</span>
-                      <span className="text-lg font-bold">{session.count}</span>
-                    </div>
-                  ))}
-                </div>
+              {programSessionAttendance.length > 0 ? (
+                <ScrollArea className="h-96 pr-4"> {/* Added ScrollArea for long lists */}
+                  <div className="space-y-6">
+                    {programSessionAttendance.map((program, programIndex) => (
+                      <div key={program.program_name + programIndex} className="border-b pb-4 last:border-b-0 last:pb-0">
+                        <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">
+                          {program.program_name}
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {program.sessions.map((session, sessionIndex) => (
+                            <div key={session.name + session.date + sessionIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
+                              <span className="text-sm font-medium">{session.name} ({format(parseISO(session.date), "MMM dd")})</span>
+                              <span className="text-lg font-bold text-secondary-foreground">{session.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               ) : (
-                <p className="text-sm text-muted-foreground">No session attendance data available yet.</p>
+                <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
               )}
             </CardContent>
           </Card>

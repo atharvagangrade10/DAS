@@ -43,7 +43,8 @@ const SidebarNav = () => {
       <NavLink to="/friends">Friends</NavLink>
       <NavLink to="/attendance">Attendance</NavLink>
       <NavLink to="/programs">Programs</NavLink>
-      <NavLink to="/participants">Participants</NavLink> {/* New NavLink */}
+      <NavLink to="/participants">Participants</NavLink>
+      <NavLink to="/stats">Stats</NavLink> {/* New NavLink for Stats */}
     </nav>
   );
 
@@ -57,9 +58,9 @@ const SidebarNav = () => {
               <span className="sr-only">Toggle navigation</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar-background bg-background"> {/* Added bg-background */}
+          <SheetContent side="left" className="w-64 p-0 bg-sidebar-background bg-background">
             <div className="flex h-16 items-center border-b px-4">
-              <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary"> {/* Changed to text-sidebar-primary */}
+              <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary">
                 DAS
               </Link>
             </div>
@@ -69,7 +70,7 @@ const SidebarNav = () => {
       ) : (
         <div className="hidden md:flex flex-col h-screen w-64 border-r bg-sidebar-background text-sidebar-foreground">
           <div className="flex h-16 items-center border-b px-4">
-            <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary"> {/* Changed to text-sidebar-primary */}
+            <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary">
               DAS
             </Link>
           </div>

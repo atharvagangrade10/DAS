@@ -9,9 +9,10 @@ import Friends from "./pages/Friends";
 import Attendance from "./pages/Attendance";
 import Programs from "./pages/Programs";
 import ParticipantsPage from "./pages/Participants";
+import Stats from "./pages/Stats"; // Import the new Stats page
 import Layout from "./components/Layout";
-import LoaderPage from "./components/LoaderPage"; // Import the new LoaderPage
-import React from "react"; // Import React for useState
+import LoaderPage from "./components/LoaderPage";
+import React from "react";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => {
               <Route path="attendance" element={<Attendance />} />
               <Route path="programs" element={<Programs />} />
               <Route path="participants" element={<ParticipantsPage />} />
+              <Route path="stats" element={<Stats />} /> {/* Add the new route */}
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

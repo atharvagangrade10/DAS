@@ -14,7 +14,7 @@ import {
 import { Participant, AttendedProgram } from "@/types/participant";
 import { Program } from "@/types/program";
 import { format, parseISO } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Import ScrollArea
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DevoteeFriend {
   id: string;
@@ -79,12 +79,11 @@ const Stats = () => {
   const totalDevoteeFriends = devoteeFriends?.length || 0;
   const participantsWithoutDevoteeFriend = allParticipants?.filter(p => !p.devotee_friend_name || p.devotee_friend_name === "None").length || 0;
 
-  // Aggregate session attendance, grouped by program
+  // Aggregate session attendance, grouped by program (existing logic)
   const programSessionAttendance = React.useMemo(() => {
     const programAttendance: Record<string, { program_name: string; sessions: Record<string, { name: string; date: string; count: number }> }> = {};
 
     if (allAttendedProgramsMap && programs) {
-      // Create a map of all programs for easy lookup
       const programsMap = new Map(programs.map(p => [p.id, p]));
 
       Object.values(allAttendedProgramsMap).forEach(attendedPrograms => {
@@ -115,15 +114,110 @@ const Stats = () => {
       });
     }
 
-    // Convert sessions from object to sorted array for each program
     const sortedProgramAttendance = Object.values(programAttendance).map(program => ({
       ...program,
       sessions: Object.values(program.sessions).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     }));
 
-    // Sort programs by name
     return sortedProgramAttendance.sort((a, b) => a.program_name.localeCompare(b.program_name));
   }, [allAttendedProgramsMap, programs]);
+
+  // NEW: Devotee Friend Session Attendance
+  const devoteeFriendProgramSessionAttendance = React.useMemo(() => {
+    const dfAttendance: Record<string, Record<string, Record<string, { name: string; date: string; count: number }>>> = {};
+
+    if (allParticipants && allAttendedProgramsMap && programs) {
+      const programsMap = new Map(programs.map(p => [p.id, p]));
+
+      allParticipants.forEach(participant => {
+        const devoteeFriendName = participant.devotee_friend_name || "None";
+        const attendedProgramsForParticipant = allAttendedProgramsMap[participant.id] || [];
+
+        if (!dfAttendance[devoteeFriendName]) {
+          dfAttendance[devoteeFriendName] = {};
+        }
+
+        attendedProgramsForParticipant.forEach(attendedProgram => {
+          const programId = attendedProgram.program_id;
+          const programDetails = programsMap.get(programId);
+
+          if (!dfAttendance[devoteeFriendName][programId]) {
+            dfAttendance[devoteeFriendName][programId] = {
+              program_name: programDetails?.program_name || attendedProgram.program_name,
+              sessions: {},
+            };
+          }
+
+          attendedProgram.sessions_attended.forEach(session => {
+            const sessionId = session.session_id;
+            if (dfAttendance[devoteeFriendName][programId].sessions[sessionId]) {
+              dfAttendance[devoteeFriendName][programId].sessions[sessionId].count++;
+            } else {
+              dfAttendance[devoteeFriendName][programId].sessions[sessionId] = {
+                name: session.session_name,
+                date: session.session_date,
+                count: 1,
+              };
+            }
+          });
+        });
+      });
+    }
+
+    // Convert to sorted arrays for display
+    const sortedDfAttendance = Object.entries(dfAttendance).map(([dfName, programsData]) => ({
+      devoteeFriendName: dfName,
+      programs: Object.values(programsData).map(program => ({
+        ...program,
+        sessions: Object.values(program.sessions).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+      })).sort((a, b) => a.program_name.localeCompare(b.program_name)),
+    })).sort((a, b) => a.devoteeFriendName.localeCompare(b.devoteeFriendName));
+
+    return sortedDfAttendance;
+  }, [allParticipants, allAttendedProgramsMap, programs]);
+
+  // NEW: Session Attendance Distribution
+  const sessionAttendanceDistribution = React.useMemo(() => {
+    const globalDistribution: Record<number, number> = {}; // { numSessions: countOfParticipants }
+    const devoteeFriendDistribution: Record<string, Record<number, number>> = {}; // { devoteeFriendName: { numSessions: countOfParticipants } }
+
+    if (allParticipants && allAttendedProgramsMap) {
+      allParticipants.forEach(participant => {
+        const devoteeFriendName = participant.devotee_friend_name || "None";
+        const attendedProgramsForParticipant = allAttendedProgramsMap[participant.id] || [];
+
+        let totalSessionsAttended = 0;
+        attendedProgramsForParticipant.forEach(program => {
+          totalSessionsAttended += program.sessions_attended.length;
+        });
+
+        // Global distribution
+        globalDistribution[totalSessionsAttended] = (globalDistribution[totalSessionsAttended] || 0) + 1;
+
+        // Devotee friend distribution
+        if (!devoteeFriendDistribution[devoteeFriendName]) {
+          devoteeFriendDistribution[devoteeFriendName] = {};
+        }
+        devoteeFriendDistribution[devoteeFriendName][totalSessionsAttended] = (devoteeFriendDistribution[devoteeFriendName][totalSessionsAttended] || 0) + 1;
+      });
+    }
+
+    const sortedGlobalDistribution = Object.entries(globalDistribution)
+      .map(([num, count]) => ({ numSessions: Number(num), count }))
+      .sort((a, b) => a.numSessions - b.numSessions);
+
+    const sortedDevoteeFriendDistribution = Object.entries(devoteeFriendDistribution)
+      .map(([dfName, distribution]) => ({
+        devoteeFriendName: dfName,
+        distribution: Object.entries(distribution)
+          .map(([num, count]) => ({ numSessions: Number(num), count }))
+          .sort((a, b) => a.numSessions - b.numSessions),
+      }))
+      .sort((a, b) => a.devoteeFriendName.localeCompare(b.devoteeFriendName));
+
+    return { global: sortedGlobalDistribution, byDevoteeFriend: sortedDevoteeFriendDistribution };
+  }, [allParticipants, allAttendedProgramsMap]);
+
 
   const isLoading = isLoadingParticipants || isLoadingFriends || isLoadingPrograms || isLoadingAllAttendedPrograms;
   const hasError = participantsError || friendsError || programsError || allAttendedProgramsError;
@@ -137,7 +231,7 @@ const Stats = () => {
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-32 w-full" />
           ))}
         </div>
@@ -187,7 +281,7 @@ const Stats = () => {
             </CardHeader>
             <CardContent>
               {programSessionAttendance.length > 0 ? (
-                <ScrollArea className="h-96 pr-4"> {/* Added ScrollArea for long lists */}
+                <ScrollArea className="h-96 pr-4">
                   <div className="space-y-6">
                     {programSessionAttendance.map((program, programIndex) => (
                       <div key={program.program_name + programIndex} className="border-b pb-4 last:border-b-0 last:pb-0">
@@ -208,6 +302,102 @@ const Stats = () => {
                 </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* NEW: Devotee Friend Session Attendance */}
+          <Card className="lg:col-span-3 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {devoteeFriendProgramSessionAttendance.length > 0 ? (
+                <ScrollArea className="h-96 pr-4">
+                  <div className="space-y-8">
+                    {devoteeFriendProgramSessionAttendance.map((df, dfIndex) => (
+                      <div key={df.devoteeFriendName + dfIndex} className="border-b pb-6 last:border-b-0 last:pb-0">
+                        <h2 className="text-2xl font-bold mb-4 text-accent-foreground dark:text-accent">
+                          {df.devoteeFriendName}
+                        </h2>
+                        {df.programs.length > 0 ? (
+                          <div className="space-y-4">
+                            {df.programs.map((program, programIndex) => (
+                              <div key={program.program_name + programIndex} className="ml-4 border-l-2 pl-4">
+                                <h3 className="text-xl font-semibold mb-2 text-primary dark:text-primary-foreground">
+                                  {program.program_name}
+                                </h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {program.sessions.map((session, sessionIndex) => (
+                                    <div key={session.name + session.date + sessionIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
+                                      <span className="text-sm font-medium">{session.name} ({format(parseISO(session.date), "MMM dd")})</span>
+                                      <span className="text-lg font-bold text-secondary-foreground">{session.count}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground ml-4">No program attendance recorded for this devotee friend.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* NEW: Session Attendance Distribution */}
+          <Card className="lg:col-span-3 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Session Attendance Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">Overall Distribution</h3>
+              {sessionAttendanceDistribution.global.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                  {sessionAttendanceDistribution.global.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
+                      <span className="text-sm font-medium">{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}:</span>
+                      <span className="text-lg font-bold text-secondary-foreground">{item.count} participants</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-6">No overall session attendance distribution data available.</p>
+              )}
+
+              <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">By Devotee Friend</h3>
+              {sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
+                <ScrollArea className="h-96 pr-4">
+                  <div className="space-y-8">
+                    {sessionAttendanceDistribution.byDevoteeFriend.map((df, dfIndex) => (
+                      <div key={df.devoteeFriendName + dfIndex} className="border-b pb-6 last:border-b-0 last:pb-0">
+                        <h4 className="text-lg font-bold mb-3 text-accent-foreground dark:text-accent">
+                          {df.devoteeFriendName}
+                        </h4>
+                        {df.distribution.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4">
+                            {df.distribution.map((item, itemIndex) => (
+                              <div key={itemIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
+                                <span className="text-sm font-medium">{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}:</span>
+                                <span className="text-lg font-bold text-secondary-foreground">{item.count} participants</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground ml-4">No session attendance distribution for this devotee friend.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground">No devotee friend session attendance distribution data available.</p>
               )}
             </CardContent>
           </Card>

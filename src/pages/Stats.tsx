@@ -178,34 +178,55 @@ const Stats = () => {
 
   // NEW: Session Attendance Distribution
   const sessionAttendanceDistribution = React.useMemo(() => {
-    const globalDistribution: Record<number, number> = {}; // { numSessions: countOfParticipants }
-    const devoteeFriendDistribution: Record<string, Record<number, number>> = {}; // { devoteeFriendName: { numSessions: countOfParticipants } }
+    // NEW: Global distribution by program
+    const globalDistributionByProgram: Record<string, Record<number, number>> = {}; // { programId: { numSessionsInProgram: countOfParticipants } }
 
-    if (allParticipants && allAttendedProgramsMap) {
+    // Existing: Devotee friend distribution (total sessions across all programs for a DF's participants)
+    const devoteeFriendDistribution: Record<string, Record<number, number>> = {}; // { devoteeFriendName: { totalSessionsAttendedByParticipant: countOfParticipants } }
+
+    if (allParticipants && allAttendedProgramsMap && programs) {
+      const programsMap = new Map(programs.map(p => [p.id, p.program_name])); // For program name lookup
+
       allParticipants.forEach(participant => {
         const devoteeFriendName = participant.devotee_friend_name || "None";
         const attendedProgramsForParticipant = allAttendedProgramsMap[participant.id] || [];
 
-        let totalSessionsAttended = 0;
+        let totalSessionsAttendedByParticipantOverall = 0; // For the existing devoteeFriendDistribution
+
         attendedProgramsForParticipant.forEach(program => {
-          totalSessionsAttended += program.sessions_attended.length;
+          const programId = program.program_id;
+          const numSessionsAttendedInThisProgram = program.sessions_attended.length;
+
+          // Populate globalDistributionByProgram
+          if (!globalDistributionByProgram[programId]) {
+            globalDistributionByProgram[programId] = {};
+          }
+          globalDistributionByProgram[programId][numSessionsAttendedInThisProgram] = (globalDistributionByProgram[programId][numSessionsAttendedInThisProgram] || 0) + 1;
+
+          totalSessionsAttendedByParticipantOverall += numSessionsAttendedInThisProgram;
         });
 
-        // Global distribution
-        globalDistribution[totalSessionsAttended] = (globalDistribution[totalSessionsAttended] || 0) + 1;
-
-        // Devotee friend distribution
+        // Populate devoteeFriendDistribution (this part remains the same as before for 'byDevoteeFriend')
         if (!devoteeFriendDistribution[devoteeFriendName]) {
           devoteeFriendDistribution[devoteeFriendName] = {};
         }
-        devoteeFriendDistribution[devoteeFriendName][totalSessionsAttended] = (devoteeFriendDistribution[devoteeFriendName][totalSessionsAttended] || 0) + 1;
+        devoteeFriendDistribution[devoteeFriendName][totalSessionsAttendedByParticipantOverall] = (devoteeFriendDistribution[devoteeFriendName][totalSessionsAttendedByParticipantOverall] || 0) + 1;
       });
     }
 
-    const sortedGlobalDistribution = Object.entries(globalDistribution)
-      .map(([num, count]) => ({ numSessions: Number(num), count }))
-      .sort((a, b) => a.numSessions - b.numSessions);
+    // Sort global distribution by program
+    const sortedGlobalDistributionByProgram = Object.entries(globalDistributionByProgram)
+      .map(([programId, distribution]) => ({
+        programId,
+        programName: programs?.find(p => p.id === programId)?.program_name || "Unknown Program",
+        distribution: Object.entries(distribution)
+          .map(([num, count]) => ({ numSessions: Number(num), count }))
+          .sort((a, b) => a.numSessions - b.numSessions),
+      }))
+      .sort((a, b) => a.programName.localeCompare(b.programName));
 
+
+    // Existing sorting for byDevoteeFriend
     const sortedDevoteeFriendDistribution = Object.entries(devoteeFriendDistribution)
       .map(([dfName, distribution]) => ({
         devoteeFriendName: dfName,
@@ -215,8 +236,8 @@ const Stats = () => {
       }))
       .sort((a, b) => a.devoteeFriendName.localeCompare(b.devoteeFriendName));
 
-    return { global: sortedGlobalDistribution, byDevoteeFriend: sortedDevoteeFriendDistribution };
-  }, [allParticipants, allAttendedProgramsMap]);
+    return { globalByProgram: sortedGlobalDistributionByProgram, byDevoteeFriend: sortedDevoteeFriendDistribution };
+  }, [allParticipants, allAttendedProgramsMap, programs]);
 
 
   const isLoading = isLoadingParticipants || isLoadingFriends || isLoadingPrograms || isLoadingAllAttendedPrograms;
@@ -357,21 +378,36 @@ const Stats = () => {
               <CardTitle className="text-lg font-medium">Session Attendance Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">Overall Distribution</h3>
-              {sessionAttendanceDistribution.global.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                  {sessionAttendanceDistribution.global.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
-                      <span className="text-sm font-medium">{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}:</span>
-                      <span className="text-lg font-bold text-secondary-foreground">{item.count} participants</span>
-                    </div>
-                  ))}
-                </div>
+              <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">Overall Distribution by Program</h3>
+              {sessionAttendanceDistribution.globalByProgram.length > 0 ? (
+                <ScrollArea className="h-96 pr-4 mb-6">
+                  <div className="space-y-8">
+                    {sessionAttendanceDistribution.globalByProgram.map((programData, programIndex) => (
+                      <div key={programData.programId + programIndex} className="border-b pb-6 last:border-b-0 last:pb-0">
+                        <h4 className="text-lg font-bold mb-3 text-accent-foreground dark:text-accent">
+                          {programData.programName}
+                        </h4>
+                        {programData.distribution.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4">
+                            {programData.distribution.map((item, itemIndex) => (
+                              <div key={itemIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
+                                <span className="text-sm font-medium">{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}:</span>
+                                <span className="text-lg font-bold text-secondary-foreground">{item.count} participants</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground ml-4">No session attendance distribution for this program.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground mb-6">No overall session attendance distribution data available.</p>
               )}
 
-              <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">By Devotee Friend</h3>
+              <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">By Devotee Friend (Total Sessions Attended)</h3>
               {sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
                   <div className="space-y-8">

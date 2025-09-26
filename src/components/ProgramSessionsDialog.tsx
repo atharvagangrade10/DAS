@@ -113,6 +113,7 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
           });
         }
       });
+      console.log("ProgramSessionsDialog: Setting sessionDates with (onSuccess):", currentDatesMap);
       setSessionDates(currentDatesMap);
       setInitialSessionDates(initialDatesMap);
       console.log("ProgramSessionsDialog: Initial sessionDates state (onSuccess):", currentDatesMap);

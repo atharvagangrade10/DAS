@@ -84,41 +84,6 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
     queryKey: ["programSessions", program.id],
     queryFn: () => fetchProgramSessions(program.id),
     enabled: isOpen, // Only fetch when dialog is open
-    onSuccess: (data) => {
-      console.log("ProgramSessionsDialog: >>> Entering onSuccess callback <<<");
-      console.log("ProgramSessionsDialog: API fetched sessions data (onSuccess):", data);
-      console.log("ProgramSessionsDialog: API fetched sessions data length (onSuccess):", data.length);
-      const currentDatesMap: Record<string, Date> = {};
-      const initialDatesMap: Record<string, Date> = {};
-      data.forEach((session) => {
-        console.log("ProgramSessionsDialog: Processing session (onSuccess):", session);
-        if (session.id && session.date) {
-          const parsedDate = parseISO(session.date);
-          console.log(`ProgramSessionsDialog: Session ${session.id} date "${session.date}" parsed to (onSuccess):`, parsedDate);
-          const normalizedDate = startOfDay(parsedDate);
-          if (!isNaN(normalizedDate.getTime())) {
-            currentDatesMap[session.id] = normalizedDate;
-            // Create a new Date object from the timestamp to ensure it's a true copy
-            initialDatesMap[session.id] = new Date(normalizedDate.getTime());
-          } else {
-            console.error(`ProgramSessionsDialog: Invalid date string for session ${session.id}: "${session.date}" (onSuccess)`);
-            toast.error(`Invalid date for session ${session.name || session.id}`, {
-              description: `Could not parse date: "${session.date}"`,
-            });
-          }
-        } else {
-          console.error(`ProgramSessionsDialog: Session missing ID or date (onSuccess):`, session);
-          toast.error(`Missing data for a session`, {
-            description: `Session ID or date is missing.`,
-          });
-        }
-      });
-      console.log("ProgramSessionsDialog: Setting sessionDates with (onSuccess):", currentDatesMap);
-      setSessionDates(currentDatesMap);
-      setInitialSessionDates(initialDatesMap);
-      console.log("ProgramSessionsDialog: Initial sessionDates state (onSuccess):", currentDatesMap);
-      console.log("ProgramSessionsDialog: Initial initialSessionDates state (onSuccess):", initialDatesMap);
-    },
     onError: (err: Error) => {
       console.error("ProgramSessionsDialog: useQuery error:", err);
       toast.error("Error loading program sessions", {
@@ -128,6 +93,45 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
   });
 
   console.log("ProgramSessionsDialog: useQuery hook returned - sessions:", sessions, "isLoading:", isLoading, "error:", error);
+
+  // Effect to initialize sessionDates and initialSessionDates when sessions data is available
+  React.useEffect(() => {
+    console.log("ProgramSessionsDialog: useEffect for sessions data triggered.");
+    if (sessions && sessions.length > 0 && !isLoading) {
+      console.log("ProgramSessionsDialog: Sessions data available in useEffect:", sessions);
+      const currentDatesMap: Record<string, Date> = {};
+      const initialDatesMap: Record<string, Date> = {};
+      sessions.forEach((session) => {
+        console.log("ProgramSessionsDialog: Processing session in useEffect:", session);
+        if (session.id && session.date) {
+          const parsedDate = parseISO(session.date);
+          console.log(`ProgramSessionsDialog: Session ${session.id} date "${session.date}" parsed to (useEffect):`, parsedDate);
+          const normalizedDate = startOfDay(parsedDate);
+          if (!isNaN(normalizedDate.getTime())) {
+            currentDatesMap[session.id] = normalizedDate;
+            initialDatesMap[session.id] = new Date(normalizedDate.getTime()); // Ensure a new Date object
+          } else {
+            console.error(`ProgramSessionsDialog: Invalid date string for session ${session.id}: "${session.date}" (useEffect)`);
+            toast.error(`Invalid date for session ${session.name || session.id}`, {
+              description: `Could not parse date: "${session.date}"`,
+            });
+          }
+        } else {
+          console.error(`ProgramSessionsDialog: Session missing ID or date (useEffect):`, session);
+          toast.error(`Missing data for a session`, {
+            description: `Session ID or date is missing.`,
+          });
+        }
+      });
+      console.log("ProgramSessionsDialog: Setting sessionDates with (useEffect):", currentDatesMap);
+      setSessionDates(currentDatesMap);
+      setInitialSessionDates(initialDatesMap);
+      console.log("ProgramSessionsDialog: Initial sessionDates state (useEffect):", currentDatesMap);
+      console.log("ProgramSessionsDialog: Initial initialSessionDates state (useEffect):", initialDatesMap);
+    } else if (!sessions && !isLoading && isOpen) {
+      console.log("ProgramSessionsDialog: No sessions data available after loading, and dialog is open.");
+    }
+  }, [sessions, isLoading, isOpen]); // Depend on sessions, isLoading, and isOpen
 
   const updateMutation = useMutation({
     mutationFn: (updates: SessionUpdate[]) =>

@@ -33,7 +33,7 @@ import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance"
 import MobileDevoteeFriendAttendance from "@/components/stats/MobileDevoteeFriendAttendance";
 import MobileSessionDistributionByProgram from "@/components/stats/MobileSessionDistributionByProgram";
 import MobileSessionDistributionByDevoteeFriend from "@/components/stats/MobileSessionDistributionByDevoteeFriend";
-import ExportImagesDialog from "@/components/stats/ExportImagesDialog"; // Import the new dialog
+import { ExportImagesDialog } from "@/components/stats/ExportImagesDialog"; // Import the new dialog as a named export
 
 interface DevoteeFriend {
   id: string;

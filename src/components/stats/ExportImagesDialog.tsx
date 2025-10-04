@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Share2, Loader2, Whatsapp } from "lucide-react";
+import { Download, Share2, Loader2 } from "lucide-react"; // Removed Whatsapp, kept Share2
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -234,7 +234,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
                           <Download className="mr-2 h-4 w-4" /> Download
                         </Button>
                         <Button onClick={() => handleShareToWhatsApp(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
-                          <Whatsapp className="mr-2 h-4 w-4" /> Share to WhatsApp
+                          <Share2 className="mr-2 h-4 w-4" /> Share to WhatsApp {/* Changed to Share2 */}
                         </Button>
                       </div>
                     </CardContent>
@@ -452,24 +452,17 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
                     <TableBody>
                       {sessionAttendanceDistribution.byDevoteeFriend.map((df) => (
                         <React.Fragment key={df.devoteeFriendName}>
-                          {df.distribution.length > 0 ? (
-                            df.distribution.map((item, index) => (
-                              <TableRow key={`${df.devoteeFriendName}-${item.numSessions}`}>
-                                {index === 0 && (
-                                  <TableCell rowSpan={df.distribution.length} className="font-medium align-top">
-                                    {df.devoteeFriendName}
-                                  </TableCell>
-                                )}
-                                <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
-                                <TableCell className="text-right">{item.count}</TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell className="font-medium">{df.devoteeFriendName}</TableCell>
-                              <TableCell colSpan={2} className="text-muted-foreground">No session attendance distribution.</TableCell>
+                          {df.distribution.map((item, index) => (
+                            <TableRow key={`${df.devoteeFriendName}-${item.numSessions}`}>
+                              {index === 0 && (
+                                <TableCell rowSpan={df.distribution.length} className="font-medium align-top">
+                                  {df.devoteeFriendName}
+                                </TableCell>
+                              )}
+                              <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
+                              <TableCell className="text-right">{item.count}</TableCell>
                             </TableRow>
-                          )}
+                          ))}
                         </React.Fragment>
                       ))}
                     </TableBody>

@@ -23,6 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
+
+// Import new mobile-specific components
+import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance";
+import MobileDevoteeFriendAttendance from "@/components/stats/MobileDevoteeFriendAttendance";
+import MobileSessionDistributionByProgram from "@/components/stats/MobileSessionDistributionByProgram";
+import MobileSessionDistributionByDevoteeFriend from "@/components/stats/MobileSessionDistributionByDevoteeFriend";
 
 interface DevoteeFriend {
   id: string;
@@ -32,6 +39,8 @@ interface DevoteeFriend {
 }
 
 const Stats = () => {
+  const isMobile = useIsMobile(); // Use the hook
+
   // Fetch all participants
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
     queryKey: ["allParticipants"],
@@ -318,7 +327,9 @@ const Stats = () => {
               <CardTitle className="text-lg font-medium">Program and Session Attendance Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              {programSessionAttendance.length > 0 ? (
+              {isMobile ? (
+                <MobileProgramAttendance data={programSessionAttendance} />
+              ) : programSessionAttendance.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
                   <Table>
                     <TableHeader>
@@ -360,7 +371,9 @@ const Stats = () => {
               <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
             </CardHeader>
             <CardContent>
-              {devoteeFriendProgramSessionAttendance.length > 0 ? (
+              {isMobile ? (
+                <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
+              ) : devoteeFriendProgramSessionAttendance.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
                   <Table>
                     <TableHeader>
@@ -420,7 +433,9 @@ const Stats = () => {
             </CardHeader>
             <CardContent>
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">Overall Distribution by Program</h3>
-              {sessionAttendanceDistribution.globalByProgram.length > 0 ? (
+              {isMobile ? (
+                <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
+              ) : sessionAttendanceDistribution.globalByProgram.length > 0 ? (
                 <ScrollArea className="h-96 pr-4 mb-6">
                   <Table>
                     <TableHeader>
@@ -454,7 +469,9 @@ const Stats = () => {
               )}
 
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">By Devotee Friend (Total Sessions Attended)</h3>
-              {sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
+              {isMobile ? (
+                <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
+              ) : sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
                   <Table>
                     <TableHeader>

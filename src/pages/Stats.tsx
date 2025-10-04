@@ -558,7 +558,6 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
                   )}
-                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
                   <MobileProgramAttendance data={programSessionAttendance} />
                 </>
               ) : programSessionAttendance.length > 0 ? (
@@ -654,7 +653,6 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
                   )}
-                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
                   <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
                 </>
               ) : (
@@ -774,7 +772,6 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground mb-6">No overall session attendance distribution data available.</p>
                   )}
-                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
                   <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
                 </>
               ) : sessionAttendanceDistribution.globalByProgram.length > 0 ? (
@@ -846,7 +843,6 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground">No devotee friend session attendance distribution data available.</p>
                   )}
-                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
                   <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
                 </>
               ) : sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (

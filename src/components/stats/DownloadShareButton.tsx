@@ -6,13 +6,15 @@ import { Download, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface DownloadShareButtonProps {
   cardId: string;
   cardTitle: string;
+  iconOnly?: boolean; // New prop
 }
 
-const DownloadShareButton: React.FC<DownloadShareButtonProps> = ({ cardId, cardTitle }) => {
+const DownloadShareButton: React.FC<DownloadShareButtonProps> = ({ cardId, cardTitle, iconOnly = false }) => {
   const [isCapturing, setIsCapturing] = React.useState(false);
 
   const captureAndProcessCard = async () => {
@@ -88,22 +90,22 @@ const DownloadShareButton: React.FC<DownloadShareButtonProps> = ({ cardId, cardT
   };
 
   return (
-    <div className="flex justify-end gap-2 mt-4">
+    <div className={cn("flex justify-end gap-2", !iconOnly && "mt-4")}>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             variant="outline"
-            size="sm"
+            size={iconOnly ? "icon" : "sm"}
             onClick={handleDownload}
             disabled={isCapturing}
-            className="flex items-center gap-1"
+            className={cn("flex items-center", !iconOnly && "gap-1")}
           >
             {isCapturing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Download className="h-4 w-4" />
             )}
-            Download
+            {!iconOnly && "Download"}
           </Button>
         </TooltipTrigger>
         <TooltipContent>
@@ -114,17 +116,17 @@ const DownloadShareButton: React.FC<DownloadShareButtonProps> = ({ cardId, cardT
         <TooltipTrigger asChild>
           <Button
             variant="outline"
-            size="sm"
+            size={iconOnly ? "icon" : "sm"}
             onClick={handleShare}
             disabled={isCapturing}
-            className="flex items-center gap-1"
+            className={cn("flex items-center", !iconOnly && "gap-1")}
           >
             {isCapturing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Share2 className="h-4 w-4" />
             )}
-            Share
+            {!iconOnly && "Share"}
           </Button>
         </TooltipTrigger>
         <TooltipContent>

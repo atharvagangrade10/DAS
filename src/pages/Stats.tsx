@@ -518,7 +518,7 @@ const Stats = () => {
               ) : (
                 <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
               )}
-              <DownloadShareButton cardId="devotee-friend-attendance-card" cardTitle="Devotee Friend Session Attendance" />
+              {/* DownloadShareButton for the entire table is removed here */}
             </CardContent>
           </Card>
 

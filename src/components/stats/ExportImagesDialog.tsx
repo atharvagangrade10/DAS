@@ -279,32 +279,34 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             <p className="text-sm text-muted-foreground">This might take a moment.</p>
           </div>
         ) : (
-          <ScrollArea className="flex-1 pr-4">
-            <div className="space-y-6">
-              {capturedImages.length > 0 ? (
-                capturedImages.map((image) => (
-                  <Card key={image.id} className="shadow-md">
-                    <CardHeader>
-                      <CardTitle className="text-lg">{image.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
-                      <img src={image.dataUrl} alt={image.title} className="max-w-full h-auto border rounded-md mb-4" />
-                      <div className="flex gap-2">
-                        <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
-                          <Download className="mr-2 h-4 w-4" /> Download
-                        </Button>
-                        <Button onClick={() => handleShareToWhatsApp(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
-                          <Share2 className="mr-2 h-4 w-4" /> Share {/* Changed to Share2 */}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
-              )}
-            </div>
-          </ScrollArea>
+          <div className="flex-1"> {/* This div now correctly takes up remaining space */}
+            <ScrollArea className="h-full pr-4"> {/* ScrollArea now fills its parent's height */}
+              <div className="space-y-6">
+                {capturedImages.length > 0 ? (
+                  capturedImages.map((image) => (
+                    <Card key={image.id} className="shadow-md">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{image.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-col items-center">
+                        <img src={image.dataUrl} alt={image.title} className="max-w-full h-auto border rounded-md mb-4" />
+                        <div className="flex gap-2">
+                          <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
+                            <Download className="mr-2 h-4 w-4" /> Download
+                          </Button>
+                          <Button onClick={() => handleShareToWhatsApp(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
+                            <Share2 className="mr-2 h-4 w-4" /> Share
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
         )}
 
         {/* Hidden elements for capturing */}

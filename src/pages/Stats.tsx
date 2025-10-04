@@ -4,7 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner"; // Corrected import statement
+import { toast } from "sonner";
 import {
   fetchAllParticipants,
   fetchDevoteeFriends,
@@ -23,17 +23,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
-import ExportToExcelButton from "@/components/ExportToExcelButton"; // Import ExportToExcelButton
-import { Button } from "@/components/ui/button"; // Import Button for the new export button
-import { Image } from "lucide-react"; // Import Image icon
+import { useIsMobile } from "@/hooks/use-mobile";
+import ExportToExcelButton from "@/components/ExportToExcelButton";
+import DownloadShareButton from "@/components/stats/DownloadShareButton"; // Import the new button
 
 // Import new mobile-specific components
 import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance";
 import MobileDevoteeFriendAttendance from "@/components/stats/MobileDevoteeFriendAttendance";
 import MobileSessionDistributionByProgram from "@/components/stats/MobileSessionDistributionByProgram";
 import MobileSessionDistributionByDevoteeFriend from "@/components/stats/MobileSessionDistributionByDevoteeFriend";
-import { ExportImagesDialog } from "@/components/stats/ExportImagesDialog"; // Import the new dialog as a named export
 
 interface DevoteeFriend {
   id: string;
@@ -49,8 +47,7 @@ interface DevoteeFriendAttendanceExportRow {
 }
 
 const Stats = () => {
-  const isMobile = useIsMobile(); // Use the hook
-  const [isExportImagesDialogOpen, setIsExportImagesDialogOpen] = React.useState(false); // State for the new dialog
+  const isMobile = useIsMobile();
 
   // Fetch all participants
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
@@ -371,7 +368,7 @@ const Stats = () => {
         <p className="text-red-500">An error occurred while loading statistics.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg" id="total-participants-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Total Participants</CardTitle>
             </CardHeader>
@@ -380,10 +377,11 @@ const Stats = () => {
               <p className="text-xs text-muted-foreground">
                 Current number of registered participants.
               </p>
+              <DownloadShareButton cardId="total-participants-card" cardTitle="Total Participants" />
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
+          <Card className="shadow-lg" id="total-devotee-friends-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Total Devotee Friends</CardTitle>
             </CardHeader>
@@ -392,10 +390,11 @@ const Stats = () => {
               <p className="text-xs text-muted-foreground">
                 Number of registered devotee friends.
               </p>
+              <DownloadShareButton cardId="total-devotee-friends-card" cardTitle="Total Devotee Friends" />
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
+          <Card className="shadow-lg" id="participants-without-df-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Participants Without Devotee Friend</CardTitle>
             </CardHeader>
@@ -404,10 +403,11 @@ const Stats = () => {
               <p className="text-xs text-muted-foreground">
                 Participants not associated with a devotee friend.
               </p>
+              <DownloadShareButton cardId="participants-without-df-card" cardTitle="Participants Without Devotee Friend" />
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-3 shadow-lg">
+          <Card className="lg:col-span-3 shadow-lg" id="program-attendance-overview-card">
             <CardHeader>
               <CardTitle className="text-lg font-medium">Program and Session Attendance Overview</CardTitle>
             </CardHeader>
@@ -448,10 +448,11 @@ const Stats = () => {
               ) : (
                 <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
               )}
+              <DownloadShareButton cardId="program-attendance-overview-card" cardTitle="Program and Session Attendance Overview" />
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-3 shadow-lg">
+          <Card className="lg:col-span-3 shadow-lg" id="devotee-friend-attendance-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
               <div className="flex gap-2 flex-shrink-0">
@@ -461,10 +462,6 @@ const Stats = () => {
                   sheetName="DF Attendance"
                   disabled={isExportDfAttendanceButtonDisabled}
                 />
-                <Button onClick={() => setIsExportImagesDialogOpen(true)} disabled={isLoading} className="flex items-center gap-2">
-                  <Image className="h-5 w-5" />
-                  Export to Images
-                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -521,10 +518,11 @@ const Stats = () => {
               ) : (
                 <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
               )}
+              <DownloadShareButton cardId="devotee-friend-attendance-card" cardTitle="Devotee Friend Session Attendance" />
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-3 shadow-lg">
+          <Card className="lg:col-span-3 shadow-lg" id="session-attendance-distribution-card">
             <CardHeader>
               <CardTitle className="text-lg font-medium">Session Attendance Distribution</CardTitle>
             </CardHeader>
@@ -600,20 +598,11 @@ const Stats = () => {
               ) : (
                 <p className="text-sm text-muted-foreground">No devotee friend session attendance distribution data available.</p>
               )}
+              <DownloadShareButton cardId="session-attendance-distribution-card" cardTitle="Session Attendance Distribution" />
             </CardContent>
           </Card>
         </div>
       )}
-
-      <ExportImagesDialog
-        isOpen={isExportImagesDialogOpen}
-        onOpenChange={setIsExportImagesDialogOpen}
-        totalParticipants={totalParticipants}
-        totalDevoteeFriends={totalDevoteeFriends}
-        participantsWithoutDevoteeFriend={participantsWithoutDevoteeFriend}
-        programSessionAttendance={programSessionAttendance}
-        devoteeFriendProgramSessionAttendance={devoteeFriendProgramSessionAttendance}
-      />
     </div>
   );
 };

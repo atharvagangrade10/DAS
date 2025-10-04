@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DownloadShareButton from "./DownloadShareButton"; // Import the new button
 
 interface MobileStatCardProps {
   title: string;
@@ -21,6 +22,7 @@ const MobileStatCard: React.FC<MobileStatCardProps> = ({ title, value, descripti
         <p className="text-xs text-muted-foreground">
           {description}
         </p>
+        <DownloadShareButton cardId={id} cardTitle={title} />
       </CardContent>
     </Card>
   );

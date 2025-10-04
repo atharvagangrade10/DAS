@@ -523,9 +523,7 @@ const Stats = () => {
 
               {isMobile ? (
                 <>
-                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
-                  <MobileProgramAttendance data={programSessionAttendance} />
-                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h3>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Full Table View</h3>
                   {programSessionAttendance.length > 0 ? (
                     <ScrollArea className="h-96 pr-4 border rounded-md">
                       <Table className="min-w-full">
@@ -560,6 +558,8 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
                   )}
+                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
+                  <MobileProgramAttendance data={programSessionAttendance} />
                 </>
               ) : programSessionAttendance.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
@@ -606,9 +606,7 @@ const Stats = () => {
             <CardContent>
               {isMobile ? (
                 <>
-                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
-                  <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
-                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h3>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Full Table View</h3>
                   {devoteeFriendProgramSessionAttendance.length > 0 && allDevoteeFriendNames.length > 0 && sortedUniqueSessions.length > 0 ? (
                     <div className="relative overflow-x-auto max-h-[500px] border rounded-md">
                       <Table className="min-w-full">
@@ -656,6 +654,8 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
                   )}
+                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
+                  <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
                 </>
               ) : (
                 devoteeFriendProgramSessionAttendance.length > 0 && allDevoteeFriendNames.length > 0 && sortedUniqueSessions.length > 0 ? (
@@ -741,9 +741,7 @@ const Stats = () => {
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">Overall Distribution by Program</h3>
               {isMobile ? (
                 <>
-                  <h4 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
-                  <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
-                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h4>
+                  <h4 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Full Table View</h4>
                   {sessionAttendanceDistribution.globalByProgram.length > 0 ? (
                     <ScrollArea className="h-96 pr-4 mb-6 border rounded-md">
                       <Table className="min-w-full">
@@ -776,6 +774,8 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground mb-6">No overall session attendance distribution data available.</p>
                   )}
+                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
+                  <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
                 </>
               ) : sessionAttendanceDistribution.globalByProgram.length > 0 ? (
                 <ScrollArea className="h-96 pr-4 mb-6">
@@ -813,9 +813,7 @@ const Stats = () => {
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">By Devotee Friend (Total Sessions Attended)</h3>
               {isMobile ? (
                 <>
-                  <h4 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
-                  <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
-                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h4>
+                  <h4 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Full Table View</h4>
                   {sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
                     <ScrollArea className="h-96 pr-4 border rounded-md">
                       <Table className="min-w-full">
@@ -848,6 +846,8 @@ const Stats = () => {
                   ) : (
                     <p className="text-sm text-muted-foreground">No devotee friend session attendance distribution data available.</p>
                   )}
+                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
+                  <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
                 </>
               ) : sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">

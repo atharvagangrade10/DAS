@@ -12,27 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Download, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, parseISO } from "date-fns";
-import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Re-import the mobile-specific components to render them within the dialog for capture
 import MobileProgramAttendance from "./MobileProgramAttendance";
 import MobileDevoteeFriendAttendance from "./MobileDevoteeFriendAttendance";
 import MobileSessionDistributionByProgram from "./MobileSessionDistributionByProgram";
 import MobileSessionDistributionByDevoteeFriend from "./MobileSessionDistributionByDevoteeFriend";
-import MobileStatCard from "./MobileStatCard"; // Import the new component
+import MobileStatCard from "./MobileStatCard";
 
 interface SessionData {
   name: string;
@@ -104,7 +90,6 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 }) => {
   const [capturedImages, setCapturedImages] = React.useState<CapturedImage[]>([]);
   const [isCapturing, setIsCapturing] = React.useState(false);
-  const isMobile = useIsMobile(); // This hook is not used in the hidden section, but kept for context if needed elsewhere.
 
   const cardRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const hiddenDfAttendanceContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -116,12 +101,12 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
     if (element) {
       try {
         const canvas = await html2canvas(element, {
-          scale: 2, // Increase scale for better resolution
-          useCORS: true, // Enable CORS for images if any
+          scale: 2,
+          useCORS: true,
           logging: false,
-          backgroundColor: element.style.backgroundColor || window.getComputedStyle(element).backgroundColor, // Ensure background is captured
+          backgroundColor: element.style.backgroundColor || window.getComputedStyle(element).backgroundColor,
         });
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.9); // Export as JPEG
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
         return { id: element.id || title.replace(/\s/g, "_").toLowerCase(), title, dataUrl, fileName: `${fileName}.jpg` };
       } catch (error) {
         console.error(`Failed to capture element for "${title}":`, error);
@@ -138,11 +123,10 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
     if (!isOpen) return;
 
     setIsCapturing(true);
-    setCapturedImages([]); // Clear previous images
+    setCapturedImages([]);
 
     const newCapturedImages: CapturedImage[] = [];
 
-    // Capture static cards using the new MobileStatCard
     const staticCardConfigs = [
       { id: "totalParticipants", title: "Total Participants", value: totalParticipants, description: "Current number of registered participants.", fileName: "total_participants" },
       { id: "totalDevoteeFriends", title: "Total Devotee Friends", value: totalDevoteeFriends, description: "Number of registered devotee friends.", fileName: "total_devotee_friends" },
@@ -151,60 +135,42 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 
     for (const config of staticCardConfigs) {
       const captured = await captureElement(cardRefs.current[config.id]!, config.title, config.fileName);
-      if (captured) {
-        newCapturedImages.push(captured);
-      }
+      if (captured) newCapturedImages.push(captured);
     }
 
-    // Capture Program and Session Attendance Overview (using MobileProgramAttendance)
     if (hiddenProgramAttendanceContainerRef.current) {
-      const programAttendanceCards = hiddenProgramAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const cardElement of Array.from(programAttendanceCards)) {
-        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
-        const programName = titleElement ? titleElement.textContent : 'Program Attendance';
-        const captured = await captureElement(cardElement as HTMLElement, programName!, `program_attendance_${programName?.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) {
-          newCapturedImages.push(captured);
-        }
+      const cards = hiddenProgramAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const card of Array.from(cards)) {
+        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'Program Attendance';
+        const captured = await captureElement(card as HTMLElement, title, `program_attendance_${title.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) newCapturedImages.push(captured);
       }
     }
 
-    // Capture Devotee Friend Session Attendance (individual cards from MobileDevoteeFriendAttendance)
     if (hiddenDfAttendanceContainerRef.current) {
-      const dfCards = hiddenDfAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const cardElement of Array.from(dfCards)) {
-        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
-        const devoteeFriendName = titleElement ? titleElement.textContent : 'Devotee Friend Attendance';
-        const captured = await captureElement(cardElement as HTMLElement, devoteeFriendName!, `df_attendance_${devoteeFriendName?.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) {
-          newCapturedImages.push(captured);
-        }
+      const cards = hiddenDfAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const card of Array.from(cards)) {
+        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'DF Attendance';
+        const captured = await captureElement(card as HTMLElement, title, `df_attendance_${title.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) newCapturedImages.push(captured);
       }
     }
 
-    // Capture Session Attendance Distribution by Program (individual cards from MobileSessionDistributionByProgram)
     if (hiddenGlobalDistContainerRef.current) {
-      const globalDistCards = hiddenGlobalDistContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const cardElement of Array.from(globalDistCards)) {
-        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
-        const programName = titleElement ? titleElement.textContent : 'Program Distribution';
-        const captured = await captureElement(cardElement as HTMLElement, programName!, `session_dist_program_${programName?.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) {
-          newCapturedImages.push(captured);
-        }
+      const cards = hiddenGlobalDistContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const card of Array.from(cards)) {
+        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'Program Distribution';
+        const captured = await captureElement(card as HTMLElement, title, `session_dist_program_${title.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) newCapturedImages.push(captured);
       }
     }
 
-    // Capture Session Attendance Distribution by Devotee Friend (individual cards from MobileSessionDistributionByDevoteeFriend)
     if (hiddenDfDistContainerRef.current) {
-      const dfDistCards = hiddenDfDistContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const cardElement of Array.from(dfDistCards)) {
-        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
-        const devoteeFriendName = titleElement ? titleElement.textContent : 'Devotee Friend Distribution';
-        const captured = await captureElement(cardElement as HTMLElement, devoteeFriendName!, `session_dist_df_${devoteeFriendName?.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) {
-          newCapturedImages.push(captured);
-        }
+      const cards = hiddenDfDistContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const card of Array.from(cards)) {
+        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'DF Distribution';
+        const captured = await captureElement(card as HTMLElement, title, `session_dist_df_${title.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) newCapturedImages.push(captured);
       }
     }
 
@@ -214,10 +180,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 
   React.useEffect(() => {
     if (isOpen && !isCapturing && capturedImages.length === 0) {
-      // Delay capture slightly to ensure all hidden elements are fully rendered
-      const timer = setTimeout(() => {
-        handleCaptureAll();
-      }, 100); 
+      const timer = setTimeout(() => handleCaptureAll(), 100);
       return () => clearTimeout(timer);
     }
   }, [isOpen, isCapturing, capturedImages.length, handleCaptureAll]);
@@ -237,9 +200,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
       return;
     }
     capturedImages.forEach((image, index) => {
-      setTimeout(() => {
-        handleDownloadImage(image.dataUrl, image.fileName);
-      }, index * 300); // Stagger downloads to avoid browser blocking
+      setTimeout(() => handleDownloadImage(image.dataUrl, image.fileName), index * 300);
     });
     toast.success(`Downloading ${capturedImages.length} images...`);
   };
@@ -266,7 +227,6 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
         });
         toast.success("All images shared successfully!");
       } catch (error) {
-        console.error("Error sharing all images:", error);
         if ((error as DOMException).name !== "AbortError") {
           toast.error("Failed to share all images.");
         } else {
@@ -274,51 +234,19 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
         }
       }
     } else {
-      toast.error("Your browser does not support sharing multiple files.", {
-        description: "Please share images one by one.",
-      });
-    }
-  };
-
-  const handleShareToWhatsApp = async (dataUrl: string, title: string, fileName: string) => {
-    if (navigator.share) {
-      try {
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        const file = new File([blob], fileName, { type: "image/jpeg" });
-
-        await navigator.share({
-          files: [file],
-          title: title,
-          text: `Check out this statistic from DAS: ${title}`,
-        });
-        toast.success("Image shared successfully!");
-      } catch (error) {
-        console.error("Error sharing image:", error);
-        if ((error as DOMException).name === "AbortError") {
-          toast.info("Sharing cancelled.");
-        } else {
-          toast.error("Failed to share image directly.", {
-            description: "Your browser might not support direct image sharing to WhatsApp. Please download and share manually.",
-          });
-        }
-      }
-    } else {
-      toast.error("Web Share API not supported", {
-        description: "Your browser does not support direct sharing. Please download the image and share manually.",
-      });
+      toast.error("Your browser does not support sharing multiple files.");
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[500px] flex flex-col">
         <DialogHeader>
           <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
             <div>
               <DialogTitle>Export Statistics as Images</DialogTitle>
               <DialogDescription>
-                Download or share the generated images below.
+                Generate images for bulk download or sharing.
               </DialogDescription>
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -332,44 +260,27 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
           </div>
         </DialogHeader>
 
-        {isCapturing ? (
-          <div className="flex flex-col items-center justify-center flex-1">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-lg font-semibold">Generating images...</p>
-            <p className="text-sm text-muted-foreground">This might take a moment.</p>
-          </div>
-        ) : (
-          <div className="flex-1 min-h-0">
-            <ScrollArea className="h-full pr-4">
-              <div className="space-y-6">
-                {capturedImages.length > 0 ? (
-                  capturedImages.map((image) => (
-                    <Card key={image.id} className="shadow-md">
-                      <CardHeader>
-                        <CardTitle className="text-lg">{image.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="flex flex-col items-center">
-                        <img src={image.dataUrl} alt={image.title} className="max-w-full h-auto border rounded-md mb-4" />
-                        <div className="flex gap-2">
-                          <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
-                            <Download className="mr-2 h-4 w-4" /> Download
-                          </Button>
-                          <Button onClick={() => handleShareToWhatsApp(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
-                            <Share2 className="mr-2 h-4 w-4" /> Share
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        )}
+        <div className="flex flex-col items-center justify-center flex-1 py-10">
+          {isCapturing ? (
+            <>
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-lg font-semibold">Generating images...</p>
+              <p className="text-sm text-muted-foreground">This might take a moment.</p>
+            </>
+          ) : capturedImages.length > 0 ? (
+            <>
+              <p className="text-lg font-semibold mb-2">Images Generated Successfully!</p>
+              <p className="text-sm text-muted-foreground text-center">
+                Use the buttons above to download or share all {capturedImages.length} images.
+              </p>
+            </>
+          ) : (
+            <p className="text-center text-muted-foreground">
+              Could not generate images. Please close and try again.
+            </p>
+          )}
+        </div>
 
-        {/* Hidden elements for capturing */}
         <div className="absolute -left-[9999px] -top-[9999px] w-[600px] p-6 bg-background">
           <div className="space-y-6">
             <MobileStatCard
@@ -379,7 +290,6 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
               description="Current number of registered participants."
               ref={(el) => (cardRefs.current["totalParticipants"] = el)}
             />
-
             <MobileStatCard
               id="totalDevoteeFriends"
               title="Total Devotee Friends"
@@ -387,7 +297,6 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
               description="Number of registered devotee friends."
               ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)}
             />
-
             <MobileStatCard
               id="participantsWithoutDevoteeFriend"
               title="Participants Without Devotee Friend"
@@ -395,20 +304,16 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
               description="Participants not associated with a devotee friend."
               ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)}
             />
-
-            <div ref={hiddenProgramAttendanceContainerRef} id="hidden-program-attendance-container">
+            <div ref={hiddenProgramAttendanceContainerRef}>
               <MobileProgramAttendance data={programSessionAttendance} />
             </div>
-
-            <div ref={hiddenDfAttendanceContainerRef} id="hidden-devotee-friend-attendance-container">
+            <div ref={hiddenDfAttendanceContainerRef}>
               <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
             </div>
-
-            <div ref={hiddenGlobalDistContainerRef} id="hidden-session-dist-program-container">
+            <div ref={hiddenGlobalDistContainerRef}>
               <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
             </div>
-
-            <div ref={hiddenDfDistContainerRef} id="hidden-session-dist-df-container">
+            <div ref={hiddenDfDistContainerRef}>
               <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
             </div>
           </div>

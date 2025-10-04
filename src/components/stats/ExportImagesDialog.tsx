@@ -250,38 +250,36 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             <p className="text-sm text-muted-foreground">This might take a moment.</p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0">
-            <ScrollArea className="h-full pr-4" key={capturedImages.length}> {/* Added key here */}
-              <div className="space-y-6">
-                {capturedImages.length > 0 ? (
-                  capturedImages.map((image) => (
-                    <Card key={image.id} className="shadow-md overflow-hidden">
-                      <CardHeader>
-                        <CardTitle className="text-lg">{image.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="flex flex-col items-center">
-                        <img
-                          src={image.dataUrl}
-                          alt={image.title}
-                          className="w-full h-auto border rounded-md mb-4 object-contain"
-                        />
-                        <div className="flex gap-2">
-                          <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
-                            <Download className="mr-2 h-4 w-4" /> Download
-                          </Button>
-                          <Button onClick={() => handleShareSingle(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
-                            <Share2 className="mr-2 h-4 w-4" /> Share
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
+          <ScrollArea className="flex-1 pr-4" key={capturedImages.length}> {/* Changed h-full to flex-1 and removed intermediate div */}
+            <div className="space-y-6">
+              {capturedImages.length > 0 ? (
+                capturedImages.map((image) => (
+                  <Card key={image.id} className="shadow-md overflow-hidden">
+                    <CardHeader>
+                      <CardTitle className="text-lg">{image.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center">
+                      <img
+                        src={image.dataUrl}
+                        alt={image.title}
+                        className="w-full h-auto border rounded-md mb-4 object-contain"
+                      />
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
+                          <Download className="mr-2 h-4 w-4" /> Download
+                        </Button>
+                        <Button onClick={() => handleShareSingle(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
+                          <Share2 className="mr-2 h-4 w-4" /> Share
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
+              )}
+            </div>
+          </ScrollArea>
         )}
 
         <div className="absolute -left-[9999px] -top-[9999px] w-[600px] p-6 bg-background">

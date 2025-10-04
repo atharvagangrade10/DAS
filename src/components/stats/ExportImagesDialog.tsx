@@ -279,8 +279,8 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             <p className="text-sm text-muted-foreground">This might take a moment.</p>
           </div>
         ) : (
-          <div className="flex-1"> {/* This div now correctly takes up remaining space */}
-            <ScrollArea className="h-full pr-4"> {/* ScrollArea now fills its parent's height */}
+          <div className="flex-1 min-h-0"> {/* Added min-h-0 here */}
+            <ScrollArea className="h-full pr-4">
               <div className="space-y-6">
                 {capturedImages.length > 0 ? (
                   capturedImages.map((image) => (

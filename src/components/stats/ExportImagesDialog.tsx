@@ -312,36 +312,36 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Total Participants</CardTitle>
             </CardHeader>
-            <CardContent>
+            <div className="p-6 pt-0"> {/* Replaced CardContent with a div */}
               <div className="text-4xl font-bold">{totalParticipants}</div>
               <p className="text-xs text-muted-foreground">
                 Current number of registered participants.
               </p>
-            </CardContent>
+            </div>
           </Card>
 
           <Card ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)} className="shadow-lg mt-6" id="totalDevoteeFriends">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Total Devotee Friends</CardTitle>
             </CardHeader>
-            <CardContent>
+            <div className="p-6 pt-0"> {/* Replaced CardContent with a div */}
               <div className="text-4xl font-bold">{totalDevoteeFriends}</div>
               <p className="text-xs text-muted-foreground">
                 Number of registered devotee friends.
               </p>
-            </CardContent>
+            </div>
           </Card>
 
           <Card ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)} className="shadow-lg mt-6" id="participantsWithoutDevoteeFriend">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Participants Without Devotee Friend</CardTitle>
             </CardHeader>
-            <CardContent>
+            <div className="p-6 pt-0"> {/* Replaced CardContent with a div */}
               <div className="text-4xl font-bold">{participantsWithoutDevoteeFriend}</div>
               <p className="text-xs text-muted-foreground">
                 Participants not associated with a devotee friend.
               </p>
-            </CardContent>
+            </div>
           </Card>
 
           {/* Render MobileProgramAttendance for capture */}

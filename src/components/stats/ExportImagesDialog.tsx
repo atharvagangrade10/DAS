@@ -1,321 +1,204 @@
 "use client";
 
-import React from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Share2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import html2canvas from "html2canvas";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Re-import the mobile-specific components to render them within the dialog for capture
-import MobileProgramAttendance from "./MobileProgramAttendance";
-import MobileDevoteeFriendAttendance from "./MobileDevoteeFriendAttendance";
-import MobileStatCard from "./MobileStatCard";
-
-interface SessionData {
-  name: string;
-  date: string;
-  count: number;
-}
-
-interface ProgramAttendanceData {
-  program_name: string;
-  sessions: SessionData[];
-}
-
-interface ProgramDataForDfAttendance {
-  program_name: string;
-  sessions: SessionData[];
-}
-
-interface DevoteeFriendAttendanceData {
-  devoteeFriendName: string;
-  programs: ProgramDataForDfAttendance[];
-}
+import { toast } from "sonner";
+import { Download } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getStatsImages } from "@/lib/api";
+import { Image } from "@/lib/types";
 
 interface ExportImagesDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  totalParticipants: number;
-  totalDevoteeFriends: number;
-  participantsWithoutDevoteeFriend: number;
-  programSessionAttendance: ProgramAttendanceData[];
-  devoteeFriendProgramSessionAttendance: DevoteeFriendAttendanceData[];
+  selectedImageIds: Set<string>;
+  onClearSelection: () => void;
 }
 
-interface CapturedImage {
-  id: string;
-  title: string;
-  dataUrl: string;
-  fileName: string;
-}
-
-const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
+export function ExportImagesDialog({
   isOpen,
   onOpenChange,
-  totalParticipants,
-  totalDevoteeFriends,
-  participantsWithoutDevoteeFriend,
-  programSessionAttendance,
-  devoteeFriendProgramSessionAttendance,
-}) => {
-  const [capturedImages, setCapturedImages] = React.useState<CapturedImage[]>([]);
-  const [isCapturing, setIsCapturing] = React.useState(false);
+  selectedImageIds,
+  onClearSelection,
+}: ExportImagesDialogProps) {
+  const [selectedImagesToExport, setSelectedImagesToExport] = useState<
+    Set<string>
+  >(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const cardRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
-  const hiddenDfAttendanceContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const hiddenProgramAttendanceContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const { data: images, isLoading } = useQuery<Image[]>({
+    queryKey: ["statsImages"],
+    queryFn: getStatsImages,
+    enabled: isOpen,
+  });
 
-  const captureElement = async (element: HTMLElement, title: string, fileName: string) => {
-    if (element) {
-      try {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: element.style.backgroundColor || window.getComputedStyle(element).backgroundColor,
-        });
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-        return { id: element.id || title.replace(/\s/g, "_").toLowerCase(), title, dataUrl, fileName: `${fileName}.jpg` };
-      } catch (error) {
-        console.error(`Failed to capture element for "${title}":`, error);
-        toast.error(`Failed to capture image for "${title}"`, {
-          description: "Please try again.",
-        });
-        return null;
-      }
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedImagesToExport(selectedImageIds);
+      setSelectAll(false); // Reset selectAll when dialog opens
+      setSearchQuery(""); // Reset search query
     }
-    return null;
-  };
+  }, [isOpen, selectedImageIds]);
 
-  const handleCaptureAll = React.useCallback(async () => {
-    if (!isOpen) return;
+  const filteredImages = useMemo(() => {
+    if (!images) return [];
+    return images.filter((image) =>
+      image.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [images, searchQuery]);
 
-    setIsCapturing(true);
-    setCapturedImages([]);
-
-    const newCapturedImages: CapturedImage[] = [];
-
-    const staticCardConfigs = [
-      { id: "totalParticipants", title: "Total Participants", value: totalParticipants, description: "Current number of registered participants.", fileName: "total_participants" },
-      { id: "totalDevoteeFriends", title: "Total Devotee Friends", value: totalDevoteeFriends, description: "Number of registered devotee friends.", fileName: "total_devotee_friends" },
-      { id: "participantsWithoutDevoteeFriend", title: "Participants Without Devotee Friend", value: participantsWithoutDevoteeFriend, description: "Participants not associated with a devotee friend.", fileName: "participants_without_df" },
-    ];
-
-    for (const config of staticCardConfigs) {
-      const captured = await captureElement(cardRefs.current[config.id]!, config.title, config.fileName);
-      if (captured) newCapturedImages.push(captured);
-    }
-
-    if (hiddenProgramAttendanceContainerRef.current) {
-      const cards = hiddenProgramAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const card of Array.from(cards)) {
-        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'Program Attendance';
-        const captured = await captureElement(card as HTMLElement, title, `program_attendance_${title.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) newCapturedImages.push(captured);
-      }
-    }
-
-    if (hiddenDfAttendanceContainerRef.current) {
-      const cards = hiddenDfAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const card of Array.from(cards)) {
-        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'DF Attendance';
-        const captured = await captureElement(card as HTMLElement, title, `df_attendance_${title.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) newCapturedImages.push(captured);
-      }
-    }
-
-    setCapturedImages(newCapturedImages);
-    setIsCapturing(false);
-  }, [isOpen, totalParticipants, totalDevoteeFriends, participantsWithoutDevoteeFriend, programSessionAttendance, devoteeFriendProgramSessionAttendance]);
-
-  React.useEffect(() => {
-    if (isOpen && !isCapturing && capturedImages.length === 0) {
-      const timer = setTimeout(() => handleCaptureAll(), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, isCapturing, capturedImages.length, handleCaptureAll]);
-
-  const handleDownloadImage = (dataUrl: string, fileName: string) => {
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleDownloadAll = () => {
-    if (capturedImages.length === 0) {
-      toast.info("No images to download.");
-      return;
-    }
-    capturedImages.forEach((image, index) => {
-      setTimeout(() => handleDownloadImage(image.dataUrl, image.fileName), index * 300);
-    });
-    toast.success(`Downloading ${capturedImages.length} images...`);
-  };
-
-  const handleShareAll = async () => {
-    if (capturedImages.length === 0) {
-      toast.info("No images to share.");
-      return;
-    }
-
-    const files: File[] = [];
-    for (const image of capturedImages) {
-      const response = await fetch(image.dataUrl);
-      const blob = await response.blob();
-      files.push(new File([blob], image.fileName, { type: "image/jpeg" }));
-    }
-
-    if (navigator.canShare && navigator.canShare({ files })) {
-      try {
-        await navigator.share({
-          files: files,
-          title: "DAS Statistics",
-          text: "Here are the latest statistics from DAS.",
-        });
-        toast.success("All images shared successfully!");
-      } catch (error) {
-        if ((error as DOMException).name !== "AbortError") {
-          toast.error("Failed to share all images.");
-        } else {
-          toast.info("Sharing cancelled.");
-        }
-      }
-    } else {
-      toast.error("Sharing all images at once is not supported on your browser.", {
-        description: "Please share images one by one using the buttons below.",
-      });
-    }
-  };
-
-  const handleShareSingle = async (dataUrl: string, title: string, fileName: string) => {
-    try {
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: "image/jpeg" });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: title,
-          text: `DAS Statistic: ${title}`,
-        });
+  const handleToggleImage = useCallback((imageId: string) => {
+    setSelectedImagesToExport((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(imageId)) {
+        newSet.delete(imageId);
       } else {
-        toast.error("Sharing is not supported on your browser.");
+        newSet.add(imageId);
       }
-    } catch (error) {
-      if ((error as DOMException).name !== "AbortError") {
-        toast.error("Failed to share image.");
-      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectAll) {
+      setSelectedImagesToExport(new Set());
+    } else {
+      setSelectedImagesToExport(new Set(filteredImages.map((img) => img.id)));
     }
-  };
+    setSelectAll((prev) => !prev);
+  }, [selectAll, filteredImages]);
+
+  const handleExport = useCallback(() => {
+    if (selectedImagesToExport.size === 0) {
+      toast.error("Please select at least one image to export.");
+      return;
+    }
+
+    const imagesToDownload = images?.filter((img) =>
+      selectedImagesToExport.has(img.id)
+    );
+
+    if (imagesToDownload && imagesToDownload.length > 0) {
+      imagesToDownload.forEach((image) => {
+        const link = document.createElement("a");
+        link.href = image.url;
+        link.download = image.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+      toast.success(
+        `Exported ${imagesToDownload.length} image${
+          imagesToDownload.length > 1 ? "s" : ""
+        }.`
+      );
+      onOpenChange(false);
+      onClearSelection();
+    } else {
+      toast.error("No images found to export.");
+    }
+  }, [selectedImagesToExport, images, onOpenChange, onClearSelection]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-y-auto">
         <DialogHeader>
           <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
             <div>
-              <DialogTitle>Export Statistics as Images</DialogTitle>
+              <DialogTitle>Export Images</DialogTitle>
               <DialogDescription>
-                Download or share the generated images below.
+                Select the images you want to export.
               </DialogDescription>
             </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <Button onClick={handleDownloadAll} variant="outline" disabled={isCapturing || capturedImages.length === 0}>
-                <Download className="mr-2 h-4 w-4" /> Download All
-              </Button>
-              <Button onClick={handleShareAll} className="bg-green-500 hover:bg-green-600 text-white" disabled={isCapturing || capturedImages.length === 0}>
-                <Share2 className="mr-2 h-4 w-4" /> Share All
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClearSelection}
+              disabled={selectedImageIds.size === 0}
+            >
+              Clear Initial Selection
+            </Button>
           </div>
         </DialogHeader>
 
-        {isCapturing ? (
-          <div className="flex flex-col items-center justify-center flex-1">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-lg font-semibold">Generating images...</p>
-            <p className="text-sm text-muted-foreground">This might take a moment.</p>
+        <div className="flex flex-col gap-4 py-4 flex-grow min-h-0">
+          <Input
+            placeholder="Search images..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="mb-2"
+          />
+
+          <div className="flex items-center space-x-2 mb-4">
+            <Checkbox
+              id="selectAll"
+              checked={selectAll}
+              onCheckedChange={handleSelectAll}
+              disabled={isLoading || filteredImages.length === 0}
+            />
+            <Label htmlFor="selectAll" className="text-sm font-medium">
+              Select All ({selectedImagesToExport.size} /{" "}
+              {filteredImages.length} selected)
+            </Label>
           </div>
-        ) : (
-          <ScrollArea className="flex-grow min-h-0 pr-4 max-h-[calc(90vh-150px)]" key={capturedImages.length}> {/* Updated classes here */}
-            <div className="space-y-6">
-              {capturedImages.length > 0 ? (
-                capturedImages.map((image) => (
-                  <Card key={image.id} className="shadow-md overflow-hidden">
-                    <CardHeader>
-                      <CardTitle className="text-lg">{image.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
-                        <img
-                          src={image.dataUrl}
-                          alt={image.title}
-                          className="w-full h-auto border rounded-md mb-4 object-contain"
-                        />
-                        <div className="flex gap-2">
-                          <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
-                            <Download className="mr-2 h-4 w-4" /> Download
-                          </Button>
-                          <Button onClick={() => handleShareSingle(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
-                            <Share2 className="mr-2 h-4 w-4" /> Share
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
-                )}
+
+          {isLoading ? (
+            <div className="text-center text-gray-500">Loading images...</div>
+          ) : filteredImages.length === 0 ? (
+            <div className="text-center text-gray-500">No images found.</div>
+          ) : (
+            <ScrollArea className="flex-grow min-h-0 max-h-[calc(90vh-250px)] pr-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredImages.map((image) => (
+                  <div
+                    key={image.id}
+                    className="flex flex-col items-center space-y-2 p-2 border rounded-md"
+                  >
+                    <Checkbox
+                      id={`image-${image.id}`}
+                      checked={selectedImagesToExport.has(image.id)}
+                      onCheckedChange={() => handleToggleImage(image.id)}
+                    />
+                    <Label htmlFor={`image-${image.id}`} className="text-sm">
+                      {image.name}
+                    </Label>
+                    <img
+                      src={image.url}
+                      alt={image.name}
+                      className="w-24 h-24 object-cover rounded-md"
+                    />
+                  </div>
+                ))}
               </div>
             </ScrollArea>
-        )}
-
-        <div className="absolute -left-[9999px] -top-[9999px] w-[600px] p-6 bg-background">
-          <div className="space-y-6">
-            <MobileStatCard
-              id="totalParticipants"
-              title="Total Participants"
-              value={totalParticipants}
-              description="Current number of registered participants."
-              ref={(el) => (cardRefs.current["totalParticipants"] = el)}
-            />
-            <MobileStatCard
-              id="totalDevoteeFriends"
-              title="Total Devotee Friends"
-              value={totalDevoteeFriends}
-              description="Number of registered devotee friends."
-              ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)}
-            />
-            <MobileStatCard
-              id="participantsWithoutDevoteeFriend"
-              title="Participants Without Devotee Friend"
-              value={participantsWithoutDevoteeFriend}
-              description="Participants not associated with a devotee friend."
-              ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)}
-            />
-            <div ref={hiddenProgramAttendanceContainerRef}>
-              <MobileProgramAttendance data={programSessionAttendance} />
-            </div>
-            <div ref={hiddenDfAttendanceContainerRef}>
-              <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
-            </div>
-          </div>
+          )}
         </div>
+
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleExport}
+            disabled={selectedImagesToExport.size === 0}
+          >
+            <Download className="mr-2 h-4 w-4" /> Export Selected
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default ExportImagesDialog;
+}

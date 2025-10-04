@@ -15,6 +15,14 @@ import { Participant, AttendedProgram } from "@/types/participant";
 import { Program } from "@/types/program";
 import { format, parseISO } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface DevoteeFriend {
   id: string;
@@ -79,7 +87,7 @@ const Stats = () => {
   const totalDevoteeFriends = devoteeFriends?.length || 0;
   const participantsWithoutDevoteeFriend = allParticipants?.filter(p => !p.devotee_friend_name || p.devotee_friend_name === "None").length || 0;
 
-  // Aggregate session attendance, grouped by program (existing logic)
+  // Aggregate session attendance, grouped by program
   const programSessionAttendance = React.useMemo(() => {
     const programAttendance: Record<string, { program_name: string; sessions: Record<string, { name: string; date: string; count: number }> }> = {};
 
@@ -122,16 +130,15 @@ const Stats = () => {
     return sortedProgramAttendance.sort((a, b) => a.program_name.localeCompare(b.program_name));
   }, [allAttendedProgramsMap, programs]);
 
-  // NEW: Devotee Friend Session Attendance
+  // Devotee Friend Session Attendance
   const devoteeFriendProgramSessionAttendance = React.useMemo(() => {
     const dfAttendance: Record<string, Record<string, { program_name: string; sessions: Record<string, { name: string; date: string; count: number }> }>> = {};
 
-    // Initialize with all known devotee friends, including "None"
     const allDevoteeFriendNames = new Set<string>();
     if (devoteeFriends) {
       devoteeFriends.forEach(df => allDevoteeFriendNames.add(df.name));
     }
-    allDevoteeFriendNames.add("None"); // Ensure "None" is always included
+    allDevoteeFriendNames.add("None");
 
     allDevoteeFriendNames.forEach(dfName => {
       dfAttendance[dfName] = {};
@@ -145,7 +152,7 @@ const Stats = () => {
         const attendedProgramsForParticipant = allAttendedProgramsMap[participant.id] || [];
 
         if (!dfAttendance[devoteeFriendName]) {
-          dfAttendance[devoteeFriendName] = {}; // Should already be initialized, but as a safeguard
+          dfAttendance[devoteeFriendName] = {};
         }
 
         attendedProgramsForParticipant.forEach(attendedProgram => {
@@ -175,7 +182,6 @@ const Stats = () => {
       });
     }
 
-    // Convert to sorted arrays for display
     const sortedDfAttendance = Object.entries(dfAttendance).map(([dfName, programsData]) => ({
       devoteeFriendName: dfName,
       programs: Object.values(programsData).map(program => ({
@@ -187,39 +193,32 @@ const Stats = () => {
     return sortedDfAttendance;
   }, [allParticipants, allAttendedProgramsMap, programs, devoteeFriends]);
 
-  // NEW: Session Attendance Distribution
+  // Session Attendance Distribution
   const sessionAttendanceDistribution = React.useMemo(() => {
-    // NEW: Global distribution by program
-    const globalDistributionByProgram: Record<string, Record<number, number>> = {}; // { programId: { numSessionsInProgram: countOfParticipants } }
+    const globalDistributionByProgram: Record<string, Record<number, number>> = {};
+    const devoteeFriendDistribution: Record<string, Record<number, number>> = {};
 
-    // Existing: Devotee friend distribution (total sessions across all programs for a DF's participants)
-    const devoteeFriendDistribution: Record<string, Record<number, number>> = {}; // { devoteeFriendName: { totalSessionsAttendedByParticipant: countOfParticipants } }
-
-    // Initialize devoteeFriendDistribution with all known devotee friends, including "None"
     const allDevoteeFriendNames = new Set<string>();
     if (devoteeFriends) {
       devoteeFriends.forEach(df => allDevoteeFriendNames.add(df.name));
     }
-    allDevoteeFriendNames.add("None"); // Ensure "None" is always included
+    allDevoteeFriendNames.add("None");
 
     allDevoteeFriendNames.forEach(dfName => {
       devoteeFriendDistribution[dfName] = {};
     });
 
     if (allParticipants && allAttendedProgramsMap && programs) {
-      const programsMap = new Map(programs.map(p => [p.id, p.program_name])); // For program name lookup
-
       allParticipants.forEach(participant => {
         const devoteeFriendName = participant.devotee_friend_name || "None";
         const attendedProgramsForParticipant = allAttendedProgramsMap[participant.id] || [];
 
-        let totalSessionsAttendedByParticipantOverall = 0; // For the existing devoteeFriendDistribution
+        let totalSessionsAttendedByParticipantOverall = 0;
 
         attendedProgramsForParticipant.forEach(program => {
           const programId = program.program_id;
           const numSessionsAttendedInThisProgram = program.sessions_attended.length;
 
-          // Populate globalDistributionByProgram
           if (!globalDistributionByProgram[programId]) {
             globalDistributionByProgram[programId] = {};
           }
@@ -228,15 +227,13 @@ const Stats = () => {
           totalSessionsAttendedByParticipantOverall += numSessionsAttendedInThisProgram;
         });
 
-        // Populate devoteeFriendDistribution (this part remains the same as before for 'byDevoteeFriend')
         if (!devoteeFriendDistribution[devoteeFriendName]) {
-          devoteeFriendDistribution[devoteeFriendName] = {}; // Should already be initialized, but as a safeguard
+          devoteeFriendDistribution[devoteeFriendName] = {};
         }
         devoteeFriendDistribution[devoteeFriendName][totalSessionsAttendedByParticipantOverall] = (devoteeFriendDistribution[devoteeFriendName][totalSessionsAttendedByParticipantOverall] || 0) + 1;
       });
     }
 
-    // Sort global distribution by program
     const sortedGlobalDistributionByProgram = Object.entries(globalDistributionByProgram)
       .map(([programId, distribution]) => ({
         programId,
@@ -247,8 +244,6 @@ const Stats = () => {
       }))
       .sort((a, b) => a.programName.localeCompare(b.programName));
 
-
-    // Existing sorting for byDevoteeFriend
     const sortedDevoteeFriendDistribution = Object.entries(devoteeFriendDistribution)
       .map(([dfName, distribution]) => ({
         devoteeFriendName: dfName,
@@ -325,23 +320,34 @@ const Stats = () => {
             <CardContent>
               {programSessionAttendance.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
-                  <div className="space-y-6">
-                    {programSessionAttendance.map((program, programIndex) => (
-                      <div key={program.program_name + programIndex} className="border-b pb-4 last:border-b-0 last:pb-0">
-                        <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">
-                          {program.program_name}
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                          {program.sessions.map((session, sessionIndex) => (
-                            <div key={session.name + session.date + sessionIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
-                              <span className="text-sm font-medium">{session.name} ({format(parseISO(session.date), "MMM dd")})</span>
-                              <span className="text-lg font-bold text-secondary-foreground">{session.count}</span>
-                            </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[200px]">Program Name</TableHead>
+                        <TableHead>Session Name</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Attendees</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {programSessionAttendance.map((program) => (
+                        <React.Fragment key={program.program_name}>
+                          {program.sessions.map((session, index) => (
+                            <TableRow key={`${program.program_name}-${session.name}-${session.date}`}>
+                              {index === 0 && (
+                                <TableCell rowSpan={program.sessions.length} className="font-medium align-top">
+                                  {program.program_name}
+                                </TableCell>
+                              )}
+                              <TableCell>{session.name}</TableCell>
+                              <TableCell>{format(parseISO(session.date), "MMM dd, yyyy")}</TableCell>
+                              <TableCell className="text-right">{session.count}</TableCell>
+                            </TableRow>
                           ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
@@ -349,7 +355,6 @@ const Stats = () => {
             </CardContent>
           </Card>
 
-          {/* NEW: Devotee Friend Session Attendance */}
           <Card className="lg:col-span-3 shadow-lg">
             <CardHeader>
               <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
@@ -357,36 +362,51 @@ const Stats = () => {
             <CardContent>
               {devoteeFriendProgramSessionAttendance.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
-                  <div className="space-y-8">
-                    {devoteeFriendProgramSessionAttendance.map((df, dfIndex) => (
-                      <div key={df.devoteeFriendName + dfIndex} className="border-b pb-6 last:border-b-0 last:pb-0">
-                        <h2 className="text-2xl font-bold mb-4 text-accent-foreground dark:text-accent">
-                          {df.devoteeFriendName}
-                        </h2>
-                        {df.programs.length > 0 ? (
-                          <div className="space-y-4">
-                            {df.programs.map((program, programIndex) => (
-                              <div key={program.program_name + programIndex} className="ml-4 border-l-2 pl-4">
-                                <h3 className="text-xl font-semibold mb-2 text-primary dark:text-primary-foreground">
-                                  {program.program_name}
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  {program.sessions.map((session, sessionIndex) => (
-                                    <div key={session.name + session.date + sessionIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
-                                      <span className="text-sm font-medium">{session.name} ({format(parseISO(session.date), "MMM dd")})</span>
-                                      <span className="text-lg font-bold text-secondary-foreground">{session.count}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground ml-4">No program attendance recorded for this devotee friend.</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[150px]">Devotee Friend</TableHead>
+                        <TableHead className="w-[200px]">Program Name</TableHead>
+                        <TableHead>Session Name</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Attendees</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {devoteeFriendProgramSessionAttendance.map((df) => (
+                        <React.Fragment key={df.devoteeFriendName}>
+                          {df.programs.length > 0 ? (
+                            df.programs.map((program, programIndex) => (
+                              <React.Fragment key={`${df.devoteeFriendName}-${program.program_name}`}>
+                                {program.sessions.map((session, sessionIndex) => (
+                                  <TableRow key={`${df.devoteeFriendName}-${program.program_name}-${session.name}-${session.date}`}>
+                                    {programIndex === 0 && sessionIndex === 0 && (
+                                      <TableCell rowSpan={df.programs.reduce((acc, p) => acc + p.sessions.length, 0)} className="font-medium align-top">
+                                        {df.devoteeFriendName}
+                                      </TableCell>
+                                    )}
+                                    {sessionIndex === 0 && (
+                                      <TableCell rowSpan={program.sessions.length} className="font-medium align-top">
+                                        {program.program_name}
+                                      </TableCell>
+                                    )}
+                                    <TableCell>{session.name}</TableCell>
+                                    <TableCell>{format(parseISO(session.date), "MMM dd, yyyy")}</TableCell>
+                                    <TableCell className="text-right">{session.count}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </React.Fragment>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell className="font-medium">{df.devoteeFriendName}</TableCell>
+                              <TableCell colSpan={4} className="text-muted-foreground">No program attendance recorded.</TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
@@ -394,7 +414,6 @@ const Stats = () => {
             </CardContent>
           </Card>
 
-          {/* NEW: Session Attendance Distribution */}
           <Card className="lg:col-span-3 shadow-lg">
             <CardHeader>
               <CardTitle className="text-lg font-medium">Session Attendance Distribution</CardTitle>
@@ -403,27 +422,32 @@ const Stats = () => {
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">Overall Distribution by Program</h3>
               {sessionAttendanceDistribution.globalByProgram.length > 0 ? (
                 <ScrollArea className="h-96 pr-4 mb-6">
-                  <div className="space-y-8">
-                    {sessionAttendanceDistribution.globalByProgram.map((programData, programIndex) => (
-                      <div key={programData.programId + programIndex} className="border-b pb-6 last:border-b-0 last:pb-0">
-                        <h4 className="text-lg font-bold mb-3 text-accent-foreground dark:text-accent">
-                          {programData.programName}
-                        </h4>
-                        {programData.distribution.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4">
-                            {programData.distribution.map((item, itemIndex) => (
-                              <div key={itemIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
-                                <span className="text-sm font-medium">{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}:</span>
-                                <span className="text-lg font-bold text-secondary-foreground">{item.count} participants</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground ml-4">No session attendance distribution for this program.</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[200px]">Program Name</TableHead>
+                        <TableHead>Sessions Attended</TableHead>
+                        <TableHead className="text-right">Participants Count</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sessionAttendanceDistribution.globalByProgram.map((programData) => (
+                        <React.Fragment key={programData.programId}>
+                          {programData.distribution.map((item, index) => (
+                            <TableRow key={`${programData.programId}-${item.numSessions}`}>
+                              {index === 0 && (
+                                <TableCell rowSpan={programData.distribution.length} className="font-medium align-top">
+                                  {programData.programName}
+                                </TableCell>
+                              )}
+                              <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
+                              <TableCell className="text-right">{item.count}</TableCell>
+                            </TableRow>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground mb-6">No overall session attendance distribution data available.</p>
@@ -432,27 +456,39 @@ const Stats = () => {
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">By Devotee Friend (Total Sessions Attended)</h3>
               {sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
-                  <div className="space-y-8">
-                    {sessionAttendanceDistribution.byDevoteeFriend.map((df, dfIndex) => (
-                      <div key={df.devoteeFriendName + dfIndex} className="border-b pb-6 last:border-b-0 last:pb-0">
-                        <h4 className="text-lg font-bold mb-3 text-accent-foreground dark:text-accent">
-                          {df.devoteeFriendName}
-                        </h4>
-                        {df.distribution.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-4">
-                            {df.distribution.map((item, itemIndex) => (
-                              <div key={itemIndex} className="flex justify-between items-center p-3 border rounded-md bg-muted/50">
-                                <span className="text-sm font-medium">{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}:</span>
-                                <span className="text-lg font-bold text-secondary-foreground">{item.count} participants</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground ml-4">No session attendance distribution for this devotee friend.</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[200px]">Devotee Friend</TableHead>
+                        <TableHead>Total Sessions Attended</TableHead>
+                        <TableHead className="text-right">Participants Count</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sessionAttendanceDistribution.byDevoteeFriend.map((df) => (
+                        <React.Fragment key={df.devoteeFriendName}>
+                          {df.distribution.length > 0 ? (
+                            df.distribution.map((item, index) => (
+                              <TableRow key={`${df.devoteeFriendName}-${item.numSessions}`}>
+                                {index === 0 && (
+                                  <TableCell rowSpan={df.distribution.length} className="font-medium align-top">
+                                    {df.devoteeFriendName}
+                                  </TableCell>
+                                )}
+                                <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
+                                <TableCell className="text-right">{item.count}</TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell className="font-medium">{df.devoteeFriendName}</TableCell>
+                              <TableCell colSpan={2} className="text-muted-foreground">No session attendance distribution.</TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </ScrollArea>
               ) : (
                 <p className="text-sm text-muted-foreground">No devotee friend session attendance distribution data available.</p>

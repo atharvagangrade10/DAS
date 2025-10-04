@@ -255,12 +255,12 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
               <div className="space-y-6">
                 {capturedImages.length > 0 ? (
                   capturedImages.map((image) => (
-                    <Card key={image.id} className="shadow-md">
+                    <Card key={image.id} className="shadow-md overflow-hidden">
                       <CardHeader>
                         <CardTitle className="text-lg">{image.title}</CardTitle>
                       </CardHeader>
                       <CardContent className="flex flex-col items-center">
-                        <img src={image.dataUrl} alt={image.title} className="max-w-full h-auto border rounded-md mb-4" />
+                        <img src={image.dataUrl} alt={image.title} className="w-full h-auto border rounded-md mb-4" />
                         <div className="flex gap-2">
                           <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
                             <Download className="mr-2 h-4 w-4" /> Download

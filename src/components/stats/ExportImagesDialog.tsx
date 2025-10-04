@@ -223,7 +223,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden"> {/* ADDED overflow-hidden HERE */}
         <DialogHeader>
           <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
             <div>
@@ -260,7 +260,11 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
                         <CardTitle className="text-lg">{image.title}</CardTitle>
                       </CardHeader>
                       <CardContent className="flex flex-col items-center">
-                        <img src={image.dataUrl} alt={image.title} className="w-full h-auto border rounded-md mb-4" />
+                        <img
+                          src={image.dataUrl}
+                          alt={image.title}
+                          className="w-full h-auto border rounded-md mb-4 object-contain" // ADDED object-contain HERE
+                        />
                         <div className="flex gap-2">
                           <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
                             <Download className="mr-2 h-4 w-4" /> Download

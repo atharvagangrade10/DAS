@@ -223,7 +223,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden"> {/* ADDED overflow-hidden HERE */}
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
             <div>
@@ -251,7 +251,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
           </div>
         ) : (
           <div className="flex-1 min-h-0">
-            <ScrollArea className="h-full pr-4">
+            <ScrollArea className="h-full pr-4" key={capturedImages.length}> {/* Added key here */}
               <div className="space-y-6">
                 {capturedImages.length > 0 ? (
                   capturedImages.map((image) => (
@@ -263,7 +263,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
                         <img
                           src={image.dataUrl}
                           alt={image.title}
-                          className="w-full h-auto border rounded-md mb-4 object-contain" // ADDED object-contain HERE
+                          className="w-full h-auto border rounded-md mb-4 object-contain"
                         />
                         <div className="flex gap-2">
                           <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">

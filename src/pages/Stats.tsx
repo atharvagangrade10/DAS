@@ -479,7 +479,45 @@ const Stats = () => {
             </CardHeader>
             <CardContent>
               {isMobile ? (
-                <MobileProgramAttendance data={programSessionAttendance} />
+                <>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
+                  <MobileProgramAttendance data={programSessionAttendance} />
+                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h3>
+                  {programSessionAttendance.length > 0 ? (
+                    <ScrollArea className="h-96 pr-4 border rounded-md">
+                      <Table className="min-w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[200px]">Program Name</TableHead>
+                            <TableHead>Session Name</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Attendees</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {programSessionAttendance.map((program) => (
+                            <React.Fragment key={program.program_name}>
+                              {program.sessions.map((session, index) => (
+                                <TableRow key={`${program.program_name}-${session.name}-${session.date}`}>
+                                  {index === 0 && (
+                                    <TableCell rowSpan={program.sessions.length} className="font-medium align-top">
+                                      {program.program_name}
+                                    </TableCell>
+                                  )}
+                                  <TableCell>{session.name}</TableCell>
+                                  <TableCell>{format(parseISO(session.date), "MMM dd, yyyy")}</TableCell>
+                                  <TableCell className="text-right">{session.count}</TableCell>
+                                </TableRow>
+                              ))}
+                            </React.Fragment>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
+                  )}
+                </>
               ) : programSessionAttendance.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
                   <Table>
@@ -524,7 +562,58 @@ const Stats = () => {
             </CardHeader>
             <CardContent>
               {isMobile ? (
-                <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
+                <>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>
+                  <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
+                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h3>
+                  {devoteeFriendProgramSessionAttendance.length > 0 && allDevoteeFriendNames.length > 0 && sortedUniqueSessions.length > 0 ? (
+                    <div className="relative overflow-x-auto max-h-[500px] border rounded-md">
+                      <Table className="min-w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="sticky left-0 bg-background z-20 w-[300px] min-w-[300px]">Program/Session (Date)</TableHead>
+                            {allDevoteeFriendNames.map(dfName => (
+                              <TableHead key={dfName} className="text-center min-w-[150px] bg-background z-10">
+                                {dfName}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sortedUniqueSessions.map((sessionDetail, rowIndex) => (
+                            <TableRow key={`row-${rowIndex}`}>
+                              <TableCell className="sticky left-0 bg-background z-20 font-medium w-[300px] min-w-[300px]">
+                                {sessionDetail.programName} - {sessionDetail.sessionName} ({format(parseISO(sessionDetail.sessionDate), "MMM dd, yyyy")})
+                              </TableCell>
+                              {allDevoteeFriendNames.map(dfName => {
+                                let attendanceCount = 0;
+                                const dfData = devoteeFriendProgramSessionAttendance.find(df => df.devoteeFriendName === dfName);
+                                if (dfData) {
+                                  dfData.programs.forEach(program => {
+                                    if (program.program_name === sessionDetail.programName) {
+                                      program.sessions.forEach(session => {
+                                        if (session.name === sessionDetail.sessionName && session.date === sessionDetail.sessionDate) {
+                                          attendanceCount = session.count;
+                                        }
+                                      });
+                                    }
+                                  });
+                                }
+                                return (
+                                  <TableCell key={`${dfName}-${rowIndex}`} className="text-center">
+                                    {attendanceCount > 0 ? attendanceCount : "-"}
+                                  </TableCell>
+                                );
+                              })}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
+                  )}
+                </>
               ) : (
                 devoteeFriendProgramSessionAttendance.length > 0 && allDevoteeFriendNames.length > 0 && sortedUniqueSessions.length > 0 ? (
                   <div className="relative overflow-x-auto max-h-[500px] border rounded-md">
@@ -608,7 +697,43 @@ const Stats = () => {
             <CardContent>
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">Overall Distribution by Program</h3>
               {isMobile ? (
-                <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
+                <>
+                  <h4 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
+                  <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
+                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h4>
+                  {sessionAttendanceDistribution.globalByProgram.length > 0 ? (
+                    <ScrollArea className="h-96 pr-4 mb-6 border rounded-md">
+                      <Table className="min-w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[200px]">Program Name</TableHead>
+                            <TableHead>Sessions Attended</TableHead>
+                            <TableHead className="text-right">Participants Count</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sessionAttendanceDistribution.globalByProgram.map((programData) => (
+                            <React.Fragment key={programData.programId}>
+                              {programData.distribution.map((item, index) => (
+                                <TableRow key={`${programData.programId}-${item.numSessions}`}>
+                                  {index === 0 && (
+                                    <TableCell rowSpan={programData.distribution.length} className="font-medium align-top">
+                                      {programData.programName}
+                                    </TableCell>
+                                  )}
+                                  <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
+                                  <TableCell className="text-right">{item.count}</TableCell>
+                                </TableRow>
+                              ))}
+                            </React.Fragment>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mb-6">No overall session attendance distribution data available.</p>
+                  )}
+                </>
               ) : sessionAttendanceDistribution.globalByProgram.length > 0 ? (
                 <ScrollArea className="h-96 pr-4 mb-6">
                   <Table>
@@ -644,7 +769,43 @@ const Stats = () => {
 
               <h3 className="text-xl font-semibold mb-3 text-primary dark:text-primary-foreground">By Devotee Friend (Total Sessions Attended)</h3>
               {isMobile ? (
-                <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
+                <>
+                  <h4 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h4>
+                  <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
+                  <h4 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Full Table View</h4>
+                  {sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
+                    <ScrollArea className="h-96 pr-4 border rounded-md">
+                      <Table className="min-w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[200px]">Devotee Friend</TableHead>
+                            <TableHead>Total Sessions Attended</TableHead>
+                            <TableHead className="text-right">Participants Count</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sessionAttendanceDistribution.byDevoteeFriend.map((df) => (
+                            <React.Fragment key={df.devoteeFriendName}>
+                              {df.distribution.map((item, index) => (
+                                <TableRow key={`${df.devoteeFriendName}-${item.numSessions}`}>
+                                  {index === 0 && (
+                                    <TableCell rowSpan={df.distribution.length} className="font-medium align-top">
+                                      {df.devoteeFriendName}
+                                    </TableCell>
+                                  )}
+                                  <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
+                                  <TableCell className="text-right">{item.count}</TableCell>
+                                </TableRow>
+                              ))}
+                            </React.Fragment>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No devotee friend session attendance distribution data available.</p>
+                  )}
+                </>
               ) : sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
                 <ScrollArea className="h-96 pr-4">
                   <Table>

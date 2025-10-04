@@ -250,7 +250,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             <p className="text-sm text-muted-foreground">This might take a moment.</p>
           </div>
         ) : (
-          <ScrollArea className="flex-1 pr-4" key={capturedImages.length}> {/* Changed h-full to flex-1 and removed intermediate div */}
+          <ScrollArea className="flex-grow min-h-0 pr-4 max-h-[calc(90vh-150px)]" key={capturedImages.length}> {/* Updated classes here */}
             <div className="space-y-6">
               {capturedImages.length > 0 ? (
                 capturedImages.map((image) => (
@@ -259,27 +259,27 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
                       <CardTitle className="text-lg">{image.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center">
-                      <img
-                        src={image.dataUrl}
-                        alt={image.title}
-                        className="w-full h-auto border rounded-md mb-4 object-contain"
-                      />
-                      <div className="flex gap-2">
-                        <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
-                          <Download className="mr-2 h-4 w-4" /> Download
-                        </Button>
-                        <Button onClick={() => handleShareSingle(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
-                          <Share2 className="mr-2 h-4 w-4" /> Share
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
-              )}
-            </div>
-          </ScrollArea>
+                        <img
+                          src={image.dataUrl}
+                          alt={image.title}
+                          className="w-full h-auto border rounded-md mb-4 object-contain"
+                        />
+                        <div className="flex gap-2">
+                          <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
+                            <Download className="mr-2 h-4 w-4" /> Download
+                          </Button>
+                          <Button onClick={() => handleShareSingle(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
+                            <Share2 className="mr-2 h-4 w-4" /> Share
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
+                )}
+              </div>
+            </ScrollArea>
         )}
 
         <div className="absolute -left-[9999px] -top-[9999px] w-[600px] p-6 bg-background">

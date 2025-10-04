@@ -23,15 +23,11 @@ import { Image } from "@/lib/types";
 interface ExportImagesDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedImageIds: Set<string>;
-  onClearSelection: () => void;
 }
 
 export function ExportImagesDialog({
   isOpen,
   onOpenChange,
-  selectedImageIds,
-  onClearSelection,
 }: ExportImagesDialogProps) {
   const [selectedImagesToExport, setSelectedImagesToExport] = useState<
     Set<string>
@@ -45,13 +41,14 @@ export function ExportImagesDialog({
     enabled: isOpen,
   });
 
+  // Reset selection and search when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setSelectedImagesToExport(selectedImageIds);
-      setSelectAll(false); // Reset selectAll when dialog opens
-      setSearchQuery(""); // Reset search query
+      setSelectedImagesToExport(new Set());
+      setSelectAll(false);
+      setSearchQuery("");
     }
-  }, [isOpen, selectedImageIds]);
+  }, [isOpen]);
 
   const filteredImages = useMemo(() => {
     if (!images) return [];
@@ -81,8 +78,13 @@ export function ExportImagesDialog({
     setSelectAll((prev) => !prev);
   }, [selectAll, filteredImages]);
 
+  const handleClearSelection = useCallback(() => {
+    setSelectedImagesToExport(new Set());
+    setSelectAll(false);
+  }, []);
+
   const handleExport = useCallback(() => {
-    if (selectedImagesToExport.size === 0) {
+    if (!selectedImagesToExport || selectedImagesToExport.size === 0) {
       toast.error("Please select at least one image to export.");
       return;
     }
@@ -106,11 +108,11 @@ export function ExportImagesDialog({
         }.`
       );
       onOpenChange(false);
-      onClearSelection();
+      handleClearSelection(); // Clear selection after export
     } else {
       toast.error("No images found to export.");
     }
-  }, [selectedImagesToExport, images, onOpenChange, onClearSelection]);
+  }, [selectedImagesToExport, images, onOpenChange, handleClearSelection]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -126,10 +128,10 @@ export function ExportImagesDialog({
             <Button
               variant="outline"
               size="sm"
-              onClick={onClearSelection}
-              disabled={selectedImageIds.size === 0}
+              onClick={handleClearSelection}
+              disabled={!selectedImagesToExport || selectedImagesToExport.size === 0}
             >
-              Clear Initial Selection
+              Clear Selection
             </Button>
           </div>
         </DialogHeader>
@@ -145,12 +147,12 @@ export function ExportImagesDialog({
           <div className="flex items-center space-x-2 mb-4">
             <Checkbox
               id="selectAll"
-              checked={selectAll}
+              checked={selectAll || (filteredImages.length > 0 && selectedImagesToExport && selectedImagesToExport.size === filteredImages.length)}
               onCheckedChange={handleSelectAll}
               disabled={isLoading || filteredImages.length === 0}
             />
             <Label htmlFor="selectAll" className="text-sm font-medium">
-              Select All ({selectedImagesToExport.size} /{" "}
+              Select All ({selectedImagesToExport?.size || 0} /{" "}
               {filteredImages.length} selected)
             </Label>
           </div>
@@ -169,7 +171,7 @@ export function ExportImagesDialog({
                   >
                     <Checkbox
                       id={`image-${image.id}`}
-                      checked={selectedImagesToExport.has(image.id)}
+                      checked={selectedImagesToExport?.has(image.id) || false}
                       onCheckedChange={() => handleToggleImage(image.id)}
                     />
                     <Label htmlFor={`image-${image.id}`} className="text-sm">
@@ -193,7 +195,7 @@ export function ExportImagesDialog({
           </Button>
           <Button
             onClick={handleExport}
-            disabled={selectedImagesToExport.size === 0}
+            disabled={!selectedImagesToExport || selectedImagesToExport.size === 0}
           >
             <Download className="mr-2 h-4 w-4" /> Export Selected
           </Button>

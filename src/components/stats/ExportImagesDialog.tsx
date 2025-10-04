@@ -229,7 +229,55 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("Image downloaded successfully!");
+  };
+
+  const handleDownloadAll = () => {
+    if (capturedImages.length === 0) {
+      toast.info("No images to download.");
+      return;
+    }
+    capturedImages.forEach((image, index) => {
+      setTimeout(() => {
+        handleDownloadImage(image.dataUrl, image.fileName);
+      }, index * 300); // Stagger downloads to avoid browser blocking
+    });
+    toast.success(`Downloading ${capturedImages.length} images...`);
+  };
+
+  const handleShareAll = async () => {
+    if (capturedImages.length === 0) {
+      toast.info("No images to share.");
+      return;
+    }
+
+    const files: File[] = [];
+    for (const image of capturedImages) {
+      const response = await fetch(image.dataUrl);
+      const blob = await response.blob();
+      files.push(new File([blob], image.fileName, { type: "image/jpeg" }));
+    }
+
+    if (navigator.canShare && navigator.canShare({ files })) {
+      try {
+        await navigator.share({
+          files: files,
+          title: "DAS Statistics",
+          text: "Here are the latest statistics from DAS.",
+        });
+        toast.success("All images shared successfully!");
+      } catch (error) {
+        console.error("Error sharing all images:", error);
+        if ((error as DOMException).name !== "AbortError") {
+          toast.error("Failed to share all images.");
+        } else {
+          toast.info("Sharing cancelled.");
+        }
+      }
+    } else {
+      toast.error("Your browser does not support sharing multiple files.", {
+        description: "Please share images one by one.",
+      });
+    }
   };
 
   const handleShareToWhatsApp = async (dataUrl: string, title: string, fileName: string) => {
@@ -266,20 +314,32 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Export Statistics as Images</DialogTitle>
-          <DialogDescription>
-            Generate images of your statistical cards for easy sharing and download.
-          </DialogDescription>
+          <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
+            <div>
+              <DialogTitle>Export Statistics as Images</DialogTitle>
+              <DialogDescription>
+                Download or share the generated images below.
+              </DialogDescription>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <Button onClick={handleDownloadAll} variant="outline" disabled={isCapturing || capturedImages.length === 0}>
+                <Download className="mr-2 h-4 w-4" /> Download All
+              </Button>
+              <Button onClick={handleShareAll} className="bg-green-500 hover:bg-green-600 text-white" disabled={isCapturing || capturedImages.length === 0}>
+                <Share2 className="mr-2 h-4 w-4" /> Share All
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
 
         {isCapturing ? (
-          <div className="flex flex-col items-center justify-center py-10">
+          <div className="flex flex-col items-center justify-center flex-1">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <p className="text-lg font-semibold">Generating images...</p>
             <p className="text-sm text-muted-foreground">This might take a moment.</p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0"> {/* Added min-h-0 here */}
+          <div className="flex-1 min-h-0">
             <ScrollArea className="h-full pr-4">
               <div className="space-y-6">
                 {capturedImages.length > 0 ? (
@@ -310,51 +370,47 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
         )}
 
         {/* Hidden elements for capturing */}
-        <div className="absolute -left-[9999px] -top-[9999px] w-[1200px] p-6 bg-background"> {/* Increased width for better capture, added bg-background */}
-          <MobileStatCard
-            id="totalParticipants"
-            title="Total Participants"
-            value={totalParticipants}
-            description="Current number of registered participants."
-            ref={(el) => (cardRefs.current["totalParticipants"] = el)}
-          />
+        <div className="absolute -left-[9999px] -top-[9999px] w-[600px] p-6 bg-background">
+          <div className="space-y-6">
+            <MobileStatCard
+              id="totalParticipants"
+              title="Total Participants"
+              value={totalParticipants}
+              description="Current number of registered participants."
+              ref={(el) => (cardRefs.current["totalParticipants"] = el)}
+            />
 
-          <MobileStatCard
-            id="totalDevoteeFriends"
-            title="Total Devotee Friends"
-            value={totalDevoteeFriends}
-            description="Number of registered devotee friends."
-            className="mt-6" // Apply margin for spacing
-            ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)}
-          />
+            <MobileStatCard
+              id="totalDevoteeFriends"
+              title="Total Devotee Friends"
+              value={totalDevoteeFriends}
+              description="Number of registered devotee friends."
+              ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)}
+            />
 
-          <MobileStatCard
-            id="participantsWithoutDevoteeFriend"
-            title="Participants Without Devotee Friend"
-            value={participantsWithoutDevoteeFriend}
-            description="Participants not associated with a devotee friend."
-            className="mt-6" // Apply margin for spacing
-            ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)}
-          />
+            <MobileStatCard
+              id="participantsWithoutDevoteeFriend"
+              title="Participants Without Devotee Friend"
+              value={participantsWithoutDevoteeFriend}
+              description="Participants not associated with a devotee friend."
+              ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)}
+            />
 
-          {/* Render MobileProgramAttendance for capture */}
-          <div ref={hiddenProgramAttendanceContainerRef} className="mt-6" id="hidden-program-attendance-container">
-            <MobileProgramAttendance data={programSessionAttendance} />
-          </div>
+            <div ref={hiddenProgramAttendanceContainerRef} id="hidden-program-attendance-container">
+              <MobileProgramAttendance data={programSessionAttendance} />
+            </div>
 
-          {/* Render MobileDevoteeFriendAttendance for capture */}
-          <div ref={hiddenDfAttendanceContainerRef} className="mt-6" id="hidden-devotee-friend-attendance-container">
-            <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
-          </div>
+            <div ref={hiddenDfAttendanceContainerRef} id="hidden-devotee-friend-attendance-container">
+              <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
+            </div>
 
-          {/* Render MobileSessionDistributionByProgram for capture */}
-          <div ref={hiddenGlobalDistContainerRef} className="mt-6" id="hidden-session-dist-program-container">
-            <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
-          </div>
+            <div ref={hiddenGlobalDistContainerRef} id="hidden-session-dist-program-container">
+              <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
+            </div>
 
-          {/* Render MobileSessionDistributionByDevoteeFriend for capture */}
-          <div ref={hiddenDfDistContainerRef} className="mt-6" id="hidden-session-dist-df-container">
-            <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
+            <div ref={hiddenDfDistContainerRef} id="hidden-session-dist-df-container">
+              <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
+            </div>
           </div>
         </div>
       </DialogContent>

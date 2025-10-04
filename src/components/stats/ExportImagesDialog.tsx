@@ -32,6 +32,7 @@ import MobileProgramAttendance from "./MobileProgramAttendance";
 import MobileDevoteeFriendAttendance from "./MobileDevoteeFriendAttendance";
 import MobileSessionDistributionByProgram from "./MobileSessionDistributionByProgram";
 import MobileSessionDistributionByDevoteeFriend from "./MobileSessionDistributionByDevoteeFriend";
+import MobileStatCard from "./MobileStatCard"; // Import the new component
 
 interface SessionData {
   name: string;
@@ -141,11 +142,11 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 
     const newCapturedImages: CapturedImage[] = [];
 
-    // Capture static cards
+    // Capture static cards using the new MobileStatCard
     const staticCardConfigs = [
-      { id: "totalParticipants", title: "Total Participants", fileName: "total_participants" },
-      { id: "totalDevoteeFriends", title: "Total Devotee Friends", fileName: "total_devotee_friends" },
-      { id: "participantsWithoutDevoteeFriend", title: "Participants Without Devotee Friend", fileName: "participants_without_df" },
+      { id: "totalParticipants", title: "Total Participants", value: totalParticipants, description: "Current number of registered participants.", fileName: "total_participants" },
+      { id: "totalDevoteeFriends", title: "Total Devotee Friends", value: totalDevoteeFriends, description: "Number of registered devotee friends.", fileName: "total_devotee_friends" },
+      { id: "participantsWithoutDevoteeFriend", title: "Participants Without Devotee Friend", value: participantsWithoutDevoteeFriend, description: "Participants not associated with a devotee friend.", fileName: "participants_without_df" },
     ];
 
     for (const config of staticCardConfigs) {
@@ -308,41 +309,31 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 
         {/* Hidden elements for capturing */}
         <div className="absolute -left-[9999px] -top-[9999px] w-[1200px] p-6 bg-background"> {/* Increased width for better capture, added bg-background */}
-          <Card ref={(el) => (cardRefs.current["totalParticipants"] = el)} className="shadow-lg" id="totalParticipants">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium">Total Participants</CardTitle>
-            </CardHeader>
-            <div className="p-6 pt-0"> {/* Replaced CardContent with a div */}
-              <div className="text-4xl font-bold">{totalParticipants}</div>
-              <p className="text-xs text-muted-foreground">
-                Current number of registered participants.
-              </p>
-            </div>
-          </Card>
+          <MobileStatCard
+            id="totalParticipants"
+            title="Total Participants"
+            value={totalParticipants}
+            description="Current number of registered participants."
+            ref={(el) => (cardRefs.current["totalParticipants"] = el)}
+          />
 
-          <Card ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)} className="shadow-lg mt-6" id="totalDevoteeFriends">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium">Total Devotee Friends</CardTitle>
-            </CardHeader>
-            <div className="p-6 pt-0"> {/* Replaced CardContent with a div */}
-              <div className="text-4xl font-bold">{totalDevoteeFriends}</div>
-              <p className="text-xs text-muted-foreground">
-                Number of registered devotee friends.
-              </p>
-            </div>
-          </Card>
+          <MobileStatCard
+            id="totalDevoteeFriends"
+            title="Total Devotee Friends"
+            value={totalDevoteeFriends}
+            description="Number of registered devotee friends."
+            className="mt-6" // Apply margin for spacing
+            ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)}
+          />
 
-          <Card ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)} className="shadow-lg mt-6" id="participantsWithoutDevoteeFriend">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium">Participants Without Devotee Friend</CardTitle>
-            </CardHeader>
-            <div className="p-6 pt-0"> {/* Replaced CardContent with a div */}
-              <div className="text-4xl font-bold">{participantsWithoutDevoteeFriend}</div>
-              <p className="text-xs text-muted-foreground">
-                Participants not associated with a devotee friend.
-              </p>
-            </div>
-          </Card>
+          <MobileStatCard
+            id="participantsWithoutDevoteeFriend"
+            title="Participants Without Devotee Friend"
+            value={participantsWithoutDevoteeFriend}
+            description="Participants not associated with a devotee friend."
+            className="mt-6" // Apply margin for spacing
+            ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)}
+          />
 
           {/* Render MobileProgramAttendance for capture */}
           <div ref={hiddenProgramAttendanceContainerRef} className="mt-6" id="hidden-program-attendance-container">

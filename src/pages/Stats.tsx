@@ -44,6 +44,7 @@ import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance"
 import MobileDevoteeFriendAttendance from "@/components/stats/MobileDevoteeFriendAttendance";
 import MobileSessionDistributionByProgram from "@/components/stats/MobileSessionDistributionByProgram";
 import MobileSessionDistributionByDevoteeFriend from "@/components/stats/MobileSessionDistributionByDevoteeFriend";
+import MobileDevoteeFriendSummary from "@/components/stats/MobileDevoteeFriendSummary"; // New import
 
 interface DevoteeFriend {
   id: string;
@@ -304,6 +305,21 @@ const Stats = () => {
       dataForDevoteeFriendAttendanceExport: exportData,
     };
   }, [devoteeFriendProgramSessionAttendance]);
+
+  // Calculate devotee friend participant summary
+  const devoteeFriendParticipantSummary = React.useMemo(() => {
+    const summary: Record<string, number> = {};
+    if (allParticipants) {
+        allParticipants.forEach(p => {
+            const dfName = p.devotee_friend_name || "None";
+            summary[dfName] = (summary[dfName] || 0) + 1;
+        });
+    }
+    return Object.entries(summary).map(([devoteeFriendName, participantCount]) => ({
+        devoteeFriendName,
+        participantCount
+    })).sort((a, b) => a.devoteeFriendName.localeCompare(b.devoteeFriendName));
+  }, [allParticipants]);
 
 
   // Session Attendance Distribution
@@ -605,54 +621,10 @@ const Stats = () => {
             <CardContent>
               {isMobile ? (
                 <>
-                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Full Table View</h3>
-                  {devoteeFriendProgramSessionAttendance.length > 0 && allDevoteeFriendNames.length > 0 && sortedUniqueSessions.length > 0 ? (
-                    <div className="relative overflow-x-auto max-h-[500px] border rounded-md">
-                      <Table className="min-w-full">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="sticky left-0 bg-background z-20 w-[300px] min-w-[300px]">Program/Session (Date)</TableHead>
-                            {allDevoteeFriendNames.map(dfName => (
-                              <TableHead key={dfName} className="text-center min-w-[150px] bg-background z-10">
-                                {dfName}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {sortedUniqueSessions.map((sessionDetail, rowIndex) => (
-                            <TableRow key={`row-${rowIndex}`}>
-                              <TableCell className="sticky left-0 bg-background z-20 font-medium w-[300px] min-w-[300px]">
-                                {sessionDetail.programName} - {sessionDetail.sessionName} ({format(parseISO(sessionDetail.sessionDate), "MMM dd, yyyy")})
-                              </TableCell>
-                              {allDevoteeFriendNames.map(dfName => {
-                                let attendanceCount = 0;
-                                const dfData = devoteeFriendProgramSessionAttendance.find(df => df.devoteeFriendName === dfName);
-                                if (dfData) {
-                                  dfData.programs.forEach(program => {
-                                    if (program.program_name === sessionDetail.programName) {
-                                      program.sessions.forEach(session => {
-                                        if (session.name === sessionDetail.sessionName && session.date === sessionDetail.sessionDate) {
-                                          attendanceCount = session.count;
-                                        }
-                                      });
-                                    }
-                                  });
-                                }
-                                return (
-                                  <TableCell key={`${dfName}-${rowIndex}`} className="text-center">
-                                    {attendanceCount > 0 ? attendanceCount : "-"}
-                                  </TableCell>
-                                );
-                              })}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
-                  )}
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Devotee Friend Participant Summary</h3>
+                  <MobileDevoteeFriendSummary data={devoteeFriendParticipantSummary} />
+
+                  <h3 className="text-lg font-semibold mt-6 mb-3 text-gray-800 dark:text-gray-200">Devotee Friend Session Breakdown</h3>
                   <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
                 </>
               ) : (

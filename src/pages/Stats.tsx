@@ -29,6 +29,15 @@ import DownloadShareButton from "@/components/stats/DownloadShareButton";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
 
 // Import new mobile-specific components
 import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance";
@@ -52,6 +61,8 @@ interface DevoteeFriendAttendanceExportRow {
 const Stats = () => {
   const isMobile = useIsMobile();
   const [isDownloadingAllDfCards, setIsDownloadingAllDfCards] = React.useState(false);
+  const [selectedProgramFilterId, setSelectedProgramFilterId] = React.useState<string | null>(null);
+
 
   // Fetch all participants
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
@@ -70,6 +81,13 @@ const Stats = () => {
     queryKey: ["programs"],
     queryFn: fetchPrograms,
   });
+
+  // Set default selected program once programs are loaded
+  React.useEffect(() => {
+    if (programs && programs.length > 0 && !selectedProgramFilterId) {
+      setSelectedProgramFilterId(programs[0].id);
+    }
+  }, [programs, selectedProgramFilterId]);
 
   // Fetch all attended programs for all participants to aggregate session attendance
   const { data: allAttendedProgramsMap, isLoading: isLoadingAllAttendedPrograms, error: allAttendedProgramsError } = useQuery<Record<string, AttendedProgram[]>, Error>({
@@ -117,6 +135,11 @@ const Stats = () => {
 
       Object.values(allAttendedProgramsMap).forEach(attendedPrograms => {
         attendedPrograms.forEach(attendedProgram => {
+          // Apply program filter here
+          if (selectedProgramFilterId && attendedProgram.program_id !== selectedProgramFilterId) {
+            return;
+          }
+
           const programId = attendedProgram.program_id;
           const programDetails = programsMap.get(programId);
 
@@ -149,7 +172,7 @@ const Stats = () => {
     }));
 
     return sortedProgramAttendance.sort((a, b) => a.program_name.localeCompare(b.program_name));
-  }, [allAttendedProgramsMap, programs]);
+  }, [allAttendedProgramsMap, programs, selectedProgramFilterId]);
 
   // Devotee Friend Session Attendance
   const devoteeFriendProgramSessionAttendance = React.useMemo(() => {
@@ -478,6 +501,26 @@ const Stats = () => {
               <CardTitle className="text-lg font-medium">Program and Session Attendance Overview</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-4">
+                <Label htmlFor="program-filter-overview">Select Program</Label>
+                <Select
+                  value={selectedProgramFilterId || ""}
+                  onValueChange={setSelectedProgramFilterId}
+                  disabled={isLoadingPrograms || !programs || programs.length === 0}
+                >
+                  <SelectTrigger id="program-filter-overview" className="w-[280px]">
+                    <SelectValue placeholder="Select a program" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {programs?.map((program) => (
+                      <SelectItem key={program.id} value={program.id}>
+                        {program.program_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {isMobile ? (
                 <>
                   <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Mobile-Optimized View</h3>

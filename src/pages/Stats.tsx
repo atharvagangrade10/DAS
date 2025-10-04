@@ -4,7 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { toast } "sonner";
 import {
   fetchAllParticipants,
   fetchDevoteeFriends,
@@ -25,12 +25,15 @@ import {
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
 import ExportToExcelButton from "@/components/ExportToExcelButton"; // Import ExportToExcelButton
+import { Button } from "@/components/ui/button"; // Import Button for the new export button
+import { Image } from "lucide-react"; // Import Image icon
 
 // Import new mobile-specific components
 import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance";
 import MobileDevoteeFriendAttendance from "@/components/stats/MobileDevoteeFriendAttendance";
 import MobileSessionDistributionByProgram from "@/components/stats/MobileSessionDistributionByProgram";
 import MobileSessionDistributionByDevoteeFriend from "@/components/stats/MobileSessionDistributionByDevoteeFriend";
+import ExportImagesDialog from "@/components/stats/ExportImagesDialog"; // Import the new dialog
 
 interface DevoteeFriend {
   id: string;
@@ -47,6 +50,7 @@ interface DevoteeFriendAttendanceExportRow {
 
 const Stats = () => {
   const isMobile = useIsMobile(); // Use the hook
+  const [isExportImagesDialogOpen, setIsExportImagesDialogOpen] = React.useState(false); // State for the new dialog
 
   // Fetch all participants
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
@@ -450,12 +454,18 @@ const Stats = () => {
           <Card className="lg:col-span-3 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
-              <ExportToExcelButton
-                data={dataForDevoteeFriendAttendanceExport}
-                fileName="devotee_friend_session_attendance"
-                sheetName="DF Attendance"
-                disabled={isExportDfAttendanceButtonDisabled}
-              />
+              <div className="flex gap-2">
+                <ExportToExcelButton
+                  data={dataForDevoteeFriendAttendanceExport}
+                  fileName="devotee_friend_session_attendance"
+                  sheetName="DF Attendance"
+                  disabled={isExportDfAttendanceButtonDisabled}
+                />
+                <Button onClick={() => setIsExportImagesDialogOpen(true)} disabled={isLoading} className="flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  Export to Images
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {isMobile ? (
@@ -571,24 +581,17 @@ const Stats = () => {
                     <TableBody>
                       {sessionAttendanceDistribution.byDevoteeFriend.map((df) => (
                         <React.Fragment key={df.devoteeFriendName}>
-                          {df.distribution.length > 0 ? (
-                            df.distribution.map((item, index) => (
-                              <TableRow key={`${df.devoteeFriendName}-${item.numSessions}`}>
-                                {index === 0 && (
-                                  <TableCell rowSpan={df.distribution.length} className="font-medium align-top">
-                                    {df.devoteeFriendName}
-                                  </TableCell>
-                                )}
-                                <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
-                                <TableCell className="text-right">{item.count}</TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell className="font-medium">{df.devoteeFriendName}</TableCell>
-                              <TableCell colSpan={2} className="text-muted-foreground">No session attendance distribution.</TableCell>
+                          {df.distribution.map((item, index) => (
+                            <TableRow key={`${df.devoteeFriendName}-${item.numSessions}`}>
+                              {index === 0 && (
+                                <TableCell rowSpan={df.distribution.length} className="font-medium align-top">
+                                  {df.devoteeFriendName}
+                                </TableCell>
+                              )}
+                              <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
+                              <TableCell className="text-right">{item.count}</TableCell>
                             </TableRow>
-                          )}
+                          ))}
                         </React.Fragment>
                       ))}
                     </TableBody>
@@ -601,6 +604,17 @@ const Stats = () => {
           </Card>
         </div>
       )}
+
+      <ExportImagesDialog
+        isOpen={isExportImagesDialogOpen}
+        onOpenChange={setIsExportImagesDialogOpen}
+        totalParticipants={totalParticipants}
+        totalDevoteeFriends={totalDevoteeFriends}
+        participantsWithoutDevoteeFriend={participantsWithoutDevoteeFriend}
+        programSessionAttendance={programSessionAttendance}
+        devoteeFriendProgramSessionAttendance={devoteeFriendProgramSessionAttendance}
+        sessionAttendanceDistribution={sessionAttendanceDistribution}
+      />
     </div>
   );
 };

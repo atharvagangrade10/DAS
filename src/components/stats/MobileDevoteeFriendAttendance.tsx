@@ -40,7 +40,11 @@ const MobileDevoteeFriendAttendance: React.FC<MobileDevoteeFriendAttendanceProps
           </CardHeader>
           <CardContent className="space-y-4">
             {df.programs.length > 0 ? (
-              <Accordion type="multiple" className="w-full">
+              <Accordion
+                type="multiple"
+                className="w-full"
+                defaultValue={df.programs.map(program => program.program_name)} // Keep all programs expanded by default
+              >
                 {df.programs.map((program) => (
                   <AccordionItem key={`${df.devoteeFriendName}-${program.program_name}`} value={program.program_name}>
                     <AccordionTrigger className="text-base font-medium">{program.program_name}</AccordionTrigger>

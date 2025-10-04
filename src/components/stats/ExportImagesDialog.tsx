@@ -16,8 +16,6 @@ import html2canvas from "html2canvas";
 // Re-import the mobile-specific components to render them within the dialog for capture
 import MobileProgramAttendance from "./MobileProgramAttendance";
 import MobileDevoteeFriendAttendance from "./MobileDevoteeFriendAttendance";
-import MobileSessionDistributionByProgram from "./MobileSessionDistributionByProgram";
-import MobileSessionDistributionByDevoteeFriend from "./MobileSessionDistributionByDevoteeFriend";
 import MobileStatCard from "./MobileStatCard";
 
 interface SessionData {
@@ -29,22 +27,6 @@ interface SessionData {
 interface ProgramAttendanceData {
   program_name: string;
   sessions: SessionData[];
-}
-
-interface DistributionItem {
-  numSessions: number;
-  count: number;
-}
-
-interface ProgramDistributionData {
-  programId: string;
-  programName: string;
-  distribution: DistributionItem[];
-}
-
-interface DevoteeFriendDistributionData {
-  devoteeFriendName: string;
-  distribution: DistributionItem[];
 }
 
 interface ProgramDataForDfAttendance {
@@ -65,10 +47,6 @@ interface ExportImagesDialogProps {
   participantsWithoutDevoteeFriend: number;
   programSessionAttendance: ProgramAttendanceData[];
   devoteeFriendProgramSessionAttendance: DevoteeFriendAttendanceData[];
-  sessionAttendanceDistribution: {
-    globalByProgram: ProgramDistributionData[];
-    byDevoteeFriend: DevoteeFriendDistributionData[];
-  };
 }
 
 interface CapturedImage {
@@ -86,7 +64,6 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
   participantsWithoutDevoteeFriend,
   programSessionAttendance,
   devoteeFriendProgramSessionAttendance,
-  sessionAttendanceDistribution,
 }) => {
   const [capturedImages, setCapturedImages] = React.useState<CapturedImage[]>([]);
   const [isCapturing, setIsCapturing] = React.useState(false);
@@ -94,8 +71,6 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
   const cardRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const hiddenDfAttendanceContainerRef = React.useRef<HTMLDivElement | null>(null);
   const hiddenProgramAttendanceContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const hiddenGlobalDistContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const hiddenDfDistContainerRef = React.useRef<HTMLDivElement | null>(null);
 
   const captureElement = async (element: HTMLElement, title: string, fileName: string) => {
     if (element) {
@@ -156,27 +131,9 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
       }
     }
 
-    if (hiddenGlobalDistContainerRef.current) {
-      const cards = hiddenGlobalDistContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const card of Array.from(cards)) {
-        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'Program Distribution';
-        const captured = await captureElement(card as HTMLElement, title, `session_dist_program_${title.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) newCapturedImages.push(captured);
-      }
-    }
-
-    if (hiddenDfDistContainerRef.current) {
-      const cards = hiddenDfDistContainerRef.current.querySelectorAll('.shadow-sm');
-      for (const card of Array.from(cards)) {
-        const title = card.querySelector('.text-lg.font-semibold')?.textContent || 'DF Distribution';
-        const captured = await captureElement(card as HTMLElement, title, `session_dist_df_${title.replace(/\s/g, "_").toLowerCase()}`);
-        if (captured) newCapturedImages.push(captured);
-      }
-    }
-
     setCapturedImages(newCapturedImages);
     setIsCapturing(false);
-  }, [isOpen, totalParticipants, totalDevoteeFriends, participantsWithoutDevoteeFriend, programSessionAttendance, devoteeFriendProgramSessionAttendance, sessionAttendanceDistribution]);
+  }, [isOpen, totalParticipants, totalDevoteeFriends, participantsWithoutDevoteeFriend, programSessionAttendance, devoteeFriendProgramSessionAttendance]);
 
   React.useEffect(() => {
     if (isOpen && !isCapturing && capturedImages.length === 0) {
@@ -234,7 +191,9 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
         }
       }
     } else {
-      toast.error("Your browser does not support sharing multiple files.");
+      toast.error("Sharing all images at once is not supported on your browser.", {
+        description: "Please try downloading the images instead.",
+      });
     }
   };
 
@@ -309,12 +268,6 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             </div>
             <div ref={hiddenDfAttendanceContainerRef}>
               <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
-            </div>
-            <div ref={hiddenGlobalDistContainerRef}>
-              <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
-            </div>
-            <div ref={hiddenDfDistContainerRef}>
-              <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
             </div>
           </div>
         </div>

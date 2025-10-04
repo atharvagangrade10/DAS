@@ -454,7 +454,7 @@ const Stats = () => {
           <Card className="lg:col-span-3 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <ExportToExcelButton
                   data={dataForDevoteeFriendAttendanceExport}
                   fileName="devotee_friend_session_attendance"
@@ -613,7 +613,6 @@ const Stats = () => {
         participantsWithoutDevoteeFriend={participantsWithoutDevoteeFriend}
         programSessionAttendance={programSessionAttendance}
         devoteeFriendProgramSessionAttendance={devoteeFriendProgramSessionAttendance}
-        sessionAttendanceDistribution={sessionAttendanceDistribution}
       />
     </div>
   );

@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile"; // Import useIsMobile
+import ExportToExcelButton from "@/components/ExportToExcelButton"; // Import ExportToExcelButton
 
 // Import new mobile-specific components
 import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance";
@@ -36,6 +37,12 @@ interface DevoteeFriend {
   name: string;
   phone: string;
   email: string;
+}
+
+// Define the interface for the export row
+interface DevoteeFriendAttendanceExportRow {
+  "Program Name DYS": string; // Combines program name, session name, and date
+  [devoteeFriendName: string]: string | number; // Dynamic keys for devotee friends
 }
 
 const Stats = () => {
@@ -202,6 +209,78 @@ const Stats = () => {
     return sortedDfAttendance;
   }, [allParticipants, allAttendedProgramsMap, programs, devoteeFriends]);
 
+  // Prepare data for Devotee Friend Session Attendance export
+  const dataForDevoteeFriendAttendanceExport: DevoteeFriendAttendanceExportRow[] = React.useMemo(() => {
+    if (!devoteeFriendProgramSessionAttendance || devoteeFriendProgramSessionAttendance.length === 0) {
+      return [];
+    }
+
+    const allDevoteeFriendNames: string[] = [];
+    devoteeFriendProgramSessionAttendance.forEach(df => {
+      allDevoteeFriendNames.push(df.devoteeFriendName);
+    });
+    // Ensure "None" is is included if it exists in the data
+    if (!allDevoteeFriendNames.includes("None") && devoteeFriendProgramSessionAttendance.some(df => df.devoteeFriendName === "None")) {
+        allDevoteeFriendNames.push("None");
+    }
+    allDevoteeFriendNames.sort(); // Keep consistent order
+
+    const uniqueProgramSessions = new Map<string, { programName: string; sessionName: string; sessionDate: string }>();
+
+    // Collect all unique program-session combinations
+    devoteeFriendProgramSessionAttendance.forEach(df => {
+      df.programs.forEach(program => {
+        program.sessions.forEach(session => {
+          const key = `${program.program_name}-${session.name}-${session.date}`;
+          if (!uniqueProgramSessions.has(key)) {
+            uniqueProgramSessions.set(key, {
+              programName: program.program_name,
+              sessionName: session.name,
+              sessionDate: session.date,
+            });
+          }
+        });
+      });
+    });
+
+    // Sort unique sessions for consistent row order
+    const sortedUniqueSessions = Array.from(uniqueProgramSessions.values()).sort((a, b) => {
+      const programCompare = a.programName.localeCompare(b.programName);
+      if (programCompare !== 0) return programCompare;
+      return new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime();
+    });
+
+    const exportData: DevoteeFriendAttendanceExportRow[] = [];
+
+    sortedUniqueSessions.forEach(sessionDetail => {
+      const formattedDate = format(parseISO(sessionDetail.sessionDate), "yyyy-MM-dd");
+      const row: DevoteeFriendAttendanceExportRow = {
+        "Program Name DYS": `${sessionDetail.programName} - ${sessionDetail.sessionName} (${formattedDate})`,
+      };
+
+      allDevoteeFriendNames.forEach(dfName => {
+        let attendanceCount = 0;
+        const dfData = devoteeFriendProgramSessionAttendance.find(df => df.devoteeFriendName === dfName);
+        if (dfData) {
+          dfData.programs.forEach(program => {
+            if (program.program_name === sessionDetail.programName) {
+              program.sessions.forEach(session => {
+                if (session.name === sessionDetail.sessionName && session.date === sessionDetail.sessionDate) {
+                  attendanceCount = session.count;
+                }
+              });
+            }
+          });
+        }
+        row[dfName] = attendanceCount > 0 ? attendanceCount : ""; // Use empty string for 0 attendance
+      });
+      exportData.push(row);
+    });
+
+    return exportData;
+  }, [devoteeFriendProgramSessionAttendance]);
+
+
   // Session Attendance Distribution
   const sessionAttendanceDistribution = React.useMemo(() => {
     const globalDistributionByProgram: Record<string, Record<number, number>> = {};
@@ -268,6 +347,8 @@ const Stats = () => {
 
   const isLoading = isLoadingParticipants || isLoadingFriends || isLoadingPrograms || isLoadingAllAttendedPrograms;
   const hasError = participantsError || friendsError || programsError || allAttendedProgramsError;
+  const isExportDfAttendanceButtonDisabled = isLoading || dataForDevoteeFriendAttendanceExport.length === 0;
+
 
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-8">
@@ -367,8 +448,14 @@ const Stats = () => {
           </Card>
 
           <Card className="lg:col-span-3 shadow-lg">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
+              <ExportToExcelButton
+                data={dataForDevoteeFriendAttendanceExport}
+                fileName="devotee_friend_session_attendance"
+                sheetName="DF Attendance"
+                disabled={isExportDfAttendanceButtonDisabled}
+              />
             </CardHeader>
             <CardContent>
               {isMobile ? (

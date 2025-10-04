@@ -28,9 +28,30 @@ const DownloadShareButton: React.FC<DownloadShareButtonProps> = ({ cardId, cardT
       return null;
     }
 
+    // Store original styles
+    const originalCardOverflow = cardElement.style.overflow;
+    const originalCardHeight = cardElement.style.height;
+
+    // Temporarily modify styles for capture
+    cardElement.style.overflow = 'visible';
+    cardElement.style.height = 'auto'; // Ensure height adjusts to content
+
+    // Find all open AccordionContent elements within the card and set their overflow to visible
+    // The AccordionContent itself has overflow-hidden for animation purposes.
+    const accordionContents = cardElement.querySelectorAll('div[data-state="open"].overflow-hidden');
+    const originalAccordionOverflows: string[] = [];
+    accordionContents.forEach((el: Element) => {
+      const htmlEl = el as HTMLElement;
+      originalAccordionOverflows.push(htmlEl.style.overflow);
+      htmlEl.style.overflow = 'visible';
+    });
+
     try {
+      // Give the browser a moment to apply the style changes before capturing
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const canvas = await html2canvas(cardElement, {
-        useCORS: true, // Important for images loaded from other origins
+        useCORS: true,
         scale: 2, // Increase scale for better resolution
       });
       return canvas.toDataURL("image/png");
@@ -41,6 +62,12 @@ const DownloadShareButton: React.FC<DownloadShareButtonProps> = ({ cardId, cardT
       });
       return null;
     } finally {
+      // Revert styles
+      cardElement.style.overflow = originalCardOverflow;
+      cardElement.style.height = originalCardHeight;
+      accordionContents.forEach((el: Element, index) => {
+        (el as HTMLElement).style.overflow = originalAccordionOverflows[index];
+      });
       setIsCapturing(false);
     }
   };

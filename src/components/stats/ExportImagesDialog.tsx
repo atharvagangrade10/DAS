@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Download, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Re-import the mobile-specific components to render them within the dialog for capture
 import MobileProgramAttendance from "./MobileProgramAttendance";
@@ -192,20 +194,42 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
       }
     } else {
       toast.error("Sharing all images at once is not supported on your browser.", {
-        description: "Please try downloading the images instead.",
+        description: "Please share images one by one using the buttons below.",
       });
+    }
+  };
+
+  const handleShareSingle = async (dataUrl: string, title: string, fileName: string) => {
+    try {
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: "image/jpeg" });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: title,
+          text: `DAS Statistic: ${title}`,
+        });
+      } else {
+        toast.error("Sharing is not supported on your browser.");
+      }
+    } catch (error) {
+      if ((error as DOMException).name !== "AbortError") {
+        toast.error("Failed to share image.");
+      }
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] flex flex-col">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
             <div>
               <DialogTitle>Export Statistics as Images</DialogTitle>
               <DialogDescription>
-                Generate images for bulk download or sharing.
+                Download or share the generated images below.
               </DialogDescription>
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -219,26 +243,42 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="flex flex-col items-center justify-center flex-1 py-10">
-          {isCapturing ? (
-            <>
-              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-              <p className="text-lg font-semibold">Generating images...</p>
-              <p className="text-sm text-muted-foreground">This might take a moment.</p>
-            </>
-          ) : capturedImages.length > 0 ? (
-            <>
-              <p className="text-lg font-semibold mb-2">Images Generated Successfully!</p>
-              <p className="text-sm text-muted-foreground text-center">
-                Use the buttons above to download or share all {capturedImages.length} images.
-              </p>
-            </>
-          ) : (
-            <p className="text-center text-muted-foreground">
-              Could not generate images. Please close and try again.
-            </p>
-          )}
-        </div>
+        {isCapturing ? (
+          <div className="flex flex-col items-center justify-center flex-1">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-lg font-semibold">Generating images...</p>
+            <p className="text-sm text-muted-foreground">This might take a moment.</p>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full pr-4">
+              <div className="space-y-6">
+                {capturedImages.length > 0 ? (
+                  capturedImages.map((image) => (
+                    <Card key={image.id} className="shadow-md">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{image.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-col items-center">
+                        <img src={image.dataUrl} alt={image.title} className="max-w-full h-auto border rounded-md mb-4" />
+                        <div className="flex gap-2">
+                          <Button onClick={() => handleDownloadImage(image.dataUrl, image.fileName)} variant="outline">
+                            <Download className="mr-2 h-4 w-4" /> Download
+                          </Button>
+                          <Button onClick={() => handleShareSingle(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
+                            <Share2 className="mr-2 h-4 w-4" /> Share
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground py-10">No images generated. Try again.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
 
         <div className="absolute -left-[9999px] -top-[9999px] w-[600px] p-6 bg-background">
           <div className="space-y-6">

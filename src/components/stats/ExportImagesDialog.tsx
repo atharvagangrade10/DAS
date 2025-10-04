@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Share2, Loader2 } from "lucide-react"; // Removed Whatsapp, kept Share2
+import { Download, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -103,23 +103,27 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
 }) => {
   const [capturedImages, setCapturedImages] = React.useState<CapturedImage[]>([]);
   const [isCapturing, setIsCapturing] = React.useState(false);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(); // This hook is not used in the hidden section, but kept for context if needed elsewhere.
 
   const cardRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+  const hiddenDfAttendanceContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const hiddenProgramAttendanceContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const hiddenGlobalDistContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const hiddenDfDistContainerRef = React.useRef<HTMLDivElement | null>(null);
 
-  const captureCard = async (cardId: string, title: string, fileName: string) => {
-    const element = cardRefs.current[cardId];
+  const captureElement = async (element: HTMLElement, title: string, fileName: string) => {
     if (element) {
       try {
         const canvas = await html2canvas(element, {
           scale: 2, // Increase scale for better resolution
           useCORS: true, // Enable CORS for images if any
           logging: false,
+          backgroundColor: element.style.backgroundColor || window.getComputedStyle(element).backgroundColor, // Ensure background is captured
         });
         const dataUrl = canvas.toDataURL("image/jpeg", 0.9); // Export as JPEG
-        return { id: cardId, title, dataUrl, fileName: `${fileName}.jpg` };
+        return { id: element.id || title.replace(/\s/g, "_").toLowerCase(), title, dataUrl, fileName: `${fileName}.jpg` };
       } catch (error) {
-        console.error(`Failed to capture card ${cardId}:`, error);
+        console.error(`Failed to capture element for "${title}":`, error);
         toast.error(`Failed to capture image for "${title}"`, {
           description: "Please try again.",
         });
@@ -135,30 +139,85 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
     setIsCapturing(true);
     setCapturedImages([]); // Clear previous images
 
-    const cardConfigs = [
+    const newCapturedImages: CapturedImage[] = [];
+
+    // Capture static cards
+    const staticCardConfigs = [
       { id: "totalParticipants", title: "Total Participants", fileName: "total_participants" },
       { id: "totalDevoteeFriends", title: "Total Devotee Friends", fileName: "total_devotee_friends" },
       { id: "participantsWithoutDevoteeFriend", title: "Participants Without Devotee Friend", fileName: "participants_without_df" },
-      { id: "programSessionAttendance", title: "Program and Session Attendance Overview", fileName: "program_session_attendance" },
-      { id: "devoteeFriendSessionAttendance", title: "Devotee Friend Session Attendance", fileName: "devotee_friend_attendance" },
-      { id: "globalDistributionByProgram", title: "Overall Distribution by Program", fileName: "distribution_by_program" },
-      { id: "byDevoteeFriendDistribution", title: "Distribution by Devotee Friend", fileName: "distribution_by_df" },
     ];
 
-    const newCapturedImages: CapturedImage[] = [];
-    for (const config of cardConfigs) {
-      const captured = await captureCard(config.id, config.title, config.fileName);
+    for (const config of staticCardConfigs) {
+      const captured = await captureElement(cardRefs.current[config.id]!, config.title, config.fileName);
       if (captured) {
         newCapturedImages.push(captured);
       }
     }
+
+    // Capture Program and Session Attendance Overview (using MobileProgramAttendance)
+    if (hiddenProgramAttendanceContainerRef.current) {
+      const programAttendanceCards = hiddenProgramAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const cardElement of Array.from(programAttendanceCards)) {
+        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
+        const programName = titleElement ? titleElement.textContent : 'Program Attendance';
+        const captured = await captureElement(cardElement as HTMLElement, programName!, `program_attendance_${programName?.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) {
+          newCapturedImages.push(captured);
+        }
+      }
+    }
+
+    // Capture Devotee Friend Session Attendance (individual cards from MobileDevoteeFriendAttendance)
+    if (hiddenDfAttendanceContainerRef.current) {
+      const dfCards = hiddenDfAttendanceContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const cardElement of Array.from(dfCards)) {
+        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
+        const devoteeFriendName = titleElement ? titleElement.textContent : 'Devotee Friend Attendance';
+        const captured = await captureElement(cardElement as HTMLElement, devoteeFriendName!, `df_attendance_${devoteeFriendName?.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) {
+          newCapturedImages.push(captured);
+        }
+      }
+    }
+
+    // Capture Session Attendance Distribution by Program (individual cards from MobileSessionDistributionByProgram)
+    if (hiddenGlobalDistContainerRef.current) {
+      const globalDistCards = hiddenGlobalDistContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const cardElement of Array.from(globalDistCards)) {
+        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
+        const programName = titleElement ? titleElement.textContent : 'Program Distribution';
+        const captured = await captureElement(cardElement as HTMLElement, programName!, `session_dist_program_${programName?.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) {
+          newCapturedImages.push(captured);
+        }
+      }
+    }
+
+    // Capture Session Attendance Distribution by Devotee Friend (individual cards from MobileSessionDistributionByDevoteeFriend)
+    if (hiddenDfDistContainerRef.current) {
+      const dfDistCards = hiddenDfDistContainerRef.current.querySelectorAll('.shadow-sm');
+      for (const cardElement of Array.from(dfDistCards)) {
+        const titleElement = cardElement.querySelector('.text-lg.font-semibold');
+        const devoteeFriendName = titleElement ? titleElement.textContent : 'Devotee Friend Distribution';
+        const captured = await captureElement(cardElement as HTMLElement, devoteeFriendName!, `session_dist_df_${devoteeFriendName?.replace(/\s/g, "_").toLowerCase()}`);
+        if (captured) {
+          newCapturedImages.push(captured);
+        }
+      }
+    }
+
     setCapturedImages(newCapturedImages);
     setIsCapturing(false);
-  }, [isOpen]);
+  }, [isOpen, totalParticipants, totalDevoteeFriends, participantsWithoutDevoteeFriend, programSessionAttendance, devoteeFriendProgramSessionAttendance, sessionAttendanceDistribution]);
 
   React.useEffect(() => {
     if (isOpen && !isCapturing && capturedImages.length === 0) {
-      handleCaptureAll();
+      // Delay capture slightly to ensure all hidden elements are fully rendered
+      const timer = setTimeout(() => {
+        handleCaptureAll();
+      }, 100); 
+      return () => clearTimeout(timer);
     }
   }, [isOpen, isCapturing, capturedImages.length, handleCaptureAll]);
 
@@ -234,7 +293,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
                           <Download className="mr-2 h-4 w-4" /> Download
                         </Button>
                         <Button onClick={() => handleShareToWhatsApp(image.dataUrl, image.title, image.fileName)} className="bg-green-500 hover:bg-green-600 text-white">
-                          <Share2 className="mr-2 h-4 w-4" /> Share to WhatsApp {/* Changed to Share2 */}
+                          <Share2 className="mr-2 h-4 w-4" /> Share {/* Changed to Share2 */}
                         </Button>
                       </div>
                     </CardContent>
@@ -248,8 +307,8 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
         )}
 
         {/* Hidden elements for capturing */}
-        <div className="absolute -left-[9999px] -top-[9999px] w-[1200px] p-6"> {/* Increased width for better capture */}
-          <Card ref={(el) => (cardRefs.current["totalParticipants"] = el)} className="shadow-lg">
+        <div className="absolute -left-[9999px] -top-[9999px] w-[1200px] p-6 bg-background"> {/* Increased width for better capture, added bg-background */}
+          <Card ref={(el) => (cardRefs.current["totalParticipants"] = el)} className="shadow-lg" id="totalParticipants">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Total Participants</CardTitle>
             </CardHeader>
@@ -261,7 +320,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             </CardContent>
           </Card>
 
-          <Card ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)} className="shadow-lg mt-6">
+          <Card ref={(el) => (cardRefs.current["totalDevoteeFriends"] = el)} className="shadow-lg mt-6" id="totalDevoteeFriends">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Total Devotee Friends</CardTitle>
             </CardHeader>
@@ -273,7 +332,7 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             </CardContent>
           </Card>
 
-          <Card ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)} className="shadow-lg mt-6">
+          <Card ref={(el) => (cardRefs.current["participantsWithoutDevoteeFriend"] = el)} className="shadow-lg mt-6" id="participantsWithoutDevoteeFriend">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Participants Without Devotee Friend</CardTitle>
             </CardHeader>
@@ -285,194 +344,25 @@ const ExportImagesDialog: React.FC<ExportImagesDialogProps> = ({
             </CardContent>
           </Card>
 
-          <Card ref={(el) => (cardRefs.current["programSessionAttendance"] = el)} className="shadow-lg mt-6">
-            <CardHeader>
-              <CardTitle className="text-lg font-medium">Program and Session Attendance Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isMobile ? (
-                <MobileProgramAttendance data={programSessionAttendance} />
-              ) : programSessionAttendance.length > 0 ? (
-                <div className="overflow-x-auto"> {/* Use overflow-x-auto for table capture */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[200px]">Program Name</TableHead>
-                        <TableHead>Session Name</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Attendees</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {programSessionAttendance.map((program) => (
-                        <React.Fragment key={program.program_name}>
-                          {program.sessions.map((session, index) => (
-                            <TableRow key={`${program.program_name}-${session.name}-${session.date}`}>
-                              {index === 0 && (
-                                <TableCell rowSpan={program.sessions.length} className="font-medium align-top">
-                                  {program.program_name}
-                                </TableCell>
-                              )}
-                              <TableCell>{session.name}</TableCell>
-                              <TableCell>{format(parseISO(session.date), "MMM dd, yyyy")}</TableCell>
-                              <TableCell className="text-right">{session.count}</TableCell>
-                            </TableRow>
-                          ))}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
-              )}
-            </CardContent>
-          </Card>
+          {/* Render MobileProgramAttendance for capture */}
+          <div ref={hiddenProgramAttendanceContainerRef} className="mt-6" id="hidden-program-attendance-container">
+            <MobileProgramAttendance data={programSessionAttendance} />
+          </div>
 
-          <Card ref={(el) => (cardRefs.current["devoteeFriendSessionAttendance"] = el)} className="shadow-lg mt-6">
-            <CardHeader>
-              <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isMobile ? (
-                <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
-              ) : devoteeFriendProgramSessionAttendance.length > 0 ? (
-                <div className="overflow-x-auto"> {/* Use overflow-x-auto for table capture */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[150px]">Devotee Friend</TableHead>
-                        <TableHead className="w-[200px]">Program Name</TableHead>
-                        <TableHead>Session Name</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Attendees</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {devoteeFriendProgramSessionAttendance.map((df) => (
-                        <React.Fragment key={df.devoteeFriendName}>
-                          {df.programs.length > 0 ? (
-                            df.programs.map((program, programIndex) => (
-                              <React.Fragment key={`${df.devoteeFriendName}-${program.program_name}`}>
-                                {program.sessions.map((session, sessionIndex) => (
-                                  <TableRow key={`${df.devoteeFriendName}-${program.program_name}-${session.name}-${session.date}`}>
-                                    {programIndex === 0 && sessionIndex === 0 && (
-                                      <TableCell rowSpan={df.programs.reduce((acc, p) => acc + p.sessions.length, 0)} className="font-medium align-top">
-                                        {df.devoteeFriendName}
-                                      </TableCell>
-                                    )}
-                                    {sessionIndex === 0 && (
-                                      <TableCell rowSpan={program.sessions.length} className="font-medium align-top">
-                                        {program.program_name}
-                                      </TableCell>
-                                    )}
-                                    <TableCell>{session.name}</TableCell>
-                                    <TableCell>{format(parseISO(session.date), "MMM dd, yyyy")}</TableCell>
-                                    <TableCell className="text-right">{session.count}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </React.Fragment>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell className="font-medium">{df.devoteeFriendName}</TableCell>
-                              <TableCell colSpan={4} className="text-muted-foreground">No program attendance recorded.</TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
-              )}
-            </CardContent>
-          </Card>
+          {/* Render MobileDevoteeFriendAttendance for capture */}
+          <div ref={hiddenDfAttendanceContainerRef} className="mt-6" id="hidden-devotee-friend-attendance-container">
+            <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
+          </div>
 
-          <Card ref={(el) => (cardRefs.current["globalDistributionByProgram"] = el)} className="shadow-lg mt-6">
-            <CardHeader>
-              <CardTitle className="text-lg font-medium">Overall Distribution by Program</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isMobile ? (
-                <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
-              ) : sessionAttendanceDistribution.globalByProgram.length > 0 ? (
-                <div className="overflow-x-auto"> {/* Use overflow-x-auto for table capture */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[200px]">Program Name</TableHead>
-                        <TableHead>Sessions Attended</TableHead>
-                        <TableHead className="text-right">Participants Count</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sessionAttendanceDistribution.globalByProgram.map((programData) => (
-                        <React.Fragment key={programData.programId}>
-                          {programData.distribution.map((item, index) => (
-                            <TableRow key={`${programData.programId}-${item.numSessions}`}>
-                              {index === 0 && (
-                                <TableCell rowSpan={programData.distribution.length} className="font-medium align-top">
-                                  {programData.programName}
-                                </TableCell>
-                              )}
-                              <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
-                              <TableCell className="text-right">{item.count}</TableCell>
-                            </TableRow>
-                          ))}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground mb-6">No overall session attendance distribution data available.</p>
-              )}
-            </CardContent>
-          </Card>
+          {/* Render MobileSessionDistributionByProgram for capture */}
+          <div ref={hiddenGlobalDistContainerRef} className="mt-6" id="hidden-session-dist-program-container">
+            <MobileSessionDistributionByProgram data={sessionAttendanceDistribution.globalByProgram} />
+          </div>
 
-          <Card ref={(el) => (cardRefs.current["byDevoteeFriendDistribution"] = el)} className="shadow-lg mt-6">
-            <CardHeader>
-              <CardTitle className="text-lg font-medium">By Devotee Friend (Total Sessions Attended)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isMobile ? (
-                <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
-              ) : sessionAttendanceDistribution.byDevoteeFriend.length > 0 ? (
-                <div className="overflow-x-auto"> {/* Use overflow-x-auto for table capture */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[200px]">Devotee Friend</TableHead>
-                        <TableHead>Total Sessions Attended</TableHead>
-                        <TableHead className="text-right">Participants Count</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sessionAttendanceDistribution.byDevoteeFriend.map((df) => (
-                        <React.Fragment key={df.devoteeFriendName}>
-                          {df.distribution.map((item, index) => (
-                            <TableRow key={`${df.devoteeFriendName}-${item.numSessions}`}>
-                              {index === 0 && (
-                                <TableCell rowSpan={df.distribution.length} className="font-medium align-top">
-                                  {df.devoteeFriendName}
-                                </TableCell>
-                              )}
-                              <TableCell>{item.numSessions} session{item.numSessions !== 1 ? "s" : ""}</TableCell>
-                              <TableCell className="text-right">{item.count}</TableCell>
-                            </TableRow>
-                          ))}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No devotee friend session attendance distribution data available.</p>
-              )}
-            </CardContent>
-          </Card>
+          {/* Render MobileSessionDistributionByDevoteeFriend for capture */}
+          <div ref={hiddenDfDistContainerRef} className="mt-6" id="hidden-session-dist-df-container">
+            <MobileSessionDistributionByDevoteeFriend data={sessionAttendanceDistribution.byDevoteeFriend} />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -26,6 +26,9 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import ExportToExcelButton from "@/components/ExportToExcelButton";
 import DownloadShareButton from "@/components/stats/DownloadShareButton"; // Import the new button
+import { Button } from "@/components/ui/button"; // Import Button
+import { Download, Loader2 } from "lucide-react"; // Import Download and Loader2 icons
+import html2canvas from "html2canvas"; // Import html2canvas
 
 // Import new mobile-specific components
 import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance";
@@ -48,6 +51,7 @@ interface DevoteeFriendAttendanceExportRow {
 
 const Stats = () => {
   const isMobile = useIsMobile();
+  const [isDownloadingAllDfCards, setIsDownloadingAllDfCards] = React.useState(false); // New state for download all button
 
   // Fetch all participants
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
@@ -350,6 +354,71 @@ const Stats = () => {
   const hasError = participantsError || friendsError || programsError || allAttendedProgramsError;
   const isExportDfAttendanceButtonDisabled = isLoading || dataForDevoteeFriendAttendanceExport.length === 0;
 
+  const handleDownloadAllDfCards = async () => {
+    setIsDownloadingAllDfCards(true);
+    if (!devoteeFriendProgramSessionAttendance || devoteeFriendProgramSessionAttendance.length === 0) {
+      toast.info("No devotee friend attendance data to download.");
+      setIsDownloadingAllDfCards(false);
+      return;
+    }
+
+    for (const df of devoteeFriendProgramSessionAttendance) {
+      const cardId = `df-attendance-${df.devoteeFriendName.replace(/\s+/g, '-').toLowerCase()}`;
+      const cardElement = document.getElementById(cardId);
+
+      if (!cardElement) {
+        console.warn(`Could not find card element for ${df.devoteeFriendName}. Skipping.`);
+        continue;
+      }
+
+      // Store original styles
+      const originalCardOverflow = cardElement.style.overflow;
+      const originalCardHeight = cardElement.style.height;
+
+      // Temporarily modify styles for capture
+      cardElement.style.overflow = 'visible';
+      cardElement.style.height = 'auto';
+
+      const accordionContents = cardElement.querySelectorAll('div[data-state="open"].overflow-hidden');
+      const originalAccordionOverflows: string[] = [];
+      accordionContents.forEach((el: Element) => {
+        const htmlEl = el as HTMLElement;
+        originalAccordionOverflows.push(htmlEl.style.overflow);
+        htmlEl.style.overflow = 'visible';
+      });
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 50)); // Give browser time to apply styles
+
+        const canvas = await html2canvas(cardElement, {
+          useCORS: true,
+          scale: 2,
+        });
+        const imageDataUrl = canvas.toDataURL("image/png");
+
+        const link = document.createElement("a");
+        link.href = imageDataUrl;
+        link.download = `${df.devoteeFriendName.replace(/\s/g, "_").toLowerCase()}_attendance.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between downloads
+      } catch (error) {
+        console.error(`Error capturing or downloading card for ${df.devoteeFriendName}:`, error);
+        toast.error(`Failed to download card for ${df.devoteeFriendName}`);
+      } finally {
+        // Revert styles
+        cardElement.style.overflow = originalCardOverflow;
+        cardElement.style.height = originalCardHeight;
+        accordionContents.forEach((el: Element, index) => {
+          (el as HTMLElement).style.overflow = originalAccordionOverflows[index];
+        });
+      }
+    }
+    toast.success("All devotee friend attendance cards downloaded!");
+    setIsDownloadingAllDfCards(false);
+  };
+
 
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-8">
@@ -462,6 +531,22 @@ const Stats = () => {
                   sheetName="DF Attendance"
                   disabled={isExportDfAttendanceButtonDisabled}
                 />
+                {isMobile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadAllDfCards}
+                    disabled={isDownloadingAllDfCards || devoteeFriendProgramSessionAttendance.length === 0}
+                    className="flex items-center gap-1"
+                  >
+                    {isDownloadingAllDfCards ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                    Download All
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>

@@ -124,7 +124,18 @@ const Stats = () => {
 
   // NEW: Devotee Friend Session Attendance
   const devoteeFriendProgramSessionAttendance = React.useMemo(() => {
-    const dfAttendance: Record<string, Record<string, Record<string, { name: string; date: string; count: number }>>> = {};
+    const dfAttendance: Record<string, Record<string, { program_name: string; sessions: Record<string, { name: string; date: string; count: number }> }>> = {};
+
+    // Initialize with all known devotee friends, including "None"
+    const allDevoteeFriendNames = new Set<string>();
+    if (devoteeFriends) {
+      devoteeFriends.forEach(df => allDevoteeFriendNames.add(df.name));
+    }
+    allDevoteeFriendNames.add("None"); // Ensure "None" is always included
+
+    allDevoteeFriendNames.forEach(dfName => {
+      dfAttendance[dfName] = {};
+    });
 
     if (allParticipants && allAttendedProgramsMap && programs) {
       const programsMap = new Map(programs.map(p => [p.id, p]));
@@ -134,7 +145,7 @@ const Stats = () => {
         const attendedProgramsForParticipant = allAttendedProgramsMap[participant.id] || [];
 
         if (!dfAttendance[devoteeFriendName]) {
-          dfAttendance[devoteeFriendName] = {};
+          dfAttendance[devoteeFriendName] = {}; // Should already be initialized, but as a safeguard
         }
 
         attendedProgramsForParticipant.forEach(attendedProgram => {
@@ -174,7 +185,7 @@ const Stats = () => {
     })).sort((a, b) => a.devoteeFriendName.localeCompare(b.devoteeFriendName));
 
     return sortedDfAttendance;
-  }, [allParticipants, allAttendedProgramsMap, programs]);
+  }, [allParticipants, allAttendedProgramsMap, programs, devoteeFriends]);
 
   // NEW: Session Attendance Distribution
   const sessionAttendanceDistribution = React.useMemo(() => {
@@ -183,6 +194,17 @@ const Stats = () => {
 
     // Existing: Devotee friend distribution (total sessions across all programs for a DF's participants)
     const devoteeFriendDistribution: Record<string, Record<number, number>> = {}; // { devoteeFriendName: { totalSessionsAttendedByParticipant: countOfParticipants } }
+
+    // Initialize devoteeFriendDistribution with all known devotee friends, including "None"
+    const allDevoteeFriendNames = new Set<string>();
+    if (devoteeFriends) {
+      devoteeFriends.forEach(df => allDevoteeFriendNames.add(df.name));
+    }
+    allDevoteeFriendNames.add("None"); // Ensure "None" is always included
+
+    allDevoteeFriendNames.forEach(dfName => {
+      devoteeFriendDistribution[dfName] = {};
+    });
 
     if (allParticipants && allAttendedProgramsMap && programs) {
       const programsMap = new Map(programs.map(p => [p.id, p.program_name])); // For program name lookup
@@ -208,7 +230,7 @@ const Stats = () => {
 
         // Populate devoteeFriendDistribution (this part remains the same as before for 'byDevoteeFriend')
         if (!devoteeFriendDistribution[devoteeFriendName]) {
-          devoteeFriendDistribution[devoteeFriendName] = {};
+          devoteeFriendDistribution[devoteeFriendName] = {}; // Should already be initialized, but as a safeguard
         }
         devoteeFriendDistribution[devoteeFriendName][totalSessionsAttendedByParticipantOverall] = (devoteeFriendDistribution[devoteeFriendName][totalSessionsAttendedByParticipantOverall] || 0) + 1;
       });
@@ -237,7 +259,7 @@ const Stats = () => {
       .sort((a, b) => a.devoteeFriendName.localeCompare(b.devoteeFriendName));
 
     return { globalByProgram: sortedGlobalDistributionByProgram, byDevoteeFriend: sortedDevoteeFriendDistribution };
-  }, [allParticipants, allAttendedProgramsMap, programs]);
+  }, [allParticipants, allAttendedProgramsMap, programs, devoteeFriends]);
 
 
   const isLoading = isLoadingParticipants || isLoadingFriends || isLoadingPrograms || isLoadingAllAttendedPrograms;

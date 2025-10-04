@@ -25,10 +25,10 @@ import {
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ExportToExcelButton from "@/components/ExportToExcelButton";
-import DownloadShareButton from "@/components/stats/DownloadShareButton"; // Import the new button
-import { Button } from "@/components/ui/button"; // Import Button
-import { Download, Loader2 } from "lucide-react"; // Import Download and Loader2 icons
-import html2canvas from "html2canvas"; // Import html2canvas
+import DownloadShareButton from "@/components/stats/DownloadShareButton";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
+import html2canvas from "html2canvas";
 
 // Import new mobile-specific components
 import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance";
@@ -51,7 +51,7 @@ interface DevoteeFriendAttendanceExportRow {
 
 const Stats = () => {
   const isMobile = useIsMobile();
-  const [isDownloadingAllDfCards, setIsDownloadingAllDfCards] = React.useState(false); // New state for download all button
+  const [isDownloadingAllDfCards, setIsDownloadingAllDfCards] = React.useState(false);
 
   // Fetch all participants
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
@@ -214,25 +214,19 @@ const Stats = () => {
     return sortedDfAttendance;
   }, [allParticipants, allAttendedProgramsMap, programs, devoteeFriends]);
 
-  // Prepare data for Devotee Friend Session Attendance export
-  const dataForDevoteeFriendAttendanceExport: DevoteeFriendAttendanceExportRow[] = React.useMemo(() => {
-    if (!devoteeFriendProgramSessionAttendance || devoteeFriendProgramSessionAttendance.length === 0) {
-      return [];
-    }
-
-    const allDevoteeFriendNames: string[] = [];
+  // Prepare data for Devotee Friend Session Attendance export and table rendering
+  const { allDevoteeFriendNames, sortedUniqueSessions, dataForDevoteeFriendAttendanceExport } = React.useMemo(() => {
+    const allDfNames: string[] = [];
     devoteeFriendProgramSessionAttendance.forEach(df => {
-      allDevoteeFriendNames.push(df.devoteeFriendName);
+      allDfNames.push(df.devoteeFriendName);
     });
-    // Ensure "None" is is included if it exists in the data
-    if (!allDevoteeFriendNames.includes("None") && devoteeFriendProgramSessionAttendance.some(df => df.devoteeFriendName === "None")) {
-        allDevoteeFriendNames.push("None");
+    if (!allDfNames.includes("None") && devoteeFriendProgramSessionAttendance.some(df => df.devoteeFriendName === "None")) {
+        allDfNames.push("None");
     }
-    allDevoteeFriendNames.sort(); // Keep consistent order
+    allDfNames.sort();
 
     const uniqueProgramSessions = new Map<string, { programName: string; sessionName: string; sessionDate: string }>();
 
-    // Collect all unique program-session combinations
     devoteeFriendProgramSessionAttendance.forEach(df => {
       df.programs.forEach(program => {
         program.sessions.forEach(session => {
@@ -248,8 +242,7 @@ const Stats = () => {
       });
     });
 
-    // Sort unique sessions for consistent row order
-    const sortedUniqueSessions = Array.from(uniqueProgramSessions.values()).sort((a, b) => {
+    const sortedUniqueSessionsArray = Array.from(uniqueProgramSessions.values()).sort((a, b) => {
       const programCompare = a.programName.localeCompare(b.programName);
       if (programCompare !== 0) return programCompare;
       return new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime();
@@ -257,13 +250,13 @@ const Stats = () => {
 
     const exportData: DevoteeFriendAttendanceExportRow[] = [];
 
-    sortedUniqueSessions.forEach(sessionDetail => {
+    sortedUniqueSessionsArray.forEach(sessionDetail => {
       const formattedDate = format(parseISO(sessionDetail.sessionDate), "yyyy-MM-dd");
       const row: DevoteeFriendAttendanceExportRow = {
         "Program Name DYS": `${sessionDetail.programName} - ${sessionDetail.sessionName} (${formattedDate})`,
       };
 
-      allDevoteeFriendNames.forEach(dfName => {
+      allDfNames.forEach(dfName => {
         let attendanceCount = 0;
         const dfData = devoteeFriendProgramSessionAttendance.find(df => df.devoteeFriendName === dfName);
         if (dfData) {
@@ -277,12 +270,16 @@ const Stats = () => {
             }
           });
         }
-        row[dfName] = attendanceCount > 0 ? attendanceCount : ""; // Use empty string for 0 attendance
+        row[dfName] = attendanceCount > 0 ? attendanceCount : "";
       });
       exportData.push(row);
     });
 
-    return exportData;
+    return {
+      allDevoteeFriendNames: allDfNames,
+      sortedUniqueSessions: sortedUniqueSessionsArray,
+      dataForDevoteeFriendAttendanceExport: exportData,
+    };
   }, [devoteeFriendProgramSessionAttendance]);
 
 
@@ -291,13 +288,13 @@ const Stats = () => {
     const globalDistributionByProgram: Record<string, Record<number, number>> = {};
     const devoteeFriendDistribution: Record<string, Record<number, number>> = {};
 
-    const allDevoteeFriendNames = new Set<string>();
+    const allDevoteeFriendNamesSet = new Set<string>();
     if (devoteeFriends) {
-      devoteeFriends.forEach(df => allDevoteeFriendNames.add(df.name));
+      devoteeFriends.forEach(df => allDevoteeFriendNamesSet.add(df.name));
     }
-    allDevoteeFriendNames.add("None");
+    allDevoteeFriendNamesSet.add("None");
 
-    allDevoteeFriendNames.forEach(dfName => {
+    allDevoteeFriendNamesSet.forEach(dfName => {
       devoteeFriendDistribution[dfName] = {};
     });
 
@@ -524,7 +521,60 @@ const Stats = () => {
           <Card className="lg:col-span-3 shadow-lg" id="devotee-friend-attendance-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-medium">Devotee Friend Session Attendance</CardTitle>
-              <div className="flex gap-2 flex-shrink-0">
+            </CardHeader>
+            <CardContent>
+              {isMobile ? (
+                <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
+              ) : (
+                devoteeFriendProgramSessionAttendance.length > 0 && allDevoteeFriendNames.length > 0 && sortedUniqueSessions.length > 0 ? (
+                  <div className="relative overflow-x-auto max-h-[500px] border rounded-md">
+                    <Table className="min-w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="sticky left-0 bg-background z-20 w-[300px] min-w-[300px]">Program/Session (Date)</TableHead>
+                          {allDevoteeFriendNames.map(dfName => (
+                            <TableHead key={dfName} className="text-center min-w-[150px] bg-background z-10">
+                              {dfName}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {sortedUniqueSessions.map((sessionDetail, rowIndex) => (
+                          <TableRow key={`row-${rowIndex}`}>
+                            <TableCell className="sticky left-0 bg-background z-20 font-medium w-[300px] min-w-[300px]">
+                              {sessionDetail.programName} - {sessionDetail.sessionName} ({format(parseISO(sessionDetail.sessionDate), "MMM dd, yyyy")})
+                            </TableCell>
+                            {allDevoteeFriendNames.map(dfName => {
+                              let attendanceCount = 0;
+                              const dfData = devoteeFriendProgramSessionAttendance.find(df => df.devoteeFriendName === dfName);
+                              if (dfData) {
+                                dfData.programs.forEach(program => {
+                                  if (program.program_name === sessionDetail.programName) {
+                                    program.sessions.forEach(session => {
+                                      if (session.name === sessionDetail.sessionName && session.date === sessionDetail.sessionDate) {
+                                        attendanceCount = session.count;
+                                      }
+                                    });
+                                  }
+                                });
+                              }
+                              return (
+                                <TableCell key={`${dfName}-${rowIndex}`} className="text-center">
+                                  {attendanceCount > 0 ? attendanceCount : "-"}
+                                </TableCell>
+                              );
+                            })}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
+                )
+              )}
+              <div className="flex justify-end gap-2 mt-4">
                 <ExportToExcelButton
                   data={dataForDevoteeFriendAttendanceExport}
                   fileName="devotee_friend_session_attendance"
@@ -548,62 +598,6 @@ const Stats = () => {
                   </Button>
                 )}
               </div>
-            </CardHeader>
-            <CardContent>
-              {isMobile ? (
-                <MobileDevoteeFriendAttendance data={devoteeFriendProgramSessionAttendance} />
-              ) : devoteeFriendProgramSessionAttendance.length > 0 ? (
-                <ScrollArea className="h-96 pr-4">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[150px]">Devotee Friend</TableHead>
-                        <TableHead className="w-[200px]">Program Name</TableHead>
-                        <TableHead>Session Name</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Attendees</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {devoteeFriendProgramSessionAttendance.map((df) => (
-                        <React.Fragment key={df.devoteeFriendName}>
-                          {df.programs.length > 0 ? (
-                            df.programs.map((program, programIndex) => (
-                              <React.Fragment key={`${df.devoteeFriendName}-${program.program_name}`}>
-                                {program.sessions.map((session, sessionIndex) => (
-                                  <TableRow key={`${df.devoteeFriendName}-${program.program_name}-${session.name}-${session.date}`}>
-                                    {programIndex === 0 && sessionIndex === 0 && (
-                                      <TableCell rowSpan={df.programs.reduce((acc, p) => acc + p.sessions.length, 0)} className="font-medium align-top">
-                                        {df.devoteeFriendName}
-                                      </TableCell>
-                                    )}
-                                    {sessionIndex === 0 && (
-                                      <TableCell rowSpan={program.sessions.length} className="font-medium align-top">
-                                        {program.program_name}
-                                      </TableCell>
-                                    )}
-                                    <TableCell>{session.name}</TableCell>
-                                    <TableCell>{format(parseISO(session.date), "MMM dd, yyyy")}</TableCell>
-                                    <TableCell className="text-right">{session.count}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </React.Fragment>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell className="font-medium">{df.devoteeFriendName}</TableCell>
-                              <TableCell colSpan={4} className="text-muted-foreground">No program attendance recorded.</TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              ) : (
-                <p className="text-sm text-muted-foreground">No devotee friend attendance data available yet.</p>
-              )}
-              {/* DownloadShareButton for the entire table is removed here */}
             </CardContent>
           </Card>
 

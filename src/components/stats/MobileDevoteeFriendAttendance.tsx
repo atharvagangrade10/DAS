@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, parseISO } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import DownloadShareButton from "./DownloadShareButton"; // Import the new button
 
 interface SessionData {
   name: string;
@@ -40,7 +39,7 @@ const MobileDevoteeFriendAttendance: React.FC<MobileDevoteeFriendAttendanceProps
           <Card key={df.devoteeFriendName} className="shadow-sm" id={cardId}>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">{df.devoteeFriendName}</CardTitle>
-              <DownloadShareButton cardId={cardId} cardTitle={`${df.devoteeFriendName} Attendance`} iconOnly={true} />
+              {/* Individual DownloadShareButton removed as per user request */}
             </CardHeader>
             <CardContent className="space-y-4">
               {df.programs.length > 0 ? (

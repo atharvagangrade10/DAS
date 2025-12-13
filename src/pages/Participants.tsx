@@ -45,6 +45,7 @@ const ParticipantsPage = () => {
   const [selectedDevoteeFriendName, setSelectedDevoteeFriendName] = React.useState<string | null>(null);
   const [selectedProgramId, setSelectedProgramId] = React.useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
+  const [selectedSessionCountFilter, setSelectedSessionCountFilter] = React.useState<string | null>(null); // New state for session count filter
 
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
     queryKey: ["allParticipants"],
@@ -121,9 +122,21 @@ const ParticipantsPage = () => {
     queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
   };
 
+  const participantSessionCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (allParticipants && allAttendedProgramsMap) {
+      allParticipants.forEach(participant => {
+        const attendedPrograms = allAttendedProgramsMap[participant.id] || [];
+        const totalSessions = attendedPrograms.reduce((sum, program) => sum + program.sessions_attended.length, 0);
+        counts[participant.id] = totalSessions;
+      });
+    }
+    return counts;
+  }, [allParticipants, allAttendedProgramsMap]);
+
   const filteredParticipants = React.useMemo(() => {
     if (!allParticipants) return [];
-    let currentParticipants = allParticipants;
+    let currentParticipants = [...allParticipants]; // Create a mutable copy
 
     if (selectedDevoteeFriendName) {
       if (selectedDevoteeFriendName === "None") {
@@ -148,8 +161,23 @@ const ParticipantsPage = () => {
       });
     }
 
+    // Apply session count filter
+    if (selectedSessionCountFilter && selectedSessionCountFilter !== "All") {
+      currentParticipants = currentParticipants.filter(participant => {
+        const count = participantSessionCounts[participant.id] || 0;
+        if (selectedSessionCountFilter === "5+") {
+          return count >= 5;
+        }
+        const filterCount = Number(selectedSessionCountFilter);
+        return count === filterCount;
+      });
+    }
+
+    // Sort by full_name
+    currentParticipants.sort((a, b) => a.full_name.localeCompare(b.full_name));
+
     return currentParticipants;
-  }, [allParticipants, selectedDevoteeFriendName, selectedProgramId, selectedSessionId, allAttendedProgramsMap]);
+  }, [allParticipants, selectedDevoteeFriendName, selectedProgramId, selectedSessionId, selectedSessionCountFilter, allAttendedProgramsMap, participantSessionCounts]);
 
   const dataForExport: ExportParticipantData[] = React.useMemo(() => {
     if (!filteredParticipants || !allAttendedProgramsMap) return [];
@@ -186,7 +214,7 @@ const ParticipantsPage = () => {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-end">
+      <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap"> {/* Added flex-wrap for responsiveness */}
         <div className="flex-1 max-w-xs">
           <Label htmlFor="devotee-friend-filter">Filter by Devotee Friend</Label>
           <Select
@@ -250,6 +278,29 @@ const ParticipantsPage = () => {
                   {session.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* New filter for session counts */}
+        <div className="flex-1 max-w-xs">
+          <Label htmlFor="session-count-filter">Filter by Sessions Attended</Label>
+          <Select
+            onValueChange={(value) => setSelectedSessionCountFilter(value)}
+            value={selectedSessionCountFilter || "All"}
+            disabled={isLoadingParticipants || isLoadingAllAttendedPrograms}
+          >
+            <SelectTrigger id="session-count-filter">
+              <SelectValue placeholder="Sessions attended" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Counts</SelectItem>
+              <SelectItem value="0">0 Sessions</SelectItem>
+              <SelectItem value="1">1 Session</SelectItem>
+              <SelectItem value="2">2 Sessions</SelectItem>
+              <SelectItem value="3">3 Sessions</SelectItem>
+              <SelectItem value="4">4 Sessions</SelectItem>
+              <SelectItem value="5+">5+ Sessions</SelectItem>
             </SelectContent>
           </Select>
         </div>

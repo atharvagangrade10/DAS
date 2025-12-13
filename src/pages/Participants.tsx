@@ -20,6 +20,7 @@ import {
 import { Label } from "@/components/ui/label";
 import ExportToExcelButton from '@/components/ExportToExcelButton';
 import { format, parseISO } from 'date-fns';
+import MultiSelectSessionFilter from '@/components/MultiSelectSessionFilter'; // New import
 
 import {
   fetchAllParticipants,
@@ -44,8 +45,8 @@ const ParticipantsPage = () => {
   const [isCreateParticipantDialogOpen, setIsCreateParticipantDialogOpen] = React.useState(false);
   const [selectedDevoteeFriendName, setSelectedDevoteeFriendName] = React.useState<string | null>(null);
   const [selectedProgramId, setSelectedProgramId] = React.useState<string | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null);
-  const [selectedSessionCountFilter, setSelectedSessionCountFilter] = React.useState<string | null>(null); // New state for session count filter
+  const [selectedSessionIds, setSelectedSessionIds] = React.useState<string[]>([]); // Changed to array for multi-select
+  const [selectedSessionCountFilter, setSelectedSessionCountFilter] = React.useState<string | null>(null);
 
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
     queryKey: ["allParticipants"],
@@ -67,6 +68,11 @@ const ParticipantsPage = () => {
     queryFn: () => fetchProgramSessions(selectedProgramId!),
     enabled: !!selectedProgramId,
   });
+
+  React.useEffect(() => {
+    // Reset selected sessions when program changes
+    setSelectedSessionIds([]);
+  }, [selectedProgramId]);
 
   const { data: allAttendedProgramsMap, isLoading: isLoadingAllAttendedPrograms, error: allAttendedProgramsError } = useQuery<Record<string, AttendedProgram[]>, Error>({
     queryKey: ["allAttendedPrograms"],
@@ -117,7 +123,6 @@ const ParticipantsPage = () => {
   };
 
   const handleParticipantUpdate = (updatedParticipant: Participant | null) => {
-    // Invalidate queries to refetch the list and remove the deleted participant
     queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
     queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
   };
@@ -136,7 +141,7 @@ const ParticipantsPage = () => {
 
   const filteredParticipants = React.useMemo(() => {
     if (!allParticipants) return [];
-    let currentParticipants = [...allParticipants]; // Create a mutable copy
+    let currentParticipants = [...allParticipants];
 
     if (selectedDevoteeFriendName) {
       if (selectedDevoteeFriendName === "None") {
@@ -149,15 +154,19 @@ const ParticipantsPage = () => {
     if (selectedProgramId && selectedProgramId !== "All" && allAttendedProgramsMap) {
       currentParticipants = currentParticipants.filter(participant => {
         const attendedPrograms = allAttendedProgramsMap[participant.id] || [];
-        const hasAttendedProgram = attendedPrograms.some(ap => ap.program_id === selectedProgramId);
+        const programAttendance = attendedPrograms.find(ap => ap.program_id === selectedProgramId);
 
-        if (selectedSessionId && selectedSessionId !== "All") {
-          return hasAttendedProgram && attendedPrograms.some(ap => 
-            ap.program_id === selectedProgramId && 
-            ap.sessions_attended.some(sa => sa.session_id === selectedSessionId)
+        if (!programAttendance) {
+          return false; // Participant did not attend the selected program
+        }
+
+        // If specific sessions are selected, filter further
+        if (selectedSessionIds.length > 0) {
+          return selectedSessionIds.some(sessionId =>
+            programAttendance.sessions_attended.some(sa => sa.session_id === sessionId)
           );
         }
-        return hasAttendedProgram;
+        return true; // Attended the program, no specific sessions selected
       });
     }
 
@@ -173,11 +182,10 @@ const ParticipantsPage = () => {
       });
     }
 
-    // Sort by full_name
     currentParticipants.sort((a, b) => a.full_name.localeCompare(b.full_name));
 
     return currentParticipants;
-  }, [allParticipants, selectedDevoteeFriendName, selectedProgramId, selectedSessionId, selectedSessionCountFilter, allAttendedProgramsMap, participantSessionCounts]);
+  }, [allParticipants, selectedDevoteeFriendName, selectedProgramId, selectedSessionIds, selectedSessionCountFilter, allAttendedProgramsMap, participantSessionCounts]);
 
   const dataForExport: ExportParticipantData[] = React.useMemo(() => {
     if (!filteredParticipants || !allAttendedProgramsMap) return [];
@@ -214,7 +222,7 @@ const ParticipantsPage = () => {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap"> {/* Added flex-wrap for responsiveness */}
+      <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap">
         <div className="flex-1 max-w-xs">
           <Label htmlFor="devotee-friend-filter">Filter by Devotee Friend</Label>
           <Select
@@ -242,7 +250,6 @@ const ParticipantsPage = () => {
           <Select
             onValueChange={(value) => {
               setSelectedProgramId(value === "All" ? null : value);
-              setSelectedSessionId(null);
             }}
             value={selectedProgramId || "All"}
             disabled={isLoadingPrograms}
@@ -263,26 +270,14 @@ const ParticipantsPage = () => {
 
         <div className="flex-1 max-w-xs">
           <Label htmlFor="session-filter">Filter by Session</Label>
-          <Select
-            onValueChange={(value) => setSelectedSessionId(value === "All" ? null : value)}
-            value={selectedSessionId || "All"}
+          <MultiSelectSessionFilter
+            sessions={sessions || []}
+            selectedSessionIds={selectedSessionIds}
+            onSelectedChange={setSelectedSessionIds}
             disabled={!selectedProgramId || isLoadingSessions}
-          >
-            <SelectTrigger id="session-filter">
-              <SelectValue placeholder="Select a session" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Sessions</SelectItem>
-              {sessions?.map((session) => (
-                <SelectItem key={session.id} value={session.id}>
-                  {session.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </div>
 
-        {/* New filter for session counts */}
         <div className="flex-1 max-w-xs">
           <Label htmlFor="session-count-filter">Filter by Sessions Attended</Label>
           <Select

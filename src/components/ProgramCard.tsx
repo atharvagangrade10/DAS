@@ -21,13 +21,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/config/api";
 
 interface ProgramCardProps {
   program: Program;
 }
 
 const deleteProgram = async (programId: string): Promise<void> => {
-  const response = await fetch(`https://das-backend-o43a.onrender.com/program/${programId}`, {
+  const response = await fetch(`${API_BASE_URL}/program/${programId}`, {
     method: "DELETE",
   });
   if (!response.ok) {

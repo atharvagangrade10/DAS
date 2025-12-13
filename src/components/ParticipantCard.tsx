@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/config/api";
 
 interface ParticipantCardProps {
   participant: Participant;
@@ -28,7 +29,7 @@ interface ParticipantCardProps {
 }
 
 const deleteParticipant = async (participantId: string): Promise<void> => {
-  const response = await fetch(`https://das-backend-o43a.onrender.com/participants/${participantId}`, {
+  const response = await fetch(`${API_BASE_URL}/participants/${participantId}`, {
     method: "DELETE",
   });
   if (!response.ok) {

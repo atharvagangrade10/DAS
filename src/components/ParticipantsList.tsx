@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import ParticipantCard from "./ParticipantCard"; // Import the new ParticipantCard
+import { API_BASE_URL } from "@/config/api";
 
 interface Participant {
   id: string;
@@ -22,7 +23,7 @@ interface ParticipantsListProps {
 
 const fetchParticipantsByDevoteeFriend = async (devoteeFriendName: string): Promise<Participant[]> => {
   const encodedName = encodeURIComponent(devoteeFriendName);
-  const response = await fetch(`https://das-backend-o43a.onrender.com/participants/by-devotee-friend/${encodedName}`);
+  const response = await fetch(`${API_BASE_URL}/participants/by-devotee-friend/${encodedName}`);
   if (!response.ok) {
     throw new Error("Failed to fetch participants");
   }

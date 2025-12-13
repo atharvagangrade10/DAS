@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { Program } from "@/types/program";
 import { format, parseISO } from "date-fns"; // Import format here
+import { API_BASE_URL } from "@/config/api";
 
 interface MarkAttendanceCardProps {
   participant: Participant;
@@ -29,7 +30,7 @@ interface MarkAttendanceCardProps {
 }
 
 const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/program/");
+  const response = await fetch(`${API_BASE_URL}/program/`);
   if (!response.ok) {
     throw new Error("Failed to fetch programs");
   }
@@ -43,7 +44,7 @@ const markAttendance = async (attendanceData: {
   status: string;
   marked_by: string;
 }) => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/attendance/mark", {
+  const response = await fetch(`${API_BASE_URL}/attendance/mark`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(attendanceData),

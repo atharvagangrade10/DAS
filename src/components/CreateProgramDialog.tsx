@@ -30,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/config/api";
 
 interface CreateProgramDialogProps {
   isOpen: boolean;
@@ -51,7 +52,7 @@ const formSchema = z.object({
 });
 
 const createProgram = async (programData: ProgramCreate): Promise<Program> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/program/create", {
+  const response = await fetch(`${API_BASE_URL}/program/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -30,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/config/api";
 
 interface EditProgramDialogProps {
   program: Program;
@@ -56,7 +57,7 @@ const updateProgram = async (
   programData: ProgramUpdate,
 ): Promise<Program> => {
   const response = await fetch(
-    `https://das-backend-o43a.onrender.com/program/update/${programId}`,
+    `${API_BASE_URL}/program/update/${programId}`,
     {
       method: "PUT",
       headers: {

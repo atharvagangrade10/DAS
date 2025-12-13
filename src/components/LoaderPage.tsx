@@ -4,13 +4,14 @@ import React from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // New import
+import { API_BASE_URL } from "@/config/api";
 
 interface LoaderPageProps {
   onLoadingComplete: () => void;
 }
 
-const HEALTH_CHECK_URL = "https://das-backend-o43a.onrender.com/health";
-const SWITCH_DATABASE_URL = "https://das-backend-o43a.onrender.com/switch-database";
+const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
+const SWITCH_DATABASE_URL = `${API_BASE_URL}/switch-database`;
 const MAX_RETRIES = 5;
 const RETRY_INTERVAL_MS = 20 * 1000; // 20 seconds
 

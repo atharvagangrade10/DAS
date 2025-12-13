@@ -1,5 +1,6 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
+import { API_BASE_URL } from "@/config/api";
 
 interface DevoteeFriend {
   id: string;
@@ -9,7 +10,7 @@ interface DevoteeFriend {
 }
 
 export const fetchAllParticipants = async (): Promise<Participant[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/register/participants");
+  const response = await fetch(`${API_BASE_URL}/register/participants`);
   if (!response.ok) {
     throw new Error("Failed to fetch participants");
   }
@@ -17,7 +18,7 @@ export const fetchAllParticipants = async (): Promise<Participant[]> => {
 };
 
 export const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/register/devoteefriends");
+  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`);
   if (!response.ok) {
     throw new Error("Failed to fetch devotee friends");
   }
@@ -25,7 +26,7 @@ export const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
 };
 
 export const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/program/");
+  const response = await fetch(`${API_BASE_URL}/program/`);
   if (!response.ok) {
     throw new Error("Failed to fetch programs");
   }
@@ -34,7 +35,7 @@ export const fetchPrograms = async (): Promise<Program[]> => {
 
 export const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
   if (!programId) return [];
-  const response = await fetch(`https://das-backend-o43a.onrender.com/program/${programId}/sessions`);
+  const response = await fetch(`${API_BASE_URL}/program/${programId}/sessions`);
   if (!response.ok) {
     throw new Error("Failed to fetch program sessions");
   }
@@ -46,7 +47,7 @@ export const fetchAttendedPrograms = async (
   participantId: string,
 ): Promise<AttendedProgram[]> => {
   const response = await fetch(
-    `https://das-backend-o43a.onrender.com/participants/${participantId}/attended-programs`,
+    `${API_BASE_URL}/participants/${participantId}/attended-programs`,
   );
   if (!response.ok) {
     throw new Error("Failed to fetch attended programs");

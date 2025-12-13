@@ -10,6 +10,7 @@ import {
   CommandEmpty,
 } from "@/components/ui/command";
 import { Participant } from "@/types/participant";
+import { API_BASE_URL } from "@/config/api";
 
 interface AttendanceSearchProps {
   onParticipantSelect: (participant: Participant) => void;
@@ -18,7 +19,7 @@ interface AttendanceSearchProps {
 const fetchParticipants = async (query: string): Promise<Participant[]> => {
   if (!query) return [];
   const response = await fetch(
-    `https://das-backend-o43a.onrender.com/participants/search?query=${encodeURIComponent(query)}`,
+    `${API_BASE_URL}/participants/search?query=${encodeURIComponent(query)}`,
   );
   if (!response.ok) {
     throw new Error("Failed to search for participants");

@@ -4,14 +4,15 @@ import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } "sonner";
 import { Program } from "@/types/program";
 import CreateProgramDialog from "@/components/CreateProgramDialog";
 import ProgramCard from "@/components/ProgramCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { API_BASE_URL } from "@/config/api";
 
 const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch("https://das-backend-o43a.onrender.com/program/");
+  const response = await fetch(`${API_BASE_URL}/program/`);
   if (!response.ok) {
     throw new Error("Failed to fetch programs");
   }

@@ -19,6 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, parseISO, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { API_BASE_URL } from "@/config/api";
 
 interface ProgramSessionsDialogProps {
   program: Program;
@@ -28,7 +29,7 @@ interface ProgramSessionsDialogProps {
 
 const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
   console.log(`ProgramSessionsDialog: Attempting to fetch sessions for program ID: ${programId}`);
-  const response = await fetch(`https://das-backend-o43a.onrender.com/program/${programId}/sessions`);
+  const response = await fetch(`${API_BASE_URL}/program/${programId}/sessions`);
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`ProgramSessionsDialog: API fetch failed with status ${response.status}: ${errorText}`);
@@ -48,7 +49,7 @@ const updateProgramSessionsDates = async (
   updates: SessionUpdate[],
 ): Promise<any> => {
   const response = await fetch(
-    `https://das-backend-o43a.onrender.com/program/${programId}/sessions/update-dates`,
+    `${API_BASE_URL}/program/${programId}/sessions/update-dates`,
     {
       method: "PUT",
       headers: {
@@ -249,16 +250,17 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={sessionDate}
-                          onSelect={(date) => handleDateChange(session.id, date)}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={sessionDate}
+                        onSelect={(date) => handleDateChange(session.id, date)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   </div>
                 );
               })

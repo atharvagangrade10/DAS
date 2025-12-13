@@ -22,13 +22,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { API_BASE_URL } from "@/config/api";
 
 interface AttendedProgramsListProps {
   participantId: string;
 }
 
 const deleteAttendanceRecord = async (attendanceId: string): Promise<void> => {
-  const response = await fetch(`https://das-backend-o43a.onrender.com/attendance/delete/${attendanceId}`, {
+  const response = await fetch(`${API_BASE_URL}/attendance/delete/${attendanceId}`, {
     method: "DELETE",
   });
   if (!response.ok) {

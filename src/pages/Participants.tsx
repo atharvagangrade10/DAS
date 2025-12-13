@@ -154,10 +154,13 @@ const ParticipantsPage = () => {
           return false; // Participant did not attend the selected program
         }
 
-        // If specific sessions are selected, filter further
+        // If specific sessions are selected, filter further (AND logic)
         if (appliedSelectedSessionIds.length > 0) {
-          return appliedSelectedSessionIds.some(sessionId =>
-            programAttendance.sessions_attended.some(sa => sa.session_id === sessionId)
+          const attendedSessionIds = new Set(programAttendance.sessions_attended.map(sa => sa.session_id));
+          
+          // Check if the participant attended ALL selected sessions
+          return appliedSelectedSessionIds.every(sessionId =>
+            attendedSessionIds.has(sessionId)
           );
         }
         return true; // Attended the program, no specific sessions selected

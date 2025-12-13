@@ -250,17 +250,16 @@ const ProgramSessionsDialog: React.FC<ProgramSessionsDialogProps> = ({
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={sessionDate}
-                        onSelect={(date) => handleDateChange(session.id, date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={sessionDate}
+                          onSelect={(date) => handleDateChange(session.id, date)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 );
               })

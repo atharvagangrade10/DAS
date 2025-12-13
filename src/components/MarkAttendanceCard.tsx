@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { Program } from "@/types/program";
-import { parseISO } from "date-fns"; // Import parseISO
+import { format, parseISO } from "date-fns"; // Import format here
 
 interface MarkAttendanceCardProps {
   participant: Participant;

@@ -20,7 +20,7 @@ import {
 import { Label } from "@/components/ui/label";
 import ExportToExcelButton from '@/components/ExportToExcelButton';
 import { format, parseISO } from 'date-fns';
-import MultiSelectSessionFilter from '@/components/MultiSelectSessionFilter'; // New import
+import MultiSelectSessionFilter from '@/components/MultiSelectSessionFilter';
 
 import {
   fetchAllParticipants,
@@ -43,10 +43,16 @@ interface ExportParticipantData extends Participant {
 const ParticipantsPage = () => {
   const queryClient = useQueryClient();
   const [isCreateParticipantDialogOpen, setIsCreateParticipantDialogOpen] = React.useState(false);
-  const [selectedDevoteeFriendName, setSelectedDevoteeFriendName] = React.useState<string | null>(null);
-  const [selectedProgramId, setSelectedProgramId] = React.useState<string | null>(null);
-  const [selectedSessionIds, setSelectedSessionIds] = React.useState<string[]>([]); // Changed to array for multi-select
-  const [selectedSessionCountFilter, setSelectedSessionCountFilter] = React.useState<string | null>(null);
+
+  // States for current filter selections (before applying)
+  const [currentDevoteeFriendName, setCurrentDevoteeFriendName] = React.useState<string | null>(null);
+  const [currentProgramId, setCurrentProgramId] = React.useState<string | null>(null);
+  const [currentSelectedSessionIds, setCurrentSelectedSessionIds] = React.useState<string[]>([]);
+
+  // States for applied filters (after clicking "Apply Filters")
+  const [appliedDevoteeFriendName, setAppliedDevoteeFriendName] = React.useState<string | null>(null);
+  const [appliedProgramId, setAppliedProgramId] = React.useState<string | null>(null);
+  const [appliedSelectedSessionIds, setAppliedSelectedSessionIds] = React.useState<string[]>([]);
 
   const { data: allParticipants, isLoading: isLoadingParticipants, error: participantsError } = useQuery<Participant[], Error>({
     queryKey: ["allParticipants"],
@@ -64,15 +70,15 @@ const ParticipantsPage = () => {
   });
 
   const { data: sessions, isLoading: isLoadingSessions, error: sessionsError } = useQuery<Session[], Error>({
-    queryKey: ["programSessions", selectedProgramId],
-    queryFn: () => fetchProgramSessions(selectedProgramId!),
-    enabled: !!selectedProgramId,
+    queryKey: ["programSessions", currentProgramId], // Fetch sessions based on currentProgramId
+    queryFn: () => fetchProgramSessions(currentProgramId!),
+    enabled: !!currentProgramId,
   });
 
   React.useEffect(() => {
-    // Reset selected sessions when program changes
-    setSelectedSessionIds([]);
-  }, [selectedProgramId]);
+    // Reset current selected sessions when program changes
+    setCurrentSelectedSessionIds([]);
+  }, [currentProgramId]);
 
   const { data: allAttendedProgramsMap, isLoading: isLoadingAllAttendedPrograms, error: allAttendedProgramsError } = useQuery<Record<string, AttendedProgram[]>, Error>({
     queryKey: ["allAttendedPrograms"],
@@ -127,42 +133,30 @@ const ParticipantsPage = () => {
     queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
   };
 
-  const participantSessionCounts = React.useMemo(() => {
-    const counts: Record<string, number> = {};
-    if (allParticipants && allAttendedProgramsMap) {
-      allParticipants.forEach(participant => {
-        const attendedPrograms = allAttendedProgramsMap[participant.id] || [];
-        const totalSessions = attendedPrograms.reduce((sum, program) => sum + program.sessions_attended.length, 0);
-        counts[participant.id] = totalSessions;
-      });
-    }
-    return counts;
-  }, [allParticipants, allAttendedProgramsMap]);
-
   const filteredParticipants = React.useMemo(() => {
     if (!allParticipants) return [];
     let currentParticipants = [...allParticipants];
 
-    if (selectedDevoteeFriendName) {
-      if (selectedDevoteeFriendName === "None") {
+    if (appliedDevoteeFriendName) {
+      if (appliedDevoteeFriendName === "None") {
         currentParticipants = currentParticipants.filter(p => !p.devotee_friend_name || p.devotee_friend_name === "None");
-      } else if (selectedDevoteeFriendName !== "All") {
-        currentParticipants = currentParticipants.filter(p => p.devotee_friend_name === selectedDevoteeFriendName);
+      } else if (appliedDevoteeFriendName !== "All") {
+        currentParticipants = currentParticipants.filter(p => p.devotee_friend_name === appliedDevoteeFriendName);
       }
     }
 
-    if (selectedProgramId && selectedProgramId !== "All" && allAttendedProgramsMap) {
+    if (appliedProgramId && appliedProgramId !== "All" && allAttendedProgramsMap) {
       currentParticipants = currentParticipants.filter(participant => {
         const attendedPrograms = allAttendedProgramsMap[participant.id] || [];
-        const programAttendance = attendedPrograms.find(ap => ap.program_id === selectedProgramId);
+        const programAttendance = attendedPrograms.find(ap => ap.program_id === appliedProgramId);
 
         if (!programAttendance) {
           return false; // Participant did not attend the selected program
         }
 
         // If specific sessions are selected, filter further
-        if (selectedSessionIds.length > 0) {
-          return selectedSessionIds.some(sessionId =>
+        if (appliedSelectedSessionIds.length > 0) {
+          return appliedSelectedSessionIds.some(sessionId =>
             programAttendance.sessions_attended.some(sa => sa.session_id === sessionId)
           );
         }
@@ -170,22 +164,10 @@ const ParticipantsPage = () => {
       });
     }
 
-    // Apply session count filter
-    if (selectedSessionCountFilter && selectedSessionCountFilter !== "All") {
-      currentParticipants = currentParticipants.filter(participant => {
-        const count = participantSessionCounts[participant.id] || 0;
-        if (selectedSessionCountFilter === "5+") {
-          return count >= 5;
-        }
-        const filterCount = Number(selectedSessionCountFilter);
-        return count === filterCount;
-      });
-    }
-
     currentParticipants.sort((a, b) => a.full_name.localeCompare(b.full_name));
 
     return currentParticipants;
-  }, [allParticipants, selectedDevoteeFriendName, selectedProgramId, selectedSessionIds, selectedSessionCountFilter, allAttendedProgramsMap, participantSessionCounts]);
+  }, [allParticipants, appliedDevoteeFriendName, appliedProgramId, appliedSelectedSessionIds, allAttendedProgramsMap]);
 
   const dataForExport: ExportParticipantData[] = React.useMemo(() => {
     if (!filteredParticipants || !allAttendedProgramsMap) return [];
@@ -213,6 +195,12 @@ const ParticipantsPage = () => {
 
   const isExportButtonDisabled = isLoadingParticipants || isLoadingAllAttendedPrograms;
 
+  const handleApplyFilters = () => {
+    setAppliedDevoteeFriendName(currentDevoteeFriendName);
+    setAppliedProgramId(currentProgramId);
+    setAppliedSelectedSessionIds(currentSelectedSessionIds);
+  };
+
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-8">
       <div>
@@ -226,8 +214,8 @@ const ParticipantsPage = () => {
         <div className="flex-1 max-w-xs">
           <Label htmlFor="devotee-friend-filter">Filter by Devotee Friend</Label>
           <Select
-            onValueChange={(value) => setSelectedDevoteeFriendName(value)}
-            value={selectedDevoteeFriendName || "All"}
+            onValueChange={(value) => setCurrentDevoteeFriendName(value)}
+            value={currentDevoteeFriendName || "All"}
             disabled={isLoadingFriends}
           >
             <SelectTrigger id="devotee-friend-filter">
@@ -249,9 +237,9 @@ const ParticipantsPage = () => {
           <Label htmlFor="program-filter">Filter by Program</Label>
           <Select
             onValueChange={(value) => {
-              setSelectedProgramId(value === "All" ? null : value);
+              setCurrentProgramId(value === "All" ? null : value);
             }}
-            value={selectedProgramId || "All"}
+            value={currentProgramId || "All"}
             disabled={isLoadingPrograms}
           >
             <SelectTrigger id="program-filter">
@@ -272,34 +260,15 @@ const ParticipantsPage = () => {
           <Label htmlFor="session-filter">Filter by Session</Label>
           <MultiSelectSessionFilter
             sessions={sessions || []}
-            selectedSessionIds={selectedSessionIds}
-            onSelectedChange={setSelectedSessionIds}
-            disabled={!selectedProgramId || isLoadingSessions}
+            selectedSessionIds={currentSelectedSessionIds}
+            onSelectedChange={setCurrentSelectedSessionIds}
+            disabled={!currentProgramId || isLoadingSessions}
           />
         </div>
 
-        <div className="flex-1 max-w-xs">
-          <Label htmlFor="session-count-filter">Filter by Sessions Attended</Label>
-          <Select
-            onValueChange={(value) => setSelectedSessionCountFilter(value)}
-            value={selectedSessionCountFilter || "All"}
-            disabled={isLoadingParticipants || isLoadingAllAttendedPrograms}
-          >
-            <SelectTrigger id="session-count-filter">
-              <SelectValue placeholder="Sessions attended" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Counts</SelectItem>
-              <SelectItem value="0">0 Sessions</SelectItem>
-              <SelectItem value="1">1 Session</SelectItem>
-              <SelectItem value="2">2 Sessions</SelectItem>
-              <SelectItem value="3">3 Sessions</SelectItem>
-              <SelectItem value="4">4 Sessions</SelectItem>
-              <SelectItem value="5+">5+ Sessions</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
+        <Button onClick={handleApplyFilters} className="flex items-center gap-2">
+          Apply Filters
+        </Button>
         <Button onClick={() => setIsCreateParticipantDialogOpen(true)} className="flex items-center gap-2">
           <PlusCircle className="h-5 w-5" />
           Add New Participant

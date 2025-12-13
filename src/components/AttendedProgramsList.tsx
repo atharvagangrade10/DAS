@@ -28,9 +28,14 @@ interface AttendedProgramsListProps {
   participantId: string;
 }
 
-const deleteAttendanceRecord = async (attendanceId: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/attendance/delete/${attendanceId}`, {
+// Updated to accept an object with attendance_id in the payload
+const deleteAttendanceRecord = async (payload: { attendance_id: string }): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/attendance/delete`, {
     method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload), // Send attendance_id in the request body
   });
   if (!response.ok) {
     const errorData = await response.json();
@@ -87,7 +92,8 @@ const AttendedProgramsList: React.FC<AttendedProgramsListProps> = ({
 
   const handleDelete = () => {
     if (attendanceRecordToDelete) {
-      deleteMutation.mutate(attendanceRecordToDelete.sessionId);
+      // Pass an object with attendance_id to the mutation
+      deleteMutation.mutate({ attendance_id: attendanceRecordToDelete.sessionId });
     }
   };
 

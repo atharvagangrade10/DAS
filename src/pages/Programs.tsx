@@ -4,7 +4,7 @@ import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2 } from "lucide-react";
-import { toast } "sonner";
+import { toast } from "sonner"; // Corrected import statement
 import { Program } from "@/types/program";
 import CreateProgramDialog from "@/components/CreateProgramDialog";
 import ProgramCard from "@/components/ProgramCard";

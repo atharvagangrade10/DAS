@@ -48,7 +48,7 @@ const AttendedProgramsList: React.FC<AttendedProgramsListProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const [attendanceRecordToDelete, setAttendanceRecordToDelete] = React.useState<{ sessionId: string; sessionName: string; programName: string } | null>(null);
+  const [attendanceRecordToDelete, setAttendanceRecordToDelete] = React.useState<{ attendanceId: string; sessionName: string; programName: string } | null>(null);
 
   const {
     data: attendedPrograms,
@@ -85,15 +85,15 @@ const AttendedProgramsList: React.FC<AttendedProgramsListProps> = ({
     },
   });
 
-  const confirmDelete = (sessionId: string, sessionName: string, programName: string) => {
-    setAttendanceRecordToDelete({ sessionId, sessionName, programName });
+  const confirmDelete = (attendanceId: string, sessionName: string, programName: string) => {
+    setAttendanceRecordToDelete({ attendanceId, sessionName, programName });
     setIsDeleteDialogOpen(true);
   };
 
   const handleDelete = () => {
     if (attendanceRecordToDelete) {
       // Pass the attendance_id directly to the mutation
-      deleteMutation.mutate(attendanceRecordToDelete.sessionId);
+      deleteMutation.mutate(attendanceRecordToDelete.attendanceId);
     }
   };
 
@@ -142,7 +142,7 @@ const AttendedProgramsList: React.FC<AttendedProgramsListProps> = ({
                   {program.sessions_attended
                     .sort((a, b) => parseISO(a.session_date).getTime() - parseISO(b.session_date).getTime()) // Sort sessions by date
                     .map((session) => (
-                      <li key={session.session_id} className="flex items-center gap-2">
+                      <li key={session.attendance_id} className="flex items-center gap-2">
                         <span className="font-normal">{session.session_name}</span>
                         <span className="text-gray-500 dark:text-gray-400">({format(parseISO(session.session_date), "PPP")})</span>
                         <Badge variant="secondary">{session.status}</Badge>
@@ -150,7 +150,7 @@ const AttendedProgramsList: React.FC<AttendedProgramsListProps> = ({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 text-red-400 hover:text-red-600 dark:text-red-300 dark:hover:text-red-500"
-                          onClick={() => confirmDelete(session.session_id, session.session_name, program.program_name)}
+                          onClick={() => confirmDelete(session.attendance_id, session.session_name, program.program_name)}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Delete attendance for {session.session_name}</span>

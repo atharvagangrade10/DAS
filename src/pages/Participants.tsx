@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { AttendedProgram, Participant } from '@/types/participant'; // Import AttendedProgram
+import { AttendedProgram, Participant } from '@/types/participant';
 import { Program, Session } from '@/types/program';
 import CreateParticipantDialog from '@/components/CreateParticipantDialog';
 import ParticipantCard from '@/components/ParticipantCard';
@@ -19,22 +19,21 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import ExportToExcelButton from '@/components/ExportToExcelButton';
-import { format, parseISO } from 'date-fns'; // Import date-fns for formatting
+import { format, parseISO } from 'date-fns';
 
 import {
   fetchAllParticipants,
   fetchDevoteeFriends,
   fetchPrograms,
   fetchProgramSessions,
-  fetchAttendedPrograms, // Import the new fetch function
-} from "@/utils/api"; // Import from new api utility
+  fetchAttendedPrograms,
+} from "@/utils/api";
 
 interface DevoteeFriend {
   id: string;
   name: string;
 }
 
-// Define a type for the data we'll export, including flattened attended program info
 interface ExportParticipantData extends Participant {
   attended_programs_summary: string;
   attended_sessions_details: string;
@@ -68,7 +67,6 @@ const ParticipantsPage = () => {
     enabled: !!selectedProgramId,
   });
 
-  // New query to fetch all attended programs for all participants
   const { data: allAttendedProgramsMap, isLoading: isLoadingAllAttendedPrograms, error: allAttendedProgramsError } = useQuery<Record<string, AttendedProgram[]>, Error>({
     queryKey: ["allAttendedPrograms"],
     queryFn: async () => {
@@ -88,9 +86,9 @@ const ParticipantsPage = () => {
         return acc;
       }, {});
     },
-    enabled: !!allParticipants && allParticipants.length > 0, // Only run if participants are loaded
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    enabled: !!allParticipants && allParticipants.length > 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   React.useEffect(() => {
@@ -113,15 +111,20 @@ const ParticipantsPage = () => {
 
   const handleParticipantCreationSuccess = (newParticipant: Participant) => {
     queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
-    queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] }); // Invalidate attended programs too
+    queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
     setIsCreateParticipantDialogOpen(false);
+  };
+
+  const handleParticipantUpdate = (updatedParticipant: Participant | null) => {
+    // Invalidate queries to refetch the list and remove the deleted participant
+    queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
+    queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
   };
 
   const filteredParticipants = React.useMemo(() => {
     if (!allParticipants) return [];
     let currentParticipants = allParticipants;
 
-    // Filter by Devotee Friend
     if (selectedDevoteeFriendName) {
       if (selectedDevoteeFriendName === "None") {
         currentParticipants = currentParticipants.filter(p => !p.devotee_friend_name || p.devotee_friend_name === "None");
@@ -130,20 +133,17 @@ const ParticipantsPage = () => {
       }
     }
 
-    // Filter by Program and Session attendance
     if (selectedProgramId && selectedProgramId !== "All" && allAttendedProgramsMap) {
       currentParticipants = currentParticipants.filter(participant => {
         const attendedPrograms = allAttendedProgramsMap[participant.id] || [];
         const hasAttendedProgram = attendedPrograms.some(ap => ap.program_id === selectedProgramId);
 
         if (selectedSessionId && selectedSessionId !== "All") {
-          // If a specific session is selected, check if they attended that session within the program
           return hasAttendedProgram && attendedPrograms.some(ap => 
             ap.program_id === selectedProgramId && 
             ap.sessions_attended.some(sa => sa.session_id === selectedSessionId)
           );
         }
-        // If no specific session is selected, just check if they attended the program
         return hasAttendedProgram;
       });
     }
@@ -151,7 +151,6 @@ const ParticipantsPage = () => {
     return currentParticipants;
   }, [allParticipants, selectedDevoteeFriendName, selectedProgramId, selectedSessionId, allAttendedProgramsMap]);
 
-  // Combine data for export, flattening attended programs into strings
   const dataForExport: ExportParticipantData[] = React.useMemo(() => {
     if (!filteredParticipants || !allAttendedProgramsMap) return [];
 
@@ -188,7 +187,6 @@ const ParticipantsPage = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 items-end">
-        {/* Devotee Friend Filter */}
         <div className="flex-1 max-w-xs">
           <Label htmlFor="devotee-friend-filter">Filter by Devotee Friend</Label>
           <Select
@@ -211,13 +209,12 @@ const ParticipantsPage = () => {
           </Select>
         </div>
 
-        {/* Program Filter */}
         <div className="flex-1 max-w-xs">
           <Label htmlFor="program-filter">Filter by Program</Label>
           <Select
             onValueChange={(value) => {
               setSelectedProgramId(value === "All" ? null : value);
-              setSelectedSessionId(null); // Reset session when program changes
+              setSelectedSessionId(null);
             }}
             value={selectedProgramId || "All"}
             disabled={isLoadingPrograms}
@@ -236,7 +233,6 @@ const ParticipantsPage = () => {
           </Select>
         </div>
 
-        {/* Session Filter */}
         <div className="flex-1 max-w-xs">
           <Label htmlFor="session-filter">Filter by Session</Label>
           <Select
@@ -276,7 +272,7 @@ const ParticipantsPage = () => {
       ) : filteredParticipants.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredParticipants.map((participant) => (
-            <ParticipantCard key={participant.id} participant={participant} />
+            <ParticipantCard key={participant.id} participant={participant} onParticipantUpdate={handleParticipantUpdate} />
           ))}
         </div>
       ) : (

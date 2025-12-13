@@ -3,19 +3,63 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, CalendarDays } from "lucide-react";
+import { Pencil, CalendarDays, Trash2 } from "lucide-react";
 import { Program } from "@/types/program";
 import { format } from "date-fns";
 import EditProgramDialog from "./EditProgramDialog";
 import ProgramSessionsDialog from "./ProgramSessionsDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface ProgramCardProps {
   program: Program;
 }
 
+const deleteProgram = async (programId: string): Promise<void> => {
+  const response = await fetch(`https://das-backend-o43a.onrender.com/program/${programId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to delete program");
+  }
+};
+
 const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isSessionsDialogOpen, setIsSessionsDialogOpen] = React.useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteProgram,
+    onSuccess: () => {
+      toast.success("Program deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["programs"] });
+      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] }); // Invalidate attendance data
+      queryClient.invalidateQueries({ queryKey: ["allAttendedProgramsForStats"] }); // Invalidate stats data
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete program", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    deleteMutation.mutate(program.id);
+  };
 
   return (
     <Card className="flex flex-col h-full">
@@ -30,6 +74,29 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
             <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
             <span className="sr-only">Edit program</span>
           </Button>
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200">
+                <Trash2 className="h-5 w-5" />
+                <span className="sr-only">Delete program</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the program{" "}
+                  <span className="font-semibold">{program.program_name}</span> and all its associated sessions and attendance records.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={deleteMutation.isPending}>
+                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardHeader>
       <CardContent className="flex-1 grid gap-2">

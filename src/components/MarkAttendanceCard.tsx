@@ -21,10 +21,11 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { Program } from "@/types/program";
+import { parseISO } from "date-fns"; // Import parseISO
 
 interface MarkAttendanceCardProps {
   participant: Participant;
-  onAttendanceMarked: (participantId: string) => void; // Updated prop type
+  onAttendanceMarked: (participantId: string) => void;
 }
 
 const fetchPrograms = async (): Promise<Program[]> => {
@@ -73,7 +74,7 @@ const MarkAttendanceCard: React.FC<MarkAttendanceCardProps> = ({
     mutationFn: markAttendance,
     onSuccess: () => {
       toast.success(`Attendance marked for ${participant.full_name}`);
-      onAttendanceMarked(participant.id); // Pass participant.id to the callback
+      onAttendanceMarked(participant.id);
     },
     onError: (error: Error) => {
       toast.error("Failed to mark attendance", {
@@ -83,6 +84,14 @@ const MarkAttendanceCard: React.FC<MarkAttendanceCardProps> = ({
   });
 
   const selectedProgram = programs?.find((p) => p.id === selectedProgramId);
+
+  // Sort sessions by date for the selected program
+  const sortedSessions = React.useMemo(() => {
+    if (selectedProgram?.sessions) {
+      return [...selectedProgram.sessions].sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+    }
+    return [];
+  }, [selectedProgram]);
 
   const handleSubmit = () => {
     if (!selectedProgramId || !selectedSessionId) {
@@ -113,7 +122,7 @@ const MarkAttendanceCard: React.FC<MarkAttendanceCardProps> = ({
             value={selectedProgramId}
             onValueChange={(value) => {
               setSelectedProgramId(value);
-              setSelectedSessionId(""); // Reset session on program change
+              setSelectedSessionId("");
             }}
           >
             <SelectTrigger id="program-select">
@@ -146,9 +155,9 @@ const MarkAttendanceCard: React.FC<MarkAttendanceCardProps> = ({
                 <SelectValue placeholder="Select a session" />
               </SelectTrigger>
               <SelectContent>
-                {selectedProgram.sessions?.map((session) => (
+                {sortedSessions.map((session) => (
                   <SelectItem key={session.id} value={session.id}>
-                    {session.name}
+                    {session.name} ({format(parseISO(session.date), "PPP")})
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -8,26 +8,24 @@ import CreateParticipantDialog from '@/components/CreateParticipantDialog';
 import { Participant } from '@/types/participant';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query'; // Import useQueryClient
+import { useQueryClient } from '@tanstack/react-query';
 
 const Attendance = () => {
-  const queryClient = useQueryClient(); // Initialize query client
+  const queryClient = useQueryClient();
   const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
   const [isCreateParticipantDialogOpen, setIsCreateParticipantDialogOpen] = React.useState(false);
 
   const handleAttendanceMarked = (participantId: string) => {
-    // Invalidate the query for attended programs for the specific participant
     queryClient.invalidateQueries({ queryKey: ["attendedPrograms", participantId] });
-    // Do NOT clear selectedParticipant, so the card remains visible
   };
 
-  const handleParticipantUpdate = (updatedParticipant: Participant) => {
-    setSelectedParticipant(updatedParticipant); // Update the selected participant with new data
+  const handleParticipantUpdate = (updatedParticipant: Participant | null) => {
+    setSelectedParticipant(updatedParticipant); // Update the selected participant with new data or null if deleted
   };
 
   const handleParticipantCreationSuccess = (newParticipant: Participant) => {
-    setSelectedParticipant(newParticipant); // Set the newly created participant for attendance marking
-    setIsCreateParticipantDialogOpen(false); // Close the creation dialog
+    setSelectedParticipant(newParticipant);
+    setIsCreateParticipantDialogOpen(false);
   };
 
   return (

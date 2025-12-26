@@ -21,8 +21,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { Program } from "@/types/program";
-import { format, parseISO } from "date-fns"; // Import format here
+import { format, parseISO } from "date-fns";
 import { API_BASE_URL } from "@/config/api";
+import { fetchPrograms } from "@/utils/api";
 
 interface MarkAttendanceCardProps {
   participant: Participant;
@@ -38,17 +39,6 @@ const getAuthHeaders = () => {
     headers["Authorization"] = `Bearer ${token}`;
   }
   return headers;
-};
-
-const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch(`${API_BASE_URL}/program/`, {
-    headers: getAuthHeaders(),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch programs' }));
-    throw new Error(errorData.detail || "Failed to fetch programs");
-  }
-  return response.json();
 };
 
 const markAttendance = async (attendanceData: {
@@ -182,6 +172,7 @@ const MarkAttendanceCard: React.FC<MarkAttendanceCardProps> = ({
 
         <Button
           onClick={handleSubmit}
+          className="w-full"
           disabled={
             !selectedProgramId || !selectedSessionId || mutation.isPending
           }

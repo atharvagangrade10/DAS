@@ -80,7 +80,7 @@ const LoaderPage: React.FC<LoaderPageProps> = ({ onLoadingComplete }) => {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({ database: "iskcon_congregation" }),
+          body: JSON.stringify({ database: "iskcon_youth" }),
         });
 
         if (!switchDbResponse.ok) {

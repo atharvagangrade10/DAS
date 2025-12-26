@@ -3,21 +3,13 @@
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Loader2 } from "lucide-react";
-import { toast } from "sonner"; // Corrected import statement
+import { PlusCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Program } from "@/types/program";
 import CreateProgramDialog from "@/components/CreateProgramDialog";
 import ProgramCard from "@/components/ProgramCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { API_BASE_URL } from "@/config/api";
-
-const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch(`${API_BASE_URL}/program/`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch programs");
-  }
-  return response.json();
-};
+import { fetchPrograms } from "@/utils/api";
 
 const Programs = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);

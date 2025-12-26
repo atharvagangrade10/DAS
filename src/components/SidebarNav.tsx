@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, LogOut } from "lucide-react";
+import { MenuIcon, LogOut, User } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
 
@@ -41,37 +41,45 @@ const SidebarNav = () => {
   const { logout, user } = useAuth();
 
   const navItems = (
-    <nav className="flex flex-col space-y-2 p-4 flex-1">
+    <nav className="flex flex-col space-y-1 p-4 flex-1">
       <NavLink to="/">Home</NavLink>
       <NavLink to="/friends">Friends</NavLink>
       <NavLink to="/attendance">Attendance</NavLink>
       <NavLink to="/programs">Programs</NavLink>
-      <NavLink to="/yatra">Yatra</NavLink> {/* Added Yatra link */}
+      <NavLink to="/yatra">Yatra</NavLink>
       <NavLink to="/participants">Participants</NavLink>
       <NavLink to="/stats">Stats</NavLink>
     </nav>
   );
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
-      <div className="flex h-16 items-center border-b px-4">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-xl text-sidebar-primary">
+    <div className="flex flex-col h-full bg-sidebar-background">
+      <div className="flex h-16 items-center border-b px-6">
+        <Link to="/" className="flex items-center gap-2 font-bold text-2xl text-primary">
           DAS
         </Link>
       </div>
+      
       {navItems}
-      <div className="p-4 border-t mt-auto">
+      
+      <div className="p-4 border-t mt-auto bg-sidebar-background/50">
         {user && (
-          <div className="mb-2 text-sm text-sidebar-foreground/70 truncate">
-            Logged in as: <span className="font-medium">{user.full_name}</span>
+          <div className="mb-4 flex items-center gap-3 px-2">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+              <User className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.phone}</p>
+            </div>
           </div>
         )}
         <Button
-          variant="destructive"
-          className="w-full justify-start text-lg py-6"
+          variant="ghost"
+          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium transition-colors"
           onClick={logout}
         >
-          <LogOut className="mr-2 h-5 w-5" />
+          <LogOut className="mr-2 h-4 w-4" />
           Logout
         </Button>
       </div>
@@ -83,12 +91,12 @@ const SidebarNav = () => {
       {isMobile ? (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50">
+            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border shadow-sm">
               <MenuIcon className="h-6 w-6" />
               <span className="sr-only">Toggle navigation</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar-background bg-background">
+          <SheetContent side="left" className="w-72 p-0 border-r shadow-xl">
             {sidebarContent}
           </SheetContent>
         </Sheet>

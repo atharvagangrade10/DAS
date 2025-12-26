@@ -1,14 +1,13 @@
 "use client";
 
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MenuIcon, LogOut, User, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
-import EditProfileDialog from "./EditProfileDialog";
 
 interface NavLinkProps {
   to: string;
@@ -39,8 +38,8 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children }) => {
 const SidebarNav = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isEditProfileOpen, setIsEditProfileOpen] = React.useState(false);
   const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
   const navItems = (
     <nav className="flex flex-col space-y-1 p-4 flex-1">
@@ -80,10 +79,13 @@ const SidebarNav = () => {
               variant="outline" 
               size="sm" 
               className="w-full text-xs h-8"
-              onClick={() => setIsEditProfileOpen(true)}
+              onClick={() => {
+                navigate('/profile');
+                if (isMobile) setIsOpen(false);
+              }}
             >
               <Settings className="mr-2 h-3 w-3" />
-              Edit Profile
+              Manage Profile
             </Button>
           </div>
         )}
@@ -96,11 +98,6 @@ const SidebarNav = () => {
           Logout
         </Button>
       </div>
-
-      <EditProfileDialog 
-        isOpen={isEditProfileOpen} 
-        onOpenChange={setIsEditProfileOpen} 
-      />
     </div>
   );
 

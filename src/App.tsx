@@ -10,7 +10,8 @@ import Attendance from "./pages/Attendance";
 import Programs from "./pages/Programs";
 import ParticipantsPage from "./pages/Participants";
 import Stats from "./pages/Stats";
-import YatraPage from "./pages/Yatra"; // New import
+import YatraPage from "./pages/Yatra";
+import ProfilePage from "./pages/Profile"; // New import
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -39,7 +40,6 @@ const App = () => {
     );
   }
   
-  // If Auth is still loading (checking local storage), show a simple loader
   if (isAuthLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -55,23 +55,21 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Auth Routes */}
             <Route path="/login" element={<LoginPage />} />
             
-            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
                 <Route path="friends" element={<Friends />} />
                 <Route path="attendance" element={<Attendance />} />
                 <Route path="programs" element={<Programs />} />
-                <Route path="yatra" element={<YatraPage />} /> {/* New Route */}
+                <Route path="yatra" element={<YatraPage />} />
                 <Route path="participants" element={<ParticipantsPage />} />
                 <Route path="stats" element={<Stats />} />
+                <Route path="profile" element={<ProfilePage />} /> {/* New Route */}
               </Route>
             </Route>
             
-            {/* Catch all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

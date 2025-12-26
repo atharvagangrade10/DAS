@@ -52,6 +52,17 @@ const formSchema = z.object({
   path: ["end_date"],
 });
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const updateProgram = async (
   programId: string,
   programData: ProgramUpdate,
@@ -60,14 +71,13 @@ const updateProgram = async (
     `${API_BASE_URL}/program/update/${programId}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(programData),
     },
   );
   if (!response.ok) {
-    throw new Error("Failed to update program");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to update program' }));
+    throw new Error(errorData.detail || "Failed to update program");
   }
   return response.json();
 };

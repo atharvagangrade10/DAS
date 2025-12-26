@@ -27,12 +27,24 @@ interface ProgramCardProps {
   program: Program;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const deleteProgram = async (programId: string): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/program/${programId}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete program' }));
     throw new Error(errorData.detail || "Failed to delete program");
   }
 };

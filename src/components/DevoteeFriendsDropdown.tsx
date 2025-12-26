@@ -24,10 +24,24 @@ interface DevoteeFriendsDropdownProps {
   onSelectFriend: (friendName: string | null) => void;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`);
+  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
-    throw new Error("Failed to fetch devotee friends");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch devotee friends' }));
+    throw new Error(errorData.detail || "Failed to fetch devotee friends");
   }
   return response.json();
 };

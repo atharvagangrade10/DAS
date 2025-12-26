@@ -16,13 +16,26 @@ interface AttendanceSearchProps {
   onParticipantSelect: (participant: Participant) => void;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const fetchParticipants = async (query: string): Promise<Participant[]> => {
   if (!query) return [];
   const response = await fetch(
     `${API_BASE_URL}/participants/search?query=${encodeURIComponent(query)}`,
+    { headers: getAuthHeaders() }
   );
   if (!response.ok) {
-    throw new Error("Failed to search for participants");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to search for participants' }));
+    throw new Error(errorData.detail || "Failed to search for participants");
   }
   return response.json();
 };

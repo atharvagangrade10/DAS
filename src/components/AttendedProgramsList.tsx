@@ -28,17 +28,26 @@ interface AttendedProgramsListProps {
   participantId: string;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 // Updated to accept attendance_id directly as a path parameter
 const deleteAttendanceRecord = async (attendance_id: string): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/attendance/delete/${attendance_id}`, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     // No body is sent for DELETE with path parameter
   });
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete attendance record' }));
     throw new Error(errorData.detail || "Failed to delete attendance record");
   }
 };

@@ -10,71 +10,74 @@ interface DevoteeFriend {
   email: string;
 }
 
-export const fetchAllParticipants = async (): Promise<Participant[]> => {
-  const response = await fetch(`${API_BASE_URL}/register/participants`);
+// Helper function to get authorization headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
+// Helper function for authenticated GET requests
+const fetchAuthenticated = async (url: string) => {
+  const response = await fetch(url, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
-    throw new Error("Failed to fetch participants");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch data' }));
+    throw new Error(errorData.detail || "Failed to fetch data");
   }
   return response.json();
+};
+
+// Helper function for authenticated POST/PUT/DELETE requests
+const mutateAuthenticated = async (url: string, method: string, body?: any) => {
+  const response = await fetch(url, {
+    method: method,
+    headers: getAuthHeaders(),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: `Failed to ${method}` }));
+    throw new Error(errorData.detail || `Failed to ${method}`);
+  }
+  return response.json();
+};
+
+
+export const fetchAllParticipants = async (): Promise<Participant[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/register/participants`);
 };
 
 export const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch devotee friends");
-  }
-  return response.json();
+  return fetchAuthenticated(`${API_BASE_URL}/register/devoteefriends`);
 };
 
 export const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch(`${API_BASE_URL}/program/`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch programs");
-  }
-  return response.json();
+  return fetchAuthenticated(`${API_BASE_URL}/program/`);
 };
 
 export const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
   if (!programId) return [];
-  const response = await fetch(`${API_BASE_URL}/program/${programId}/sessions`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch program sessions");
-  }
-  const data = await response.json();
-  return Array.isArray(data) ? data : [];
+  return fetchAuthenticated(`${API_BASE_URL}/program/${programId}/sessions`);
 };
 
 export const fetchAttendedPrograms = async (
   participantId: string,
 ): Promise<AttendedProgram[]> => {
-  const response = await fetch(
+  return fetchAuthenticated(
     `${API_BASE_URL}/participants/${participantId}/attended-programs`,
   );
-  if (!response.ok) {
-    throw new Error("Failed to fetch attended programs");
-  }
-  return response.json();
 };
 
 export const fetchYatras = async (): Promise<Yatra[]> => {
-  const response = await fetch(`${API_BASE_URL}/yatra/`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch yatras");
-  }
-  return response.json();
+  return fetchAuthenticated(`${API_BASE_URL}/yatra/`);
 };
 
 export const createYatra = async (yatraData: YatraCreate): Promise<Yatra> => {
-  const response = await fetch(`${API_BASE_URL}/yatra/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(yatraData),
-  });
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.detail || "Failed to create yatra");
-  }
-  return response.json();
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/create`, "POST", yatraData);
 };

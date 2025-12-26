@@ -68,10 +68,24 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address").optional().or(z.literal('')), // Added email
 });
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`);
+  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
-    throw new Error("Failed to fetch devotee friends");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch devotee friends' }));
+    throw new Error(errorData.detail || "Failed to fetch devotee friends");
   }
   return response.json();
 };
@@ -81,13 +95,11 @@ const createParticipant = async (
 ): Promise<Participant> => {
   const response = await fetch(`${API_BASE_URL}/register/participant`, { // Updated endpoint
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to create participant' }));
     throw new Error(errorData.detail || "Failed to create participant");
   }
   return response.json();

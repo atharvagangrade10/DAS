@@ -29,10 +29,24 @@ interface MarkAttendanceCardProps {
   onAttendanceMarked: (participantId: string) => void;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const fetchPrograms = async (): Promise<Program[]> => {
-  const response = await fetch(`${API_BASE_URL}/program/`);
+  const response = await fetch(`${API_BASE_URL}/program/`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
-    throw new Error("Failed to fetch programs");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch programs' }));
+    throw new Error(errorData.detail || "Failed to fetch programs");
   }
   return response.json();
 };
@@ -46,11 +60,11 @@ const markAttendance = async (attendanceData: {
 }) => {
   const response = await fetch(`${API_BASE_URL}/attendance/mark`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders(),
     body: JSON.stringify(attendanceData),
   });
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to mark attendance' }));
     throw new Error(errorData.detail || "Failed to mark attendance");
   }
   return response.json();

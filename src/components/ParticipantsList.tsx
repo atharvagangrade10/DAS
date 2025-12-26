@@ -21,11 +21,25 @@ interface ParticipantsListProps {
   devoteeFriendName: string;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const fetchParticipantsByDevoteeFriend = async (devoteeFriendName: string): Promise<Participant[]> => {
   const encodedName = encodeURIComponent(devoteeFriendName);
-  const response = await fetch(`${API_BASE_URL}/participants/by-devotee-friend/${encodedName}`);
+  const response = await fetch(`${API_BASE_URL}/participants/by-devotee-friend/${encodedName}`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
-    throw new Error("Failed to fetch participants");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch participants' }));
+    throw new Error(errorData.detail || "Failed to fetch participants");
   }
   return response.json();
 };

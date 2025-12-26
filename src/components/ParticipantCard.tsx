@@ -28,12 +28,24 @@ interface ParticipantCardProps {
   onParticipantUpdate?: (updatedParticipant: Participant | null) => void; // Modified to accept null for deletion
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const deleteParticipant = async (participantId: string): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/participants/${participantId}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete participant' }));
     throw new Error(errorData.detail || "Failed to delete participant");
   }
 };

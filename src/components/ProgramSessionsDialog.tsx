@@ -27,9 +27,22 @@ interface ProgramSessionsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const fetchProgramSessions = async (programId: string): Promise<Session[]> => {
   console.log(`ProgramSessionsDialog: Attempting to fetch sessions for program ID: ${programId}`);
-  const response = await fetch(`${API_BASE_URL}/program/${programId}/sessions`);
+  const response = await fetch(`${API_BASE_URL}/program/${programId}/sessions`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`ProgramSessionsDialog: API fetch failed with status ${response.status}: ${errorText}`);
@@ -52,14 +65,13 @@ const updateProgramSessionsDates = async (
     `${API_BASE_URL}/program/${programId}/sessions/update-dates`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(updates),
     },
   );
   if (!response.ok) {
-    throw new Error("Failed to update program session dates");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to update program session dates' }));
+    throw new Error(errorData.detail || "Failed to update program session dates");
   }
   return response.json();
 };

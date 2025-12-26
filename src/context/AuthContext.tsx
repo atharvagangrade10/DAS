@@ -20,6 +20,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = 'das_auth_token';
 const USER_STORAGE_KEY = 'das_auth_user';
 
+// --- Global Unauthorized Handler Mechanism ---
+let onUnauthorizedHandler: (() => void) | null = null;
+
+export const registerUnauthorizedHandler = (handler: () => void) => {
+  onUnauthorizedHandler = handler;
+};
+
+export const handleUnauthorized = () => {
+  if (onUnauthorizedHandler) {
+    onUnauthorizedHandler();
+  }
+};
+// ---------------------------------------------
+
 const fetchAuth = async <T, R>(endpoint: string, data: T): Promise<R> => {
   const response = await fetch(`${API_BASE_URL}/auth/${endpoint}`, {
     method: 'POST',
@@ -68,6 +82,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
   };
 
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+    toast.info("Logged out successfully.");
+  };
+
+  // Register the logout function globally
+  useEffect(() => {
+    registerUnauthorizedHandler(logout);
+    // Cleanup is not strictly necessary here as AuthProvider is root, but good practice
+    return () => {
+      registerUnauthorizedHandler(() => {});
+    };
+  }, []);
+
   const login = async (data: LoginRequest) => {
     try {
       const response = await fetchAuth<LoginRequest, AuthTokenResponse>('login', data);
@@ -87,14 +118,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error("Registration failed", { description: error.message });
       throw error;
     }
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    toast.info("Logged out successfully.");
   };
 
   return (

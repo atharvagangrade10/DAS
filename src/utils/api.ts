@@ -2,6 +2,7 @@ import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate } from "@/types/yatra";
 import { API_BASE_URL } from "@/config/api";
+import { handleUnauthorized } from "@/context/AuthContext"; // Import the handler
 
 interface DevoteeFriend {
   id: string;
@@ -27,6 +28,13 @@ const fetchAuthenticated = async (url: string) => {
   const response = await fetch(url, {
     headers: getAuthHeaders(),
   });
+  
+  if (response.status === 401) {
+    handleUnauthorized();
+    // Throw an error to stop further processing in the calling component/hook
+    throw new Error("Unauthorized access. Logging out.");
+  }
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch data' }));
     throw new Error(errorData.detail || "Failed to fetch data");
@@ -41,6 +49,13 @@ const mutateAuthenticated = async (url: string, method: string, body?: any) => {
     headers: getAuthHeaders(),
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    // Throw an error to stop further processing in the calling component/hook
+    throw new Error("Unauthorized access. Logging out.");
+  }
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ detail: `Failed to ${method}` }));
     throw new Error(errorData.detail || `Failed to ${method}`);

@@ -95,7 +95,7 @@ const LoginPage = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Password</Label>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
@@ -115,10 +115,7 @@ const LoginPage = () => {
           </Form>
           
           <div className="mt-4 text-center text-sm space-y-2">
-            <Link to="/forgot-password" className="text-primary hover:underline block">
-              Forgot Password?
-            </Link>
-            {/* Registration is disabled */}
+            {/* Forgot Password is disabled */}
           </div>
         </CardContent>
       </Card>

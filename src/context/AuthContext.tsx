@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthUser, AuthTokenResponse, LoginRequest, RegisterRequest, ForgotPasswordRequest, ResetPasswordRequest } from '@/types/auth';
+import { AuthUser, AuthTokenResponse, LoginRequest, RegisterRequest } from '@/types/auth';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
 
@@ -11,8 +11,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
-  forgotPassword: (data: ForgotPasswordRequest) => Promise<string>;
-  resetPassword: (data: ResetPasswordRequest) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -91,27 +89,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const forgotPassword = async (data: ForgotPasswordRequest): Promise<string> => {
-    try {
-      const response = await fetchAuth<ForgotPasswordRequest, { message: string }>('forgot-password', data);
-      toast.info("Password reset token requested.", { description: "You will be redirected to reset your password." });
-      return response.message; // This is the token
-    } catch (error: any) {
-      toast.error("Forgot password failed", { description: error.message });
-      throw error;
-    }
-  };
-
-  const resetPassword = async (data: ResetPasswordRequest) => {
-    try {
-      await fetchAuth<ResetPasswordRequest, { message: string }>('reset-password', data);
-      toast.success("Password reset successfully! You can now log in.");
-    } catch (error: any) {
-      toast.error("Password reset failed", { description: error.message });
-      throw error;
-    }
-  };
-
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -127,8 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: !!user,
       login,
       register,
-      forgotPassword,
-      resetPassword,
       logout,
       isLoading,
     }}>

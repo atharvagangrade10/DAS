@@ -29,12 +29,3 @@ export interface RegisterRequest {
   devotee_friend_name: string;
   chanting_rounds: number | null;
 }
-
-export interface ForgotPasswordRequest {
-  phone: string;
-}
-
-export interface ResetPasswordRequest {
-  token: string;
-  new_password: string;
-}

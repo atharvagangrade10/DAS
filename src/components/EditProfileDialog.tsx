@@ -34,7 +34,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE_URL } from "@/config/api";
 import { Loader2 } from "lucide-react";
-import { fetchDevoteeFriends } from "@/utils/api";
 
 interface EditProfileDialogProps {
   isOpen: boolean;
@@ -51,7 +50,6 @@ const profileSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Age cannot be negative").nullable().optional(),
   ),
-  devotee_friend_name: z.string().optional(),
   gender: z.enum(["Male", "Female", "Other"]).optional(),
   chanting_rounds: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
@@ -66,12 +64,6 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
 }) => {
   const { user, updateUser, token } = useAuth();
 
-  const { data: devoteeFriends, isLoading: isLoadingFriends } = useQuery({
-    queryKey: ["devoteeFriends"],
-    queryFn: fetchDevoteeFriends,
-    enabled: isOpen,
-  });
-
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -79,7 +71,6 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       phone: user?.phone || "",
       address: user?.address || "",
       age: user?.age || undefined,
-      devotee_friend_name: user?.devotee_friend_name || "None",
       gender: (user?.gender as "Male" | "Female" | "Other") || "Male",
       chanting_rounds: user?.chanting_rounds || undefined,
       email: user?.email || "",
@@ -93,7 +84,6 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
         phone: user.phone,
         address: user.address || "",
         age: user.age || undefined,
-        devotee_friend_name: user.devotee_friend_name || "None",
         gender: (user.gender as "Male" | "Female" | "Other") || "Male",
         chanting_rounds: user.chanting_rounds || undefined,
         email: user.email || "",
@@ -240,35 +230,6 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="devotee_friend_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Devotee Friend</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={isLoadingFriends}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a devotee friend" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="None">None</SelectItem>
-                      {devoteeFriends?.map((friend) => (
-                        <SelectItem key={friend.id} value={friend.name}>
-                          {friend.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="chanting_rounds"

@@ -44,18 +44,33 @@ interface EditProfileDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const PROFESSIONS = [
+  "Student",
+  "Software Engineer",
+  "Teacher",
+  "Doctor",
+  "Business",
+  "Housewife",
+  "Retired",
+  "Other",
+];
+
 const profileSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
+  initiated_name: z.string().optional().or(z.literal('')),
   phone: z.string()
     .min(10, "Phone must be 10 digits")
     .max(10, "Phone must be 10 digits"),
   address: z.string().optional(),
+  place_name: z.string().optional().or(z.literal('')),
   age: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Age cannot be negative").nullable().optional(),
   ),
-  dob: z.date().nullable().optional(), // Added dob
+  dob: z.date().nullable().optional(),
   gender: z.enum(["Male", "Female", "Other"]).optional(),
+  profession_type: z.string().optional(),
+  profession_other: z.string().optional(),
   chanting_rounds: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
@@ -75,29 +90,48 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
     return isValid(date) ? date : null;
   };
 
+  const getProfessionInitialValues = (prof: string | null | undefined) => {
+    if (!prof) return { type: "Student", other: "" };
+    if (PROFESSIONS.includes(prof)) return { type: prof, other: "" };
+    return { type: "Other", other: prof };
+  };
+
+  const profInit = getProfessionInitialValues(user?.profession);
+
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: user?.full_name || "",
+      initiated_name: user?.initiated_name || "",
       phone: user?.phone || "",
       address: user?.address || "",
+      place_name: user?.place_name || "",
       age: user?.age || undefined,
       dob: getInitialDob(user?.dob),
       gender: (user?.gender as "Male" | "Female" | "Other") || "Male",
+      profession_type: profInit.type,
+      profession_other: profInit.other,
       chanting_rounds: user?.chanting_rounds || undefined,
       email: user?.email || "",
     },
   });
 
+  const professionType = form.watch("profession_type");
+
   React.useEffect(() => {
     if (user && isOpen) {
+      const pInit = getProfessionInitialValues(user.profession);
       form.reset({
         full_name: user.full_name,
+        initiated_name: user.initiated_name || "",
         phone: user.phone,
         address: user.address || "",
+        place_name: user.place_name || "",
         age: user.age || undefined,
         dob: getInitialDob(user.dob),
         gender: (user.gender as "Male" | "Female" | "Other") || "Male",
+        profession_type: pInit.type,
+        profession_other: pInit.other,
         chanting_rounds: user.chanting_rounds || undefined,
         email: user.email || "",
       });
@@ -106,9 +140,22 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof profileSchema>) => {
+      const profession = values.profession_type === "Other" 
+        ? values.profession_other 
+        : values.profession_type;
+
       const payload = {
-        ...values,
+        full_name: values.full_name,
+        initiated_name: values.initiated_name || null,
+        phone: values.phone,
+        address: values.address,
+        place_name: values.place_name || null,
+        age: values.age,
         dob: values.dob ? format(values.dob, "yyyy-MM-dd") : null,
+        gender: values.gender,
+        email: values.email,
+        profession: profession || null,
+        chanting_rounds: values.chanting_rounds,
       };
       
       const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
@@ -166,6 +213,19 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
             />
             <FormField
               control={form.control}
+              name="initiated_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Initiated Name (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
@@ -196,6 +256,19 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="place_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Place Name (Optional)</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -289,6 +362,51 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4 border p-3 rounded-md bg-muted/20">
+              <FormField
+                control={form.control}
+                name="profession_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profession</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select profession" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {PROFESSIONS.map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {professionType === "Other" && (
+                <FormField
+                  control={form.control}
+                  name="profession_other"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Specify Profession</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter your profession" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
             <FormField
               control={form.control}
               name="chanting_rounds"

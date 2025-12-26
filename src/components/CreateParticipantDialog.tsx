@@ -50,23 +50,38 @@ interface CreateParticipantDialogProps {
   onCreationSuccess: (newParticipant: Participant) => void;
 }
 
+const PROFESSIONS = [
+  "Student",
+  "Software Engineer",
+  "Teacher",
+  "Doctor",
+  "Business",
+  "Housewife",
+  "Retired",
+  "Other",
+];
+
 const formSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
+  initiated_name: z.string().optional().or(z.literal('')),
   phone: z.string()
     .optional()
     .refine((val) => !val || /^\d{10}$/.test(val), {
       message: "Phone number must be 10 digits",
     }),
   address: z.string().optional(),
+  place_name: z.string().optional().or(z.literal('')),
   age: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Age cannot be negative").nullable().optional(),
   ),
-  dob: z.date().nullable().optional(), // Updated for dob
+  dob: z.date().nullable().optional(),
   devotee_friend: z.string().optional(),
   gender: z.enum(["Male", "Female", "Other"], {
     required_error: "Gender is required",
   }),
+  profession_type: z.string().optional(),
+  profession_other: z.string().optional(),
   chanting_rounds: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
@@ -130,22 +145,42 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       full_name: "",
+      initiated_name: "",
       phone: "",
       address: "",
+      place_name: "",
       age: undefined,
       dob: null,
       devotee_friend: "None",
       gender: "Male",
+      profession_type: "Student",
+      profession_other: "",
       chanting_rounds: undefined,
       email: "",
     },
   });
 
+  const professionType = form.watch("profession_type");
+
   const mutation = useMutation({
     mutationFn: (values: z.infer<typeof formSchema>) => {
+      const profession = values.profession_type === "Other" 
+        ? values.profession_other 
+        : values.profession_type;
+
       const payload = {
-        ...values,
+        full_name: values.full_name,
+        initiated_name: values.initiated_name || null,
+        phone: values.phone,
+        address: values.address,
+        place_name: values.place_name || null,
+        age: values.age,
         dob: values.dob ? format(values.dob, "yyyy-MM-dd") : null,
+        gender: values.gender,
+        email: values.email,
+        profession: profession || null,
+        devotee_friend: values.devotee_friend,
+        chanting_rounds: values.chanting_rounds,
       };
       return createParticipant(payload);
     },
@@ -154,7 +189,6 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
       queryClient.invalidateQueries({ queryKey: ["participants"] });
       queryClient.invalidateQueries({ queryKey: ["participantsSearch"] });
       queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
-      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
       onOpenChange(false);
       form.reset();
       onCreationSuccess(data);
@@ -196,6 +230,19 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
             />
             <FormField
               control={form.control}
+              name="initiated_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Initiated Name (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g., Arjuna Dasa" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
@@ -215,6 +262,19 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                   <FormLabel>Address</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="place_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Place Name (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g., Mayapur" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -306,6 +366,51 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                 </FormItem>
               )}
             />
+            
+            <div className="space-y-4 border p-3 rounded-md bg-muted/20">
+              <FormField
+                control={form.control}
+                name="profession_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profession</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select profession" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {PROFESSIONS.map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {professionType === "Other" && (
+                <FormField
+                  control={form.control}
+                  name="profession_other"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Specify Profession</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter your profession" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
             <FormField
               control={form.control}
               name="email"

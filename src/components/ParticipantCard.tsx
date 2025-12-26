@@ -3,12 +3,12 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, CalendarIcon } from "lucide-react"; // Added CalendarIcon
+import { Pencil, Trash2, User } from "lucide-react";
 import PhoneDialer from "./PhoneDialer";
 import EditParticipantDialog from "./EditParticipantDialog";
 import { Participant } from "@/types/participant";
 import AttendedProgramsList from "./AttendedProgramsList";
-import { format, parseISO, isValid } from "date-fns"; // Added date formatting
+import { format, parseISO, isValid } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,8 +63,6 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
       queryClient.invalidateQueries({ queryKey: ["participants"] });
       queryClient.invalidateQueries({ queryKey: ["participantsSearch"] });
       queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
-      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
-      queryClient.invalidateQueries({ queryKey: ["allAttendedProgramsForStats"] });
       if (onParticipantUpdate) {
         onParticipantUpdate(null);
       }
@@ -87,9 +85,14 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
   }, [participant.dob]);
 
   return (
-    <Card>
+    <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-2xl font-semibold">{participant.full_name}</CardTitle>
+        <div className="flex flex-col">
+          <CardTitle className="text-2xl font-semibold">{participant.full_name}</CardTitle>
+          {participant.initiated_name && (
+            <p className="text-sm font-medium text-primary/80 italic">({participant.initiated_name})</p>
+          )}
+        </div>
         <div className="flex space-x-2">
           <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
             <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
@@ -107,7 +110,7 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete the participant{" "}
-                  <span className="font-semibold">{participant.full_name}</span> and remove their data from our servers.
+                  <span className="font-semibold">{participant.full_name}</span>.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -122,36 +125,42 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
       </CardHeader>
       <CardContent className="grid gap-2 text-sm">
         <div className="flex items-center gap-2">
-          <p className="font-medium">Phone:</p>
+          <p className="font-medium min-w-[120px]">Phone:</p>
           <PhoneDialer phoneNumber={participant.phone} participantName={participant.full_name} />
         </div>
         <div className="flex items-center gap-2">
-          <p className="font-medium">Email:</p>
-          <p className="text-gray-700 dark:text-gray-300">{participant.email || "N/A"}</p>
+          <p className="font-medium min-w-[120px]">Email:</p>
+          <p className="text-gray-700 dark:text-gray-300 truncate">{participant.email || "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">
-          <p className="font-medium">Date of Birth:</p>
+          <p className="font-medium min-w-[120px]">Profession:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.profession || "N/A"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium min-w-[120px]">Date of Birth:</p>
           <p className="text-gray-700 dark:text-gray-300">{formattedDob}</p>
         </div>
         <div className="flex items-center gap-2">
-          <p className="font-medium">Address:</p>
+          <p className="font-medium min-w-[120px]">Place Name:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.place_name || "N/A"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium min-w-[120px]">Address:</p>
           <p className="text-gray-700 dark:text-gray-300">{participant.address || "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">
-          <p className="font-medium">Age:</p>
-          <p className="text-gray-700 dark:text-gray-300">{participant.age !== null && participant.age !== undefined ? participant.age : "N/A"}</p>
+          <p className="font-medium min-w-[120px]">Age / Gender:</p>
+          <p className="text-gray-700 dark:text-gray-300">
+            {participant.age || "N/A"} / {participant.gender || "N/A"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <p className="font-medium">Gender:</p>
-          <p className="text-gray-700 dark:text-gray-300">{participant.gender || "N/A"}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <p className="font-medium">Devotee Friend:</p>
+          <p className="font-medium min-w-[120px]">Devotee Friend:</p>
           <p className="text-gray-700 dark:text-gray-300">{participant.devotee_friend_name || "None"}</p>
         </div>
         <div className="flex items-center gap-2">
-          <p className="font-medium">Chanting Rounds:</p>
-          <p className="text-gray-700 dark:text-gray-300">{participant.chanting_rounds !== null && participant.chanting_rounds !== undefined ? participant.chanting_rounds : "N/A"}</p>
+          <p className="font-medium min-w-[120px]">Chanting Rounds:</p>
+          <p className="text-gray-700 dark:text-gray-300 font-semibold">{participant.chanting_rounds ?? "N/A"}</p>
         </div>
         
         <AttendedProgramsList participantId={participant.id} />

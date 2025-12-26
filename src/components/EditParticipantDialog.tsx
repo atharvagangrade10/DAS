@@ -53,7 +53,7 @@ interface EditParticipantDialogProps {
 
 const PROFESSIONS = [
   "Student",
-  "Software Engineer",
+  "Employee",
   "Teacher",
   "Doctor",
   "Business",
@@ -295,32 +295,6 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="place_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Place Name (Optional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -409,6 +383,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
             />
 
             <div className="space-y-4 border p-3 rounded-md bg-muted/20">
+              <h3 className="text-sm font-semibold text-muted-foreground px-1">Professional Details</h3>
               <FormField
                 control={form.control}
                 name="profession_type"
@@ -450,7 +425,35 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
                   )}
                 />
               )}
+
+              <FormField
+                control={form.control}
+                name="place_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Workplace / Institution</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Where do you work/study?" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Residential Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

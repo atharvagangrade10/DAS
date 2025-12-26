@@ -137,15 +137,15 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
           <p className="text-gray-700 dark:text-gray-300">{participant.profession || "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">
+          <p className="font-medium min-w-[120px]">Workplace / Inst:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.place_name || "N/A"}</p>
+        </div>
+        <div className="flex items-center gap-2">
           <p className="font-medium min-w-[120px]">Date of Birth:</p>
           <p className="text-gray-700 dark:text-gray-300">{formattedDob}</p>
         </div>
         <div className="flex items-center gap-2">
-          <p className="font-medium min-w-[120px]">Place Name:</p>
-          <p className="text-gray-700 dark:text-gray-300">{participant.place_name || "N/A"}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <p className="font-medium min-w-[120px]">Address:</p>
+          <p className="font-medium min-w-[120px]">Residential Addr:</p>
           <p className="text-gray-700 dark:text-gray-300">{participant.address || "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">

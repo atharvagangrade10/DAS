@@ -5,9 +5,10 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, LogOut, User } from "lucide-react";
+import { MenuIcon, LogOut, User, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
+import EditProfileDialog from "./EditProfileDialog";
 
 interface NavLinkProps {
   to: string;
@@ -38,6 +39,7 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children }) => {
 const SidebarNav = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = React.useState(false);
   const { logout, user } = useAuth();
 
   const navItems = (
@@ -64,14 +66,25 @@ const SidebarNav = () => {
       
       <div className="p-4 border-t mt-auto bg-sidebar-background/50">
         {user && (
-          <div className="mb-4 flex items-center gap-3 px-2">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-              <User className="h-5 w-5 text-primary" />
+          <div className="mb-4 flex flex-col gap-3 px-2">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.phone}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.phone}</p>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full text-xs h-8"
+              onClick={() => setIsEditProfileOpen(true)}
+            >
+              <Settings className="mr-2 h-3 w-3" />
+              Edit Profile
+            </Button>
           </div>
         )}
         <Button
@@ -83,6 +96,11 @@ const SidebarNav = () => {
           Logout
         </Button>
       </div>
+
+      <EditProfileDialog 
+        isOpen={isEditProfileOpen} 
+        onOpenChange={setIsEditProfileOpen} 
+      />
     </div>
   );
 

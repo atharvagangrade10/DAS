@@ -12,6 +12,7 @@ interface AuthContextType {
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
+  updateUser: (updatedUser: AuthUser) => void;
   isLoading: boolean;
 }
 
@@ -90,6 +91,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.info("Logged out successfully.");
   };
 
+  const updateUser = (updatedUser: AuthUser) => {
+    setUser(updatedUser);
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+  };
+
   // Register the logout function globally
   useEffect(() => {
     registerUnauthorizedHandler(logout);
@@ -128,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       logout,
+      updateUser,
       isLoading,
     }}>
       {children}

@@ -33,7 +33,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
-import { format, parseISO, isValid } from "date-fns";
+import { format, parseISO, isValid, differenceInYears } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
@@ -178,7 +178,16 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
     },
   });
 
+  const dobValue = form.watch("dob");
   const professionType = form.watch("profession_type");
+
+  // Automatically calculate age when DOB changes
+  React.useEffect(() => {
+    if (dobValue) {
+      const age = differenceInYears(new Date(), dobValue);
+      form.setValue("age", age, { shouldValidate: true });
+    }
+  }, [dobValue, form]);
 
   React.useEffect(() => {
     if (participant) {

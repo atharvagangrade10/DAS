@@ -33,7 +33,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, Loader2 } from "lucide-react";
-import { format, parseISO, isValid } from "date-fns";
+import { format, parseISO, isValid, differenceInYears } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -116,7 +116,16 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
     },
   });
 
+  const dobValue = form.watch("dob");
   const professionType = form.watch("profession_type");
+
+  // Automatically calculate age when DOB changes
+  React.useEffect(() => {
+    if (dobValue) {
+      const age = differenceInYears(new Date(), dobValue);
+      form.setValue("age", age, { shouldValidate: true });
+    }
+  }, [dobValue, form]);
 
   React.useEffect(() => {
     if (user && isOpen) {
@@ -237,7 +246,45 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                 </FormItem>
               )}
             />
-            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="place_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Workplace / Institution</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Where do you work/study?" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -299,7 +346,6 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
               name="gender"
@@ -369,49 +415,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                   )}
                 />
               )}
-
-              <FormField
-                control={form.control}
-                name="place_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workplace / Institution</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Where do you work/study?" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Residential Address</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}

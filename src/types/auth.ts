@@ -4,6 +4,7 @@ export interface AuthUser {
   phone: string;
   address?: string;
   age?: number | null;
+  dob?: string | null; // Added dob field
   gender?: string;
   email?: string;
   devotee_friend_name?: string;
@@ -27,6 +28,7 @@ export interface RegisterRequest {
   address: string;
   password: string;
   age: number | null;
+  dob: string | null; // Added dob field
   gender: string;
   email: string;
   devotee_friend_name: string;

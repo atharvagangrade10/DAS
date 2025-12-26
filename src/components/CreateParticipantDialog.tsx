@@ -30,6 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { API_BASE_URL } from "@/config/api";
@@ -57,15 +62,16 @@ const formSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Age cannot be negative").nullable().optional(),
   ),
-  devotee_friend: z.string().optional(), // This will be the name of the devotee friend
+  dob: z.date().nullable().optional(), // Updated for dob
+  devotee_friend: z.string().optional(),
   gender: z.enum(["Male", "Female", "Other"], {
     required_error: "Gender is required",
   }),
-  chanting_rounds: z.preprocess( // New field
+  chanting_rounds: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
-  email: z.string().email("Invalid email address").optional().or(z.literal('')), // Added email
+  email: z.string().email("Invalid email address").optional().or(z.literal('')),
 });
 
 const getAuthHeaders = () => {
@@ -91,9 +97,9 @@ const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
 };
 
 const createParticipant = async (
-  data: z.infer<typeof formSchema>,
+  data: any,
 ): Promise<Participant> => {
-  const response = await fetch(`${API_BASE_URL}/register/participant`, { // Updated endpoint
+  const response = await fetch(`${API_BASE_URL}/register/participant`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -127,24 +133,31 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
       phone: "",
       address: "",
       age: undefined,
+      dob: null,
       devotee_friend: "None",
-      gender: "Male", // Default gender
-      chanting_rounds: undefined, // Default for new field
-      email: "", // Default for new field
+      gender: "Male",
+      chanting_rounds: undefined,
+      email: "",
     },
   });
 
   const mutation = useMutation({
-    mutationFn: (data: z.infer<typeof formSchema>) => createParticipant(data),
+    mutationFn: (values: z.infer<typeof formSchema>) => {
+      const payload = {
+        ...values,
+        dob: values.dob ? format(values.dob, "yyyy-MM-dd") : null,
+      };
+      return createParticipant(payload);
+    },
     onSuccess: (data) => {
       toast.success("Participant created successfully!");
       queryClient.invalidateQueries({ queryKey: ["participants"] });
       queryClient.invalidateQueries({ queryKey: ["participantsSearch"] });
-      queryClient.invalidateQueries({ queryKey: ["allParticipants"] }); // Invalidate all participants list
-      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] }); // Invalidate attended programs too
+      queryClient.invalidateQueries({ queryKey: ["allParticipants"] });
+      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
       onOpenChange(false);
       form.reset();
-      onCreationSuccess(data); // Pass the new participant data back
+      onCreationSuccess(data);
     },
     onError: (error: Error) => {
       toast.error("Failed to create participant", {
@@ -159,7 +172,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Participant</DialogTitle>
           <DialogDescription>
@@ -207,23 +220,67 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="age"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Age</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="age"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Age</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dob"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col justify-end">
+                    <FormLabel>Date of Birth</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="gender"
@@ -301,6 +358,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                     <Input
                       type="number"
                       {...field}
+                      value={field.value ?? ""}
                       onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
                       min="0"
                     />

@@ -3,11 +3,12 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, CalendarIcon } from "lucide-react"; // Added CalendarIcon
 import PhoneDialer from "./PhoneDialer";
 import EditParticipantDialog from "./EditParticipantDialog";
 import { Participant } from "@/types/participant";
 import AttendedProgramsList from "./AttendedProgramsList";
+import { format, parseISO, isValid } from "date-fns"; // Added date formatting
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +26,7 @@ import { API_BASE_URL } from "@/config/api";
 
 interface ParticipantCardProps {
   participant: Participant;
-  onParticipantUpdate?: (updatedParticipant: Participant | null) => void; // Modified to accept null for deletion
+  onParticipantUpdate?: (updatedParticipant: Participant | null) => void;
 }
 
 const getAuthHeaders = () => {
@@ -65,7 +66,7 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
       queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
       queryClient.invalidateQueries({ queryKey: ["allAttendedProgramsForStats"] });
       if (onParticipantUpdate) {
-        onParticipantUpdate(null); // Signal parent to remove this card
+        onParticipantUpdate(null);
       }
     },
     onError: (error: Error) => {
@@ -78,6 +79,12 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
   const handleDelete = () => {
     deleteMutation.mutate(participant.id);
   };
+
+  const formattedDob = React.useMemo(() => {
+    if (!participant.dob) return "N/A";
+    const date = parseISO(participant.dob);
+    return isValid(date) ? format(date, "PPP") : "N/A";
+  }, [participant.dob]);
 
   return (
     <Card>
@@ -123,12 +130,16 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
           <p className="text-gray-700 dark:text-gray-300">{participant.email || "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">
+          <p className="font-medium">Date of Birth:</p>
+          <p className="text-gray-700 dark:text-gray-300">{formattedDob}</p>
+        </div>
+        <div className="flex items-center gap-2">
           <p className="font-medium">Address:</p>
           <p className="text-gray-700 dark:text-gray-300">{participant.address || "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">
           <p className="font-medium">Age:</p>
-          <p className="text-gray-700 dark:text-gray-300">{participant.age || "N/A"}</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.age !== null && participant.age !== undefined ? participant.age : "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">
           <p className="font-medium">Gender:</p>

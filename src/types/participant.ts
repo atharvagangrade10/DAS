@@ -22,8 +22,9 @@ export interface Participant {
   phone: string;
   address: string;
   age: number | null;
+  dob: string | null; // Added dob field
   gender: string;
   email: string;
   devotee_friend_name: string;
-  chanting_rounds: number | null; // New field
+  chanting_rounds: number | null;
 }

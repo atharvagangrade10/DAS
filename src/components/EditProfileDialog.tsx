@@ -30,10 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { format, parseISO, isValid } from "date-fns";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE_URL } from "@/config/api";
-import { Loader2 } from "lucide-react";
 
 interface EditProfileDialogProps {
   isOpen: boolean;
@@ -50,6 +54,7 @@ const profileSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Age cannot be negative").nullable().optional(),
   ),
+  dob: z.date().nullable().optional(), // Added dob
   gender: z.enum(["Male", "Female", "Other"]).optional(),
   chanting_rounds: z.preprocess(
     (val) => (val === "" ? null : Number(val)),
@@ -64,6 +69,12 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
 }) => {
   const { user, updateUser, token } = useAuth();
 
+  const getInitialDob = (dobString: string | null | undefined) => {
+    if (!dobString) return null;
+    const date = parseISO(dobString);
+    return isValid(date) ? date : null;
+  };
+
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -71,6 +82,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       phone: user?.phone || "",
       address: user?.address || "",
       age: user?.age || undefined,
+      dob: getInitialDob(user?.dob),
       gender: (user?.gender as "Male" | "Female" | "Other") || "Male",
       chanting_rounds: user?.chanting_rounds || undefined,
       email: user?.email || "",
@@ -84,6 +96,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
         phone: user.phone,
         address: user.address || "",
         age: user.age || undefined,
+        dob: getInitialDob(user.dob),
         gender: (user.gender as "Male" | "Female" | "Other") || "Male",
         chanting_rounds: user.chanting_rounds || undefined,
         email: user.email || "",
@@ -93,13 +106,18 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof profileSchema>) => {
+      const payload = {
+        ...values,
+        dob: values.dob ? format(values.dob, "yyyy-MM-dd") : null,
+      };
+      
       const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -206,30 +224,71 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
               />
               <FormField
                 control={form.control}
-                name="gender"
+                name="dob"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="flex flex-col justify-end">
+                    <FormLabel>Date of Birth</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="chanting_rounds"

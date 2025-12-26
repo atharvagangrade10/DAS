@@ -1,5 +1,6 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
+import { Yatra, YatraCreate } from "@/types/yatra";
 import { API_BASE_URL } from "@/config/api";
 
 interface DevoteeFriend {
@@ -51,6 +52,29 @@ export const fetchAttendedPrograms = async (
   );
   if (!response.ok) {
     throw new Error("Failed to fetch attended programs");
+  }
+  return response.json();
+};
+
+export const fetchYatras = async (): Promise<Yatra[]> => {
+  const response = await fetch(`${API_BASE_URL}/yatra/`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch yatras");
+  }
+  return response.json();
+};
+
+export const createYatra = async (yatraData: YatraCreate): Promise<Yatra> => {
+  const response = await fetch(`${API_BASE_URL}/yatra/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(yatraData),
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to create yatra");
   }
   return response.json();
 };

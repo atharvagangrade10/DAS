@@ -26,8 +26,8 @@ const LoginPage = () => {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      full_name: "Rakesh Sharma",
-      phone: "9090511756",
+      full_name: "",
+      phone: "",
       password: "",
     },
   });
@@ -71,7 +71,7 @@ const LoginPage = () => {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Rakesh Sharma" {...field} />
+                      <Input placeholder="Enter your full name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -84,7 +84,7 @@ const LoginPage = () => {
                   <FormItem>
                     <FormLabel>Phone Number (10 digits)</FormLabel>
                     <FormControl>
-                      <Input placeholder="9090511756" type="tel" {...field} />
+                      <Input placeholder="e.g., 9090511756" type="tel" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

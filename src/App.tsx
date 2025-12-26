@@ -10,7 +10,6 @@ import Attendance from "./pages/Attendance";
 import Programs from "./pages/Programs";
 import ParticipantsPage from "./pages/Participants";
 import Stats from "./pages/Stats";
-import YatraPage from "./pages/Yatra";
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -67,7 +66,6 @@ const App = () => {
                 <Route path="programs" element={<Programs />} />
                 <Route path="participants" element={<ParticipantsPage />} />
                 <Route path="stats" element={<Stats />} />
-                <Route path="yatra" element={<YatraPage />} />
               </Route>
             </Route>
             

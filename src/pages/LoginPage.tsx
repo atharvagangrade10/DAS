@@ -71,7 +71,7 @@ const LoginPage = () => {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your Full Name" {...field} />
+                      <Input placeholder="Rakesh Sharma" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -84,7 +84,7 @@ const LoginPage = () => {
                   <FormItem>
                     <FormLabel>Phone Number (10 digits)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 7649090511" type="tel" {...field} />
+                      <Input placeholder="9090511756" type="tel" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

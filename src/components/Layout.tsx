@@ -12,7 +12,7 @@ const Layout = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <SidebarNav />
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 overflow-y-auto">
         <main className={`flex-1 p-4 ${isMobile ? "pt-20" : ""}`}>
           <Outlet />
         </main>

@@ -65,6 +65,7 @@ const formSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
+  email: z.string().email("Invalid email address").optional().or(z.literal('')), // Added email
 });
 
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
@@ -117,6 +118,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
       devotee_friend: "None",
       gender: "Male", // Default gender
       chanting_rounds: undefined, // Default for new field
+      email: "", // Default for new field
     },
   });
 
@@ -237,6 +239,19 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
             />
             <FormField
               control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="devotee_friend"
               render={({ field }) => (
                 <FormItem>
@@ -264,7 +279,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                 </FormItem>
               )}
             />
-            <FormField // New FormField for chanting_rounds
+            <FormField
               control={form.control}
               name="chanting_rounds"
               render={({ field }) => (

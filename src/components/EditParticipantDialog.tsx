@@ -64,6 +64,7 @@ const formSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
+  email: z.string().email("Invalid email address").optional().or(z.literal('')), // Added email
 });
 
 const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
@@ -120,7 +121,8 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
       age: participant.age || undefined,
       devotee_friend: participant.devotee_friend_name || "None",
       gender: (participant.gender as "Male" | "Female" | "Other") || "Male",
-      chanting_rounds: participant.chanting_rounds || undefined, // Default for new field
+      chanting_rounds: participant.chanting_rounds || undefined,
+      email: participant.email || "", // Default for new field
     },
   });
 
@@ -133,7 +135,8 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
         age: participant.age || undefined,
         devotee_friend: participant.devotee_friend_name || "None",
         gender: (participant.gender as "Male" | "Female" | "Other") || "Male",
-        chanting_rounds: participant.chanting_rounds || undefined, // Reset for new field
+        chanting_rounds: participant.chanting_rounds || undefined,
+        email: participant.email || "", // Reset for new field
       });
     }
   }, [participant, form]);
@@ -254,6 +257,19 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
             />
             <FormField
               control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="devotee_friend"
               render={({ field }) => (
                 <FormItem>
@@ -281,7 +297,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
                 </FormItem>
               )}
             />
-            <FormField // New FormField for chanting_rounds
+            <FormField
               control={form.control}
               name="chanting_rounds"
               render={({ field }) => (

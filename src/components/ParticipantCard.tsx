@@ -107,6 +107,10 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
           <PhoneDialer phoneNumber={participant.phone} participantName={participant.full_name} />
         </div>
         <div className="flex items-center gap-2">
+          <p className="font-medium">Email:</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.email || "N/A"}</p>
+        </div>
+        <div className="flex items-center gap-2">
           <p className="font-medium">Address:</p>
           <p className="text-gray-700 dark:text-gray-300">{participant.address || "N/A"}</p>
         </div>

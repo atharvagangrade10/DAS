@@ -9,14 +9,22 @@ import Friends from "./pages/Friends";
 import Attendance from "./pages/Attendance";
 import Programs from "./pages/Programs";
 import ParticipantsPage from "./pages/Participants";
-import Stats from "./pages/Stats"; // Import the new Stats page
+import Stats from "./pages/Stats";
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const { isLoading: isAuthLoading } = useAuth();
   const [isAppReady, setIsAppReady] = React.useState(false);
 
   const handleLoadingComplete = () => {
@@ -32,6 +40,15 @@ const App = () => {
       </QueryClientProvider>
     );
   }
+  
+  // If Auth is still loading (checking local storage), show a simple loader
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -40,14 +57,25 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Index />} />
-              <Route path="friends" element={<Friends />} />
-              <Route path="attendance" element={<Attendance />} />
-              <Route path="programs" element={<Programs />} />
-              <Route path="participants" element={<ParticipantsPage />} />
-              <Route path="stats" element={<Stats />} /> {/* Add the new route */}
+            {/* Public Auth Routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Index />} />
+                <Route path="friends" element={<Friends />} />
+                <Route path="attendance" element={<Attendance />} />
+                <Route path="programs" element={<Programs />} />
+                <Route path="participants" element={<ParticipantsPage />} />
+                <Route path="stats" element={<Stats />} />
+              </Route>
             </Route>
+            
+            {/* Catch all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -118,12 +118,7 @@ const LoginPage = () => {
             <Link to="/forgot-password" className="text-primary hover:underline block">
               Forgot Password?
             </Link>
-            <p>
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary hover:underline">
-                Register
-              </Link>
-            </p>
+            {/* Registration is disabled */}
           </div>
         </CardContent>
       </Card>

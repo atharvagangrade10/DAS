@@ -14,7 +14,6 @@ import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
 import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -59,7 +58,7 @@ const App = () => {
           <Routes>
             {/* Public Auth Routes */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            {/* Registration route removed */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 

@@ -4,7 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Form,
   FormControl,
@@ -29,6 +29,7 @@ import { API_BASE_URL } from "@/config/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, User as UserIcon } from "lucide-react";
 import DOBInput from "@/components/DOBInput";
+import { Participant } from "@/types/participant";
 
 const PROFESSIONS = [
   "Student",
@@ -66,6 +67,50 @@ const profileSchema = z.object({
 
 const ProfilePage = () => {
   const { user, updateUser, token } = useAuth();
+  const [participantId, setParticipantId] = React.useState<string | null>(null);
+
+  // Fetch participant details by searching with phone number
+  const { data: searchResults, isLoading: isSearching } = useQuery<Participant[], Error>({
+    queryKey: ["participantSearch", user?.phone],
+    queryFn: async () => {
+      const response = await fetch(
+        `${API_BASE_URL}/participants/search?query=${encodeURIComponent(user?.phone || "")}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to find participant record");
+      return response.json();
+    },
+    enabled: !!user?.phone && !!token,
+  });
+
+  React.useEffect(() => {
+    if (searchResults && searchResults.length > 0) {
+      // Find exact match by phone or just take the first result
+      const match = searchResults.find(p => p.phone === user?.phone) || searchResults[0];
+      setParticipantId(match.id);
+      
+      // Update form values with latest participant data
+      const profInit = getProfessionInitialValues(match.profession);
+      form.reset({
+        full_name: match.full_name,
+        initiated_name: match.initiated_name || "",
+        phone: match.phone || "",
+        address: match.address || "",
+        place_name: match.place_name || "",
+        age: match.age || undefined,
+        dob: getInitialDob(match.dob),
+        gender: (match.gender as "Male" | "Female" | "Other") || "Male",
+        profession_type: profInit.type,
+        profession_other: profInit.other,
+        chanting_rounds: match.chanting_rounds || undefined,
+        email: match.email || "",
+      });
+    }
+  }, [searchResults]);
 
   const getInitialDob = (dobString: string | null | undefined) => {
     if (!dobString) return null;
@@ -111,6 +156,8 @@ const ProfilePage = () => {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof profileSchema>) => {
+      if (!participantId) throw new Error("Could not identify your participant record.");
+
       const profession = values.profession_type === "Other" 
         ? values.profession_other 
         : values.profession_type;
@@ -127,9 +174,10 @@ const ProfilePage = () => {
         email: values.email,
         profession: profession || null,
         chanting_rounds: values.chanting_rounds,
+        devotee_friend: user?.devotee_friend_name || "None" // Preserving devotee friend
       };
       
-      const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
+      const response = await fetch(`${API_BASE_URL}/participants/${participantId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -157,6 +205,15 @@ const ProfilePage = () => {
     mutation.mutate(values);
   };
 
+  if (isSearching) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Identifying your profile record...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 sm:p-8 max-w-4xl">
       <div className="flex items-center gap-4 mb-8">
@@ -175,6 +232,12 @@ const ProfilePage = () => {
           <CardDescription>Update your profile information here.</CardDescription>
         </CardHeader>
         <CardContent>
+          {!participantId && (
+            <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/50 rounded-md text-yellow-800 dark:text-yellow-200 text-sm">
+              We couldn't link your account to a participant record. Profile updates may be disabled.
+            </div>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -211,7 +274,7 @@ const ProfilePage = () => {
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
                       <FormControl>
-                        <Input {...field} type="tel" placeholder="10 digit number" />
+                        <Input {...field} type="tel" placeholder="10 digit number" readOnly className="bg-muted cursor-not-allowed" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -388,7 +451,7 @@ const ProfilePage = () => {
               </div>
 
               <div className="pt-6 border-t flex justify-end">
-                <Button type="submit" disabled={mutation.isPending} className="w-full md:w-auto px-8">
+                <Button type="submit" disabled={mutation.isPending || !participantId} className="w-full md:w-auto px-8">
                   {mutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}

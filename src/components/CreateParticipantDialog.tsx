@@ -30,14 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
 import { format, differenceInYears } from "date-fns";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { API_BASE_URL } from "@/config/api";
+import DOBInput from "./DOBInput";
 
 interface DevoteeFriend {
   id: string;
@@ -163,7 +160,6 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
   const dobValue = form.watch("dob");
   const professionType = form.watch("profession_type");
 
-  // Automatically calculate age when DOB changes
   React.useEffect(() => {
     if (dobValue) {
       const age = differenceInYears(new Date(), dobValue);
@@ -264,20 +260,14 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
               )}
             />
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="age"
+                name="dob"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                      />
+                      <DOBInput value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -285,41 +275,19 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
               />
               <FormField
                 control={form.control}
-                name="dob"
+                name="age"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col justify-end">
-                    <FormLabel>Date of Birth</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value || undefined}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>Age (Calculated)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? ""}
+                        readOnly
+                        className="bg-muted"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

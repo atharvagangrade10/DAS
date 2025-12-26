@@ -30,8 +30,7 @@ const LoaderPage: React.FC<LoaderPageProps> = ({ onLoadingComplete }) => {
       while (retries < MAX_RETRIES && !healthCheckSuccess) {
         try {
           setLoadingMessage(
-            `Hare Krishna, please wait. Your DAS is loading DATA... (Attempt ${
-              retries + 1
+            `Hare Krishna, please wait. Your DAS is loading DATA... (Attempt ${retries + 1
             }/${MAX_RETRIES})`,
           );
           const healthResponse = await fetch(HEALTH_CHECK_URL);
@@ -74,14 +73,14 @@ const LoaderPage: React.FC<LoaderPageProps> = ({ onLoadingComplete }) => {
       // Switch Database
       try {
         // Keep the loading message general, do not explicitly state "Switching database..."
-        setLoadingMessage("Hare Krishna, please wait. Your DAS is loading DATA..."); 
+        setLoadingMessage("Hare Krishna, please wait. Your DAS is loading DATA...");
         const switchDbResponse = await fetch(SWITCH_DATABASE_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({ database: "iskcon_youth" }),
+          body: JSON.stringify({ database: "iskcon_congregation" }),
         });
 
         if (!switchDbResponse.ok) {

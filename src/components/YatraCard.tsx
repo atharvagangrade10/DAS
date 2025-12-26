@@ -12,15 +12,12 @@ interface YatraCardProps {
 }
 
 const YatraCard: React.FC<YatraCardProps> = ({ yatra }) => {
-  // Filter out zero fees and map keys for display (e.g., additionalProp1 -> Category 1)
+  // Filter out zero fees and map keys for display (now using dynamic keys)
   const feeEntries = Object.entries(yatra.registration_fees)
     .filter(([, value]) => value > 0)
     .map(([key, value]) => {
-      let displayName = key;
-      if (key === "additionalProp1") displayName = "Standard";
-      if (key === "additionalProp2") displayName = "Student";
-      if (key === "additionalProp3") displayName = "Early Bird";
-      return { key: displayName, value };
+      // Assuming the key is the user-defined category name
+      return { key, value };
     });
 
   return (

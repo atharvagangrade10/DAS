@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { YatraCreate } from "@/types/yatra";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -37,22 +37,19 @@ interface CreateYatraDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const FeeItemSchema = z.object({
+  category_name: z.string().min(1, "Category name is required"),
+  fee_amount: z.preprocess(
+    (val) => (val === "" ? 0 : Number(val)),
+    z.number().int().min(0, "Fee must be non-negative"),
+  ),
+});
+
 const formSchema = z.object({
   name: z.string().min(1, "Yatra name is required"),
   date_start: z.date({ required_error: "Start date is required" }),
   date_end: z.date({ required_error: "End date is required" }),
-  fee_category_1: z.preprocess(
-    (val) => (val === "" ? 0 : Number(val)),
-    z.number().int().min(0, "Fee must be non-negative").optional().default(0),
-  ),
-  fee_category_2: z.preprocess(
-    (val) => (val === "" ? 0 : Number(val)),
-    z.number().int().min(0, "Fee must be non-negative").optional().default(0),
-  ),
-  fee_category_3: z.preprocess(
-    (val) => (val === "" ? 0 : Number(val)),
-    z.number().int().min(0, "Fee must be non-negative").optional().default(0),
-  ),
+  fees: z.array(FeeItemSchema).min(1, "At least one registration fee category is required."),
 }).refine((data) => data.date_end >= data.date_start, {
   message: "End date cannot be before start date.",
   path: ["date_end"],
@@ -70,10 +67,13 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
       name: "",
       date_start: undefined,
       date_end: undefined,
-      fee_category_1: 0,
-      fee_category_2: 0,
-      fee_category_3: 0,
+      fees: [{ category_name: "Standard", fee_amount: 0 }], // Initial default fee
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "fees",
   });
 
   const mutation = useMutation({
@@ -92,22 +92,24 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    const registration_fees = values.fees.reduce((acc, fee) => {
+      // Use the category name as the key in the dictionary payload
+      acc[fee.category_name] = fee.fee_amount;
+      return acc;
+    }, {} as Record<string, number>);
+
     const yatraData: YatraCreate = {
       name: values.name,
       date_start: format(values.date_start, "yyyy-MM-dd"),
       date_end: format(values.date_end, "yyyy-MM-dd"),
-      registration_fees: {
-        additionalProp1: values.fee_category_1 || 0,
-        additionalProp2: values.fee_category_2 || 0,
-        additionalProp3: values.fee_category_3 || 0,
-      },
+      registration_fees,
     };
     mutation.mutate(yatraData);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Yatra (Trip)</DialogTitle>
           <DialogDescription>
@@ -207,63 +209,73 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
                 )}
               />
             </div>
-            <div className="space-y-2 pt-2">
-              <FormLabel>Registration Fees (INR)</FormLabel>
-              <FormField
-                control={form.control}
-                name="fee_category_1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-normal text-muted-foreground">Category 1 Fee (e.g., Standard)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                        min="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="fee_category_2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-normal text-muted-foreground">Category 2 Fee (e.g., Student)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                        min="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="fee_category_3"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-normal text-muted-foreground">Category 3 Fee (e.g., Early Bird)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                        min="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            
+            <div className="space-y-3 pt-2 border-t">
+              <div className="flex justify-between items-center">
+                <FormLabel className="text-base font-semibold">Registration Fees (INR)</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ category_name: "", fee_amount: 0 })}
+                  className="flex items-center gap-1"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Add Category
+                </Button>
+              </div>
+
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex gap-2 items-start border p-3 rounded-md">
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`fees.${index}.category_name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-normal text-muted-foreground">Category Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`fees.${index}.fee_amount`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-normal text-muted-foreground">Fee Amount</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                              min="0"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => remove(index)}
+                    className="mt-7 text-red-500 hover:text-red-700"
+                    disabled={fields.length === 1} // Prevent deleting the last field
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Remove fee category</span>
+                  </Button>
+                </div>
+              ))}
+              <FormMessage>{form.formState.errors.fees?.message}</FormMessage>
             </div>
+
             <DialogFooter>
               <Button type="submit" disabled={mutation.isPending}>
                 {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Yatra"}

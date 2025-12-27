@@ -1,13 +1,117 @@
 "use client";
 
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CreditCard, History, Info, ReceiptText } from "lucide-react";
+import { CreditCard, History, Info, ReceiptText, IndianRupee } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/context/AuthContext";
+import { fetchPaymentHistory } from "@/utils/api";
+import { PaymentRecord } from "@/types/yatra";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PaymentHistory = () => {
-  // Empty array as we are not using dummy data anymore
-  const payments: any[] = [];
+  const { user } = useAuth();
+  const isMobile = useIsMobile();
+
+  const { data: payments, isLoading, error } = useQuery<PaymentRecord[], Error>({
+    queryKey: ["paymentHistory", user?.user_id],
+    queryFn: () => fetchPaymentHistory(user!.user_id),
+    enabled: !!user?.user_id,
+  });
+
+  React.useEffect(() => {
+    if (error) {
+      toast.error("Error loading payment history", {
+        description: error.message,
+      });
+    }
+  }, [error]);
+
+  const getStatusBadge = (status: string) => {
+    const lowerStatus = status.toLowerCase();
+    switch (lowerStatus) {
+      case "success":
+      case "paid":
+        return <Badge className="bg-green-500 hover:bg-green-500 text-white">Success</Badge>;
+      case "pending":
+        return <Badge variant="secondary">Pending</Badge>;
+      case "failed":
+      case "refunded":
+        return <Badge variant="destructive">Failed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const renderMobileView = (payments: PaymentRecord[]) => (
+    <div className="space-y-4">
+      {payments.map((payment) => (
+        <Card key={payment.transaction_id} className="shadow-sm">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-lg">{payment.yatra_name}</span>
+              {getStatusBadge(payment.status)}
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Date:</span>
+              <span className="font-medium">{format(parseISO(payment.date), "MMM dd, yyyy")}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Amount:</span>
+              <span className="font-bold flex items-center">
+                <IndianRupee className="h-3 w-3 mr-1" />
+                {payment.amount}
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground break-all">
+              Txn ID: {payment.transaction_id}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const renderDesktopTable = (payments: PaymentRecord[]) => (
+    <ScrollArea className="h-[400px] w-full border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[200px]">Yatra Name</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead className="text-right">Amount (₹)</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[250px]">Transaction ID</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {payments.map((payment) => (
+            <TableRow key={payment.transaction_id}>
+              <TableCell className="font-medium">{payment.yatra_name}</TableCell>
+              <TableCell>{format(parseISO(payment.date), "MMM dd, yyyy")}</TableCell>
+              <TableCell className="text-right font-semibold">{payment.amount}</TableCell>
+              <TableCell>{getStatusBadge(payment.status)}</TableCell>
+              <TableCell className="text-xs text-muted-foreground break-all">{payment.transaction_id}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </ScrollArea>
+  );
 
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-8">
@@ -38,7 +142,17 @@ const PaymentHistory = () => {
           <CardDescription>A list of your recent yatra and program payments.</CardDescription>
         </CardHeader>
         <CardContent>
-          {payments.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : error ? (
+            <p className="text-red-500">Error loading history: {error.message}</p>
+          ) : payments && payments.length > 0 ? (
+            isMobile ? renderMobileView(payments) : renderDesktopTable(payments)
+          ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
               <div className="bg-muted p-4 rounded-full">
                 <ReceiptText className="h-10 w-10 text-muted-foreground" />
@@ -50,9 +164,6 @@ const PaymentHistory = () => {
                 </p>
               </div>
             </div>
-          ) : (
-            // Table would go here if we had real data
-            <p>Payment data display is ready for integration.</p>
           )}
         </CardContent>
       </Card>

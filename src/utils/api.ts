@@ -1,6 +1,6 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
-import { Yatra, YatraCreate, YatraUpdate } from "@/types/yatra";
+import { Yatra, YatraCreate, YatraUpdate, PaymentRecord } from "@/types/yatra";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -143,6 +143,10 @@ export interface RazorpayVerificationRequest {
 export const verifyPayment = async (yatraId: string, data: RazorpayVerificationRequest): Promise<any> => {
   // New endpoint for payment verification: /yatra/{yatra_id}/verify-payment
   return mutateAuthenticated(`${API_BASE_URL}/yatra/${yatraId}/verify-payment`, "POST", data);
+};
+
+export const fetchPaymentHistory = async (participantId: string): Promise<PaymentRecord[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/yatra/payment-history/${participantId}`);
 };
 
 // --- Public Endpoints (Unprotected) ---

@@ -23,3 +23,12 @@ export interface YatraUpdate {
   date_end?: string;
   registration_fees?: RegistrationFees;
 }
+
+export interface PaymentRecord {
+  yatra_id: string;
+  yatra_name: string;
+  amount: number;
+  status: string;
+  transaction_id: string;
+  date: string; // ISO date string (YYYY-MM-DD)
+}

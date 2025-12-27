@@ -11,6 +11,13 @@ interface DevoteeFriend {
   email: string;
 }
 
+export interface AccountStatusResponse {
+  status: "Login" | "Register" | "SetPassword";
+  participant_id: string | null;
+  full_name: string | null;
+  message: string;
+}
+
 // Helper function to get authorization headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('das_auth_token');
@@ -103,6 +110,45 @@ export const fetchYatrasPublic = async (): Promise<Yatra[]> => {
     headers: { "Content-Type": "application/json" }
   });
   if (!response.ok) throw new Error("Failed to fetch trip details");
+  return response.json();
+};
+
+export const createAccountCheck = async (phone: string): Promise<AccountStatusResponse> => {
+  const response = await fetch(`${API_BASE_URL}/auth/create-account`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to check account' }));
+    throw new Error(errorData.detail || "Failed to check account status");
+  }
+  return response.json();
+};
+
+export const createParticipantPublic = async (data: any): Promise<Participant> => {
+  const response = await fetch(`${API_BASE_URL}/auth/create-participant`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to create participant' }));
+    throw new Error(errorData.detail || "Failed to register participant");
+  }
+  return response.json();
+};
+
+export const setPasswordPublic = async (participant_id: string, password: string): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/auth/set-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ participant_id, password }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to set password' }));
+    throw new Error(errorData.detail || "Failed to set account password");
+  }
   return response.json();
 };
 

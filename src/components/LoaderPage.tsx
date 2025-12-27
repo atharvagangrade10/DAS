@@ -3,7 +3,7 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // New import
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_BASE_URL } from "@/config/api";
 
 interface LoaderPageProps {
@@ -11,7 +11,6 @@ interface LoaderPageProps {
 }
 
 const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
-const SWITCH_DATABASE_URL = `${API_BASE_URL}/switch-database`;
 const MAX_RETRIES = 5;
 const RETRY_INTERVAL_MS = 20 * 1000; // 20 seconds
 
@@ -70,34 +69,8 @@ const LoaderPage: React.FC<LoaderPageProps> = ({ onLoadingComplete }) => {
         return;
       }
 
-      // Switch Database
-      try {
-        // Keep the loading message general, do not explicitly state "Switching database..."
-        setLoadingMessage("Hare Krishna, please wait. Your DAS is loading DATA...");
-        const switchDbResponse = await fetch(SWITCH_DATABASE_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ database: "iskcon_youth" }),
-        });
-
-        if (!switchDbResponse.ok) {
-          const errorData = await switchDbResponse.json();
-          throw new Error(
-            errorData.detail || "Failed to switch database.",
-          );
-        }
-        console.log("Database switched successfully.");
-        onLoadingComplete(); // Signal App.tsx that loading is complete
-      } catch (err: any) {
-        console.error("Failed to switch database:", err);
-        setError(`Failed to initialize application: ${err.message}`);
-        toast.error("Application failed to load", {
-          description: `Failed to switch database: ${err.message}`,
-        });
-      }
+      // If health check is successful, proceed to complete loading
+      onLoadingComplete();
     };
 
     initializeApp();

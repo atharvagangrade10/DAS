@@ -104,7 +104,8 @@ export const createYatra = async (yatraData: YatraCreate): Promise<Yatra> => {
 };
 
 export const updateYatra = async (yatraId: string, yatraData: YatraUpdate): Promise<Yatra> => {
-  return mutateAuthenticated(`${API_BASE_URL}/yatra/${yatraId}`, "PUT", yatraData);
+  // Fixed the endpoint path to include /update/ to match backend conventions
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/update/${yatraId}`, "PUT", yatraData);
 };
 
 // --- Public Endpoints (Unprotected) ---

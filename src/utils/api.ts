@@ -112,10 +112,11 @@ export interface RazorpayOrderRequest {
   yatra_id: string;
   fee_category: string;
   amount: number; // Amount in INR (or base currency)
+  participant_id: string; // Added participant_id as per new requirement
 }
 
 export interface RazorpayOrderResponse {
-  order_id: string;
+  id: string; // Renamed from order_id to id to match sample code
   amount: number; // Amount in smallest unit (e.g., paise)
   currency: string;
   yatra_name: string;
@@ -125,7 +126,23 @@ export interface RazorpayOrderResponse {
 }
 
 export const createRazorpayOrder = async (data: RazorpayOrderRequest): Promise<RazorpayOrderResponse> => {
-  return mutateAuthenticated(`${API_BASE_URL}/yatra/create-order`, "POST", data);
+  // Updated endpoint to match the specified structure: /yatra/{yatra_id}/order
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/order`, "POST", {
+    participant_id: data.participant_id,
+    amount: data.amount,
+    fee_category: data.fee_category, // Keeping fee_category for backend context
+  });
+};
+
+export interface RazorpayVerificationRequest {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+export const verifyPayment = async (yatraId: string, data: RazorpayVerificationRequest): Promise<any> => {
+  // New endpoint for payment verification: /yatra/{yatra_id}/verify-payment
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/${yatraId}/verify-payment`, "POST", data);
 };
 
 // --- Public Endpoints (Unprotected) ---

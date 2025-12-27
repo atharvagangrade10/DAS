@@ -52,27 +52,32 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
   const selectedFeeAmount = availableFees.find(([key]) => key === selectedFeeKey)?.[1] || 0;
 
   const orderMutation = useMutation({
-    mutationFn: () => createRazorpayOrder({
-      yatra_id: yatra.id,
-      fee_category: selectedFeeKey,
-      amount: selectedFeeAmount,
-    }),
+    mutationFn: () => {
+      if (!user?.user_id) throw new Error("User ID is missing for order creation.");
+      return createRazorpayOrder({
+        yatra_id: yatra.id,
+        fee_category: selectedFeeKey,
+        amount: selectedFeeAmount,
+        participant_id: user.user_id, // Pass participant_id as required by the new API structure
+      });
+    },
     onSuccess: (order) => {
       // Step 2: Display Razorpay checkout
       displayRazorpay({
+        yatraId: yatra.id, // Pass yatraId for verification step
         order,
         onSuccess: (response) => {
-          // Handle successful payment response (e.g., verify payment on backend, update UI)
-          toast.success("Payment successful!", {
-            description: `Registration confirmed for ${yatra.name}. Payment ID: ${response.razorpay_payment_id}`,
+          // This is called after successful payment AND successful backend verification
+          toast.success("Registration successful!", {
+            description: `You are registered for ${yatra.name}. Payment ID: ${response.razorpay_payment_id}`,
           });
           onOpenChange(false);
         },
         onFailure: (error) => {
-          // Handle payment failure
-          console.error("Razorpay Payment Failed:", error);
+          // Handle payment failure or verification failure
+          console.error("Payment Failed/Verification Error:", error);
           toast.error("Payment failed", {
-            description: error.description || "An error occurred during payment.",
+            description: error.description || "An error occurred during payment or verification.",
           });
         },
       });

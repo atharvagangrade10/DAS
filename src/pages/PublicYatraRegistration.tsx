@@ -49,10 +49,10 @@ const registrationSchema = z.object({
 
 const passwordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Please confirm your password"),
-}).refine((data) => data.password === data.confirmPassword, {
+  verifyPassword: z.string().min(6, "Please confirm your password"),
+}).refine((data) => data.password === data.verifyPassword, {
   message: "Passwords do not match",
-  path: ["confirmPassword"],
+  path: ["verifyPassword"],
 });
 
 const PublicYatraRegistration = () => {
@@ -86,7 +86,7 @@ const PublicYatraRegistration = () => {
     resolver: zodResolver(passwordSchema),
     defaultValues: {
       password: "",
-      confirmPassword: "",
+      verifyPassword: "",
     },
   });
 
@@ -342,6 +342,9 @@ const PublicYatraRegistration = () => {
           <CardContent>
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} className="space-y-6">
+                {/* Hidden field to guide browser password managers to associate password with phone number */}
+                <input type="hidden" autoComplete="username" value={form.getValues("phone")} />
+                
                 <FormField
                   control={passwordForm.control}
                   name="password"
@@ -355,6 +358,7 @@ const PublicYatraRegistration = () => {
                             type={showPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
+                            id="new_password_input"
                           />
                           <button
                             type="button"
@@ -371,7 +375,7 @@ const PublicYatraRegistration = () => {
                 />
                 <FormField
                   control={passwordForm.control}
-                  name="confirmPassword"
+                  name="verifyPassword"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
@@ -382,6 +386,7 @@ const PublicYatraRegistration = () => {
                             type={showConfirmPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
+                            id="verify_password_input"
                           />
                           <button
                             type="button"

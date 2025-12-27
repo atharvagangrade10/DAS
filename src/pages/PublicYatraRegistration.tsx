@@ -48,11 +48,11 @@ const registrationSchema = z.object({
 });
 
 const passwordSchema = z.object({
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  verifyPassword: z.string().min(6, "Please confirm your password"),
-}).refine((data) => data.password === data.verifyPassword, {
+  new_password: z.string().min(6, "Password must be at least 6 characters"),
+  confirm_password: z.string().min(6, "Please confirm your password"),
+}).refine((data) => data.new_password === data.confirm_password, {
   message: "Passwords do not match",
-  path: ["verifyPassword"],
+  path: ["confirm_password"],
 });
 
 const PublicYatraRegistration = () => {
@@ -85,8 +85,8 @@ const PublicYatraRegistration = () => {
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
-      password: "",
-      verifyPassword: "",
+      new_password: "",
+      confirm_password: "",
     },
   });
 
@@ -140,7 +140,7 @@ const PublicYatraRegistration = () => {
   const passwordMutation = useMutation({
     mutationFn: async (values: z.infer<typeof passwordSchema>) => {
       if (!participantId) throw new Error("Participant ID is missing");
-      await setPasswordPublic(participantId, values.password);
+      await setPasswordPublic(participantId, values.new_password);
     },
     onSuccess: () => {
       toast.success("Password set successfully! Please log in.");
@@ -342,12 +342,17 @@ const PublicYatraRegistration = () => {
           <CardContent>
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} className="space-y-6">
-                {/* Hidden field to guide browser password managers to associate password with phone number */}
-                <input type="hidden" autoComplete="username" value={form.getValues("phone")} />
+                {/* 
+                   Browser autofill often looks for a username field before the password field.
+                   By providing a hidden but present field, we guide it correctly.
+                */}
+                <div style={{ display: 'none' }}>
+                  <input type="text" name="username" autoComplete="username" value={form.getValues("phone")} readOnly />
+                </div>
                 
                 <FormField
                   control={passwordForm.control}
-                  name="password"
+                  name="new_password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
@@ -358,7 +363,6 @@ const PublicYatraRegistration = () => {
                             type={showPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
-                            id="new_password_input"
                           />
                           <button
                             type="button"
@@ -375,7 +379,7 @@ const PublicYatraRegistration = () => {
                 />
                 <FormField
                   control={passwordForm.control}
-                  name="verifyPassword"
+                  name="confirm_password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
@@ -386,7 +390,6 @@ const PublicYatraRegistration = () => {
                             type={showConfirmPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
-                            id="verify_password_input"
                           />
                           <button
                             type="button"

@@ -48,11 +48,11 @@ const registrationSchema = z.object({
 });
 
 const passwordSchema = z.object({
-  pass_field: z.string().min(6, "Password must be at least 6 characters"),
-  verify_field: z.string().min(6, "Please confirm your password"),
-}).refine((data) => data.pass_field === data.verify_field, {
+  p_val: z.string().min(6, "Password must be at least 6 characters"),
+  v_val: z.string().min(6, "Please confirm your password"),
+}).refine((data) => data.p_val === data.v_val, {
   message: "Passwords do not match",
-  path: ["verify_field"],
+  path: ["v_val"],
 });
 
 const PublicYatraRegistration = () => {
@@ -84,8 +84,8 @@ const PublicYatraRegistration = () => {
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
-      pass_field: "",
-      verify_field: "",
+      p_val: "",
+      v_val: "",
     },
   });
 
@@ -139,7 +139,7 @@ const PublicYatraRegistration = () => {
   const passwordMutation = useMutation({
     mutationFn: async (values: z.infer<typeof passwordSchema>) => {
       if (!participantId) throw new Error("Participant ID is missing");
-      await setPasswordPublic(participantId, values.pass_field);
+      await setPasswordPublic(participantId, values.p_val);
     },
     onSuccess: () => {
       toast.success("Password set successfully! Please log in.");
@@ -340,27 +340,18 @@ const PublicYatraRegistration = () => {
           </CardHeader>
           <CardContent>
             <Form {...passwordForm}>
-              <form onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} className="space-y-6">
+              <form 
+                onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} 
+                className="space-y-6"
+                autoComplete="off"
+              >
                 {/* 
-                   Off-screen username field to guide browser password managers. 
-                   Using off-screen positioning instead of display:none as some browsers ignore hidden inputs.
+                   Using readOnly + onFocus to trick the browser into not autofilling on load.
+                   The input only becomes editable when the user actually focuses on it.
                 */}
-                <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
-                  <input 
-                    type="text" 
-                    name="user_login_hint" 
-                    autoComplete="username" 
-                    value={form.getValues("phone")} 
-                    tabIndex={-1}
-                    readOnly 
-                  />
-                  {/* Dummy password field to catch the very first autofill attempt */}
-                  <input type="password" name="dummy_pass" autoComplete="new-password" tabIndex={-1} />
-                </div>
-                
                 <FormField
                   control={passwordForm.control}
-                  name="pass_field"
+                  name="p_val"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
@@ -371,7 +362,8 @@ const PublicYatraRegistration = () => {
                             type={showPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
-                            name="pass_field"
+                            readOnly
+                            onFocus={(e) => e.target.removeAttribute('readonly')}
                           />
                           <button
                             type="button"
@@ -388,7 +380,7 @@ const PublicYatraRegistration = () => {
                 />
                 <FormField
                   control={passwordForm.control}
-                  name="verify_field"
+                  name="v_val"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
@@ -399,7 +391,8 @@ const PublicYatraRegistration = () => {
                             type={showConfirmPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
-                            name="verify_field"
+                            readOnly
+                            onFocus={(e) => e.target.removeAttribute('readonly')}
                           />
                           <button
                             type="button"

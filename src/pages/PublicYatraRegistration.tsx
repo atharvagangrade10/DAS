@@ -328,7 +328,7 @@ const PublicYatraRegistration = () => {
   // Step 2: Set Password
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-      <div className="max-md w-full space-y-8">
+      <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <KeyRound className="mx-auto h-12 w-12 text-primary" />
           <h1 className="text-3xl font-extrabold text-gray-900 mt-4">Secure Your Account</h1>
@@ -353,7 +353,8 @@ const PublicYatraRegistration = () => {
                           <Input 
                             {...field} 
                             type={showPassword ? "text" : "password"} 
-                            placeholder="••••••••" 
+                            placeholder="••••••••"
+                            autoComplete="new-password"
                           />
                           <button
                             type="button"
@@ -379,7 +380,8 @@ const PublicYatraRegistration = () => {
                           <Input 
                             {...field} 
                             type={showConfirmPassword ? "text" : "password"} 
-                            placeholder="••••••••" 
+                            placeholder="••••••••"
+                            autoComplete="new-password"
                           />
                           <button
                             type="button"

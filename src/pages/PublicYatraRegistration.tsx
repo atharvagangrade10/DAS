@@ -176,7 +176,7 @@ const PublicYatraRegistration = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Full Name</FormLabel>
-                          <FormControl><Input {...field} placeholder="Full Name" /></FormControl>
+                          <FormControl><Input {...field} placeholder="Full Name" autoComplete="name" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -187,7 +187,7 @@ const PublicYatraRegistration = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Initiated Name (Optional)</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
+                          <FormControl><Input {...field} autoComplete="additional-name" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -200,7 +200,7 @@ const PublicYatraRegistration = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Phone Number (10 digits)</FormLabel>
-                        <FormControl><Input {...field} type="tel" placeholder="e.g. 9876543210" /></FormControl>
+                        <FormControl><Input {...field} type="tel" placeholder="e.g. 9876543210" autoComplete="tel" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -293,7 +293,7 @@ const PublicYatraRegistration = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Workplace / Institution</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} autoComplete="organization" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -305,7 +305,7 @@ const PublicYatraRegistration = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Residential Address</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} autoComplete="street-address" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -343,16 +343,7 @@ const PublicYatraRegistration = () => {
               <form 
                 onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} 
                 className="space-y-6"
-                autoComplete="off"
               >
-                {/* 
-                   Honeypot/Dummy fields to catch the browser's first prefill attempt. 
-                */}
-                <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
-                  <input type="text" name="dummy_user" tabIndex={-1} autoComplete="username" />
-                  <input type="password" name="dummy_pass" tabIndex={-1} autoComplete="new-password" />
-                </div>
-                
                 <FormField
                   control={passwordForm.control}
                   name="sec_p"
@@ -361,18 +352,11 @@ const PublicYatraRegistration = () => {
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          {/* 
-                             Using type="text" with -webkit-text-security to mask input.
-                             This is the most effective way to hide it from autofill systems 
-                             that only look for type="password".
-                          */}
                           <Input 
                             {...field} 
-                            type={showPassword ? "text" : "text"} 
+                            type={showPassword ? "text" : "password"} 
                             placeholder="••••••••"
-                            autoComplete="off"
-                            style={!showPassword ? { WebkitTextSecurity: 'disc' } : {}}
-                            className="bg-white"
+                            autoComplete="new-password"
                           />
                           <button
                             type="button"
@@ -397,11 +381,9 @@ const PublicYatraRegistration = () => {
                         <div className="relative">
                           <Input 
                             {...field} 
-                            type={showConfirmPassword ? "text" : "text"} 
+                            type={showConfirmPassword ? "text" : "password"} 
                             placeholder="••••••••"
-                            autoComplete="off"
-                            style={!showConfirmPassword ? { WebkitTextSecurity: 'disc' } : {}}
-                            className="bg-white"
+                            autoComplete="new-password"
                           />
                           <button
                             type="button"

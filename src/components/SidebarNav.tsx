@@ -41,15 +41,21 @@ const SidebarNav = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
+  const isManager = user?.role === 'Manager';
+
   const navItems = (
     <nav className="flex flex-col space-y-1 p-4 flex-1">
       <NavLink to="/">Home</NavLink>
-      <NavLink to="/friends">Friends</NavLink>
-      <NavLink to="/attendance">Attendance</NavLink>
-      <NavLink to="/programs">Programs</NavLink>
-      <NavLink to="/yatra">Yatra</NavLink>
-      <NavLink to="/participants">Participants</NavLink>
-      <NavLink to="/stats">Stats</NavLink>
+      {isManager && (
+        <>
+          <NavLink to="/friends">Friends</NavLink>
+          <NavLink to="/attendance">Attendance</NavLink>
+          <NavLink to="/programs">Programs</NavLink>
+          <NavLink to="/yatra">Yatra</NavLink>
+          <NavLink to="/participants">Participants</NavLink>
+          <NavLink to="/stats">Stats</NavLink>
+        </>
+      )}
     </nav>
   );
 

@@ -1,17 +1,18 @@
 export interface AuthUser {
   user_id: string;
   full_name: string;
-  initiated_name?: string | null; // Added field
+  initiated_name?: string | null;
   phone: string;
   address?: string;
-  place_name?: string | null; // Added field
+  place_name?: string | null;
   age?: number | null;
   dob?: string | null;
   gender?: string;
   email?: string;
-  profession?: string | null; // Added field
+  profession?: string | null;
   devotee_friend_name?: string;
   chanting_rounds?: number | null;
+  role: 'Attendee' | 'Manager'; // Added role field
 }
 
 export interface AuthTokenResponse extends AuthUser {
@@ -27,16 +28,16 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   full_name: string;
-  initiated_name: string | null; // Added field
+  initiated_name: string | null;
   phone: string;
   address: string;
-  place_name: string | null; // Added field
+  place_name: string | null;
   password: string;
   age: number | null;
   dob: string | null;
   gender: string;
   email: string;
-  profession: string | null; // Added field
+  profession: string | null;
   devotee_friend_name: string;
   chanting_rounds: number | null;
 }

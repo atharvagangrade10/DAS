@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Friends from "./pages/Friends";
@@ -12,7 +12,7 @@ import ParticipantsPage from "./pages/Participants";
 import Stats from "./pages/Stats";
 import YatraPage from "./pages/Yatra";
 import ProfilePage from "./pages/Profile";
-import PublicYatraRegistration from "./pages/PublicYatraRegistration"; // New import
+import PublicYatraRegistration from "./pages/PublicYatraRegistration";
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -22,6 +22,14 @@ import { useAuth } from "./context/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
+
+const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  if (user?.role !== 'Manager') {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
 
 const App = () => {
   const { isLoading: isAuthLoading } = useAuth();
@@ -64,13 +72,15 @@ const App = () => {
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
-                <Route path="friends" element={<Friends />} />
-                <Route path="attendance" element={<Attendance />} />
-                <Route path="programs" element={<Programs />} />
-                <Route path="yatra" element={<YatraPage />} />
-                <Route path="participants" element={<ParticipantsPage />} />
-                <Route path="stats" element={<Stats />} />
                 <Route path="profile" element={<ProfilePage />} />
+                
+                {/* Manager Only Routes */}
+                <Route path="friends" element={<ManagerRoute><Friends /></ManagerRoute>} />
+                <Route path="attendance" element={<ManagerRoute><Attendance /></ManagerRoute>} />
+                <Route path="programs" element={<ManagerRoute><Programs /></ManagerRoute>} />
+                <Route path="yatra" element={<ManagerRoute><YatraPage /></ManagerRoute>} />
+                <Route path="participants" element={<ManagerRoute><ParticipantsPage /></ManagerRoute>} />
+                <Route path="stats" element={<ManagerRoute><Stats /></ManagerRoute>} />
               </Route>
             </Route>
             

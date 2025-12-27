@@ -1,52 +1,14 @@
 "use client";
 
 import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CreditCard, History, Info } from "lucide-react";
-import { format } from "date-fns";
+import { CreditCard, History, Info, ReceiptText } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Mock data for demo purposes
-const MOCK_PAYMENTS = [
-  {
-    id: "PAY-001",
-    item: "Vrindavan Kartik Yatra",
-    category: "Full Package",
-    amount: 5000,
-    date: "2023-10-15T10:00:00Z",
-    status: "Completed",
-    method: "UPI",
-  },
-  {
-    id: "PAY-002",
-    item: "Mayapur Festival",
-    category: "Accommodation",
-    amount: 2500,
-    date: "2023-11-20T14:30:00Z",
-    status: "Completed",
-    method: "Net Banking",
-  },
-  {
-    id: "PAY-003",
-    item: "Jagannath Puri Yatra",
-    category: "Travel Only",
-    amount: 1200,
-    date: "2024-01-05T09:15:00Z",
-    status: "Processing",
-    method: "Card",
-  },
-];
-
 const PaymentHistory = () => {
+  // Empty array as we are not using dummy data anymore
+  const payments: any[] = [];
+
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-8">
       <div className="flex items-center gap-3">
@@ -76,41 +38,22 @@ const PaymentHistory = () => {
           <CardDescription>A list of your recent yatra and program payments.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-[100px]">ID</TableHead>
-                  <TableHead>Event / Item</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {MOCK_PAYMENTS.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-mono text-xs">{payment.id}</TableCell>
-                    <TableCell className="font-medium">{payment.item}</TableCell>
-                    <TableCell>{payment.category}</TableCell>
-                    <TableCell>{format(new Date(payment.date), "MMM dd, yyyy")}</TableCell>
-                    <TableCell>{payment.method}</TableCell>
-                    <TableCell className="text-right font-bold">₹{payment.amount}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={payment.status === "Completed" ? "default" : "secondary"}
-                        className={payment.status === "Completed" ? "bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400" : ""}
-                      >
-                        {payment.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {payments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+              <div className="bg-muted p-4 rounded-full">
+                <ReceiptText className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">No payments found</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                  You haven't made any online payments yet. Once you register for a Yatra or program, it will appear here.
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Table would go here if we had real data
+            <p>Payment data display is ready for integration.</p>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { format, differenceInYears } from "date-fns";
 import { toast } from "sonner";
 import { Loader2, ArrowRight, CheckCircle2, MapPin, Calendar, IndianRupee } from "lucide-react";
-import { searchParticipantPublic, upsertParticipantPublic, fetchYatrasPublic, fetchDevoteeFriends } from "@/utils/api";
+import { searchParticipantPublic, upsertParticipantPublic, fetchYatrasPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 import { Yatra } from "@/types/yatra";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +41,6 @@ const formSchema = z.object({
   place_name: z.string().optional().or(z.literal('')),
   age: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().int().min(0).nullable()),
   dob: z.date({ required_error: "Date of birth is required" }),
-  devotee_friend: z.string().optional(),
   gender: z.enum(["Male", "Female", "Other"]),
   profession_type: z.string().optional(),
   profession_other: z.string().optional(),
@@ -59,14 +58,6 @@ const PublicYatraRegistration = () => {
     queryFn: fetchYatrasPublic,
   });
 
-  const { data: devoteeFriends } = useQuery({
-    queryKey: ["devoteeFriendsPublic"],
-    queryFn: async () => {
-      // Note: If this requires auth, we'll fall back to 'None'
-      try { return await fetchDevoteeFriends(); } catch { return []; }
-    }
-  });
-
   const selectedYatra = yatras?.find(y => y.name === targetYatraName);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -79,7 +70,6 @@ const PublicYatraRegistration = () => {
       place_name: "",
       age: undefined,
       dob: undefined,
-      devotee_friend: "None",
       gender: "Male",
       profession_type: "Student",
       profession_other: "",
@@ -112,6 +102,7 @@ const PublicYatraRegistration = () => {
         place_name: values.place_name || null,
         dob: values.dob ? format(values.dob, "yyyy-MM-dd") : null,
         profession: profession || null,
+        devotee_friend: "None", // Defaulted to None as requested to skip selection
       };
 
       // 2. Upsert
@@ -285,28 +276,6 @@ const PublicYatraRegistration = () => {
                       <FormItem>
                         <FormLabel>Residential Address</FormLabel>
                         <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="devotee_friend"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Devotee Friend</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select Devotee Friend" /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="None">None</SelectItem>
-                            {devoteeFriends?.map((f: any) => (
-                              <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

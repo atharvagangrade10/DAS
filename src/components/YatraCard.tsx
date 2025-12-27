@@ -2,12 +2,13 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck } from "lucide-react";
 import { Yatra } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import EditYatraDialog from "./EditYatraDialog";
+import YatraRegistrationDialog from "./YatraRegistrationDialog";
 
 interface YatraCardProps {
   yatra: Yatra;
@@ -16,6 +17,7 @@ interface YatraCardProps {
 
 const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
 
   // Filter out zero fees and map keys for display
   const feeEntries = Object.entries(yatra.registration_fees)
@@ -25,7 +27,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false 
     });
 
   return (
-    <Card className="flex flex-col h-full hover:shadow-lg transition-shadow">
+    <Card className="flex flex-col h-full hover:shadow-lg transition-shadow overflow-hidden">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-2xl font-semibold flex items-center gap-2">
           <MapPin className="h-6 w-6 text-primary" />
@@ -62,12 +64,30 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false 
             <p className="text-sm text-muted-foreground">No fees specified.</p>
           )}
         </div>
+
+        {!showAdminControls && (
+          <div className="pt-4">
+            <Button 
+              className="w-full flex items-center gap-2" 
+              onClick={() => setIsRegisterDialogOpen(true)}
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              Register Now
+            </Button>
+          </div>
+        )}
       </CardContent>
 
       <EditYatraDialog
         yatra={yatra}
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+      />
+
+      <YatraRegistrationDialog
+        yatra={yatra}
+        isOpen={isRegisterDialogOpen}
+        onOpenChange={setIsRegisterDialogOpen}
       />
     </Card>
   );

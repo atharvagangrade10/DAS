@@ -12,6 +12,7 @@ import ParticipantsPage from "./pages/Participants";
 import Stats from "./pages/Stats";
 import YatraPage from "./pages/Yatra";
 import ProfilePage from "./pages/Profile";
+import PaymentHistory from "./pages/PaymentHistory";
 import PublicYatraRegistration from "./pages/PublicYatraRegistration";
 import PublicSetPassword from "./pages/PublicSetPassword";
 import Layout from "./components/Layout";
@@ -83,6 +84,7 @@ const App = () => {
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="payments" element={<PaymentHistory />} />
 
                 {/* Devotee Friend / Manager Routes */}
                 <Route path="friends" element={<DevoteeFriendRoute><Friends /></DevoteeFriendRoute>} />

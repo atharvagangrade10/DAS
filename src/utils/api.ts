@@ -2,7 +2,7 @@ import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate } from "@/types/yatra";
 import { API_BASE_URL } from "@/config/api";
-import { handleUnauthorized } from "@/context/AuthContext"; // Import the handler
+import { handleUnauthorized } from "@/context/AuthContext";
 
 interface DevoteeFriend {
   id: string;
@@ -31,7 +31,6 @@ const fetchAuthenticated = async (url: string) => {
   
   if (response.status === 401) {
     handleUnauthorized();
-    // Throw an error to stop further processing in the calling component/hook
     throw new Error("Unauthorized access. Logging out.");
   }
 
@@ -52,7 +51,6 @@ const mutateAuthenticated = async (url: string, method: string, body?: any) => {
 
   if (response.status === 401) {
     handleUnauthorized();
-    // Throw an error to stop further processing in the calling component/hook
     throw new Error("Unauthorized access. Logging out.");
   }
 
@@ -63,6 +61,7 @@ const mutateAuthenticated = async (url: string, method: string, body?: any) => {
   return response.json();
 };
 
+// --- Authenticated Endpoints ---
 
 export const fetchAllParticipants = async (): Promise<Participant[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/register/participants`);
@@ -95,4 +94,40 @@ export const fetchYatras = async (): Promise<Yatra[]> => {
 
 export const createYatra = async (yatraData: YatraCreate): Promise<Yatra> => {
   return mutateAuthenticated(`${API_BASE_URL}/yatra/create`, "POST", yatraData);
+};
+
+// --- Public Endpoints (Unprotected) ---
+
+export const fetchYatrasPublic = async (): Promise<Yatra[]> => {
+  const response = await fetch(`${API_BASE_URL}/yatra/`, {
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!response.ok) throw new Error("Failed to fetch trip details");
+  return response.json();
+};
+
+export const searchParticipantPublic = async (phone: string): Promise<Participant[]> => {
+  const response = await fetch(`${API_BASE_URL}/participants/search?query=${encodeURIComponent(phone)}`, {
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!response.ok) return [];
+  return response.json();
+};
+
+export const upsertParticipantPublic = async (data: any, id?: string): Promise<Participant> => {
+  const url = id 
+    ? `${API_BASE_URL}/participants/${id}` 
+    : `${API_BASE_URL}/register/participant`;
+  
+  const response = await fetch(url, {
+    method: id ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to process request' }));
+    throw new Error(errorData.detail || "Failed to process participant data");
+  }
+  return response.json();
 };

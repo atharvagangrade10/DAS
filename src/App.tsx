@@ -11,7 +11,8 @@ import Programs from "./pages/Programs";
 import ParticipantsPage from "./pages/Participants";
 import Stats from "./pages/Stats";
 import YatraPage from "./pages/Yatra";
-import ProfilePage from "./pages/Profile"; // New import
+import ProfilePage from "./pages/Profile";
+import PublicYatraRegistration from "./pages/PublicYatraRegistration"; // New import
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -55,8 +56,11 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/yatra/maheswar-yatra-new-year" element={<PublicYatraRegistration />} />
             
+            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
@@ -66,7 +70,7 @@ const App = () => {
                 <Route path="yatra" element={<YatraPage />} />
                 <Route path="participants" element={<ParticipantsPage />} />
                 <Route path="stats" element={<Stats />} />
-                <Route path="profile" element={<ProfilePage />} /> {/* New Route */}
+                <Route path="profile" element={<ProfilePage />} />
               </Route>
             </Route>
             

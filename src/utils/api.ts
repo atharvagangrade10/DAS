@@ -157,7 +157,7 @@ export const setPasswordPublic = async (participant_id: string, password: string
   return response.json();
 };
 
-export const forgotPassword = async (phone: string): Promise<{ token: string }> => {
+export const forgotPassword = async (phone: string): Promise<any> => {
   const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -167,7 +167,7 @@ export const forgotPassword = async (phone: string): Promise<{ token: string }> 
     const errorData = await response.json().catch(() => ({ detail: 'Failed to initiate password reset' }));
     throw new Error(errorData.detail || "Failed to initiate password reset");
   }
-  // Assuming the backend returns { token: "..." }
+  // Return the raw JSON response object
   return response.json();
 };
 

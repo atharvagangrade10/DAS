@@ -31,15 +31,23 @@ const ForgotPasswordPage = () => {
   const mutation = useMutation({
     mutationFn: (data: { phone: string }) => forgotPassword(data.phone),
     onSuccess: (data) => {
+      // Extract token, checking for common keys like 'token' or 'message'
+      const token = data.token || data.message;
+
+      if (!token) {
+        toast.error("Password reset failed", {
+          description: "API did not return a valid reset token.",
+        });
+        return;
+      }
+
       toast.success("Password reset initiated!", {
         description: "Please check your console for the reset token (simulated).",
       });
-      console.log("Password Reset Token (SIMULATED):", data.token);
+      console.log("Password Reset Token (SIMULATED):", token);
       
-      // In a real app, the token would be sent via email/SMS. 
-      // Here we navigate directly, passing the token (simulated flow).
-      // NOTE: The backend is expected to handle token delivery. We simulate receiving it here.
-      navigate(`/reset-password?token=${data.token}`);
+      // Navigate, passing the extracted token
+      navigate(`/reset-password?token=${token}`);
     },
     onError: (error: Error) => {
       toast.error("Reset failed", { description: error.message });

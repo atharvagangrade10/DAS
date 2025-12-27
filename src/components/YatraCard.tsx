@@ -2,31 +2,41 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil } from "lucide-react";
 import { Yatra } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import EditYatraDialog from "./EditYatraDialog";
 
 interface YatraCardProps {
   yatra: Yatra;
+  showAdminControls?: boolean;
 }
 
-const YatraCard: React.FC<YatraCardProps> = ({ yatra }) => {
-  // Filter out zero fees and map keys for display (now using dynamic keys)
+const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false }) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
+  // Filter out zero fees and map keys for display
   const feeEntries = Object.entries(yatra.registration_fees)
     .filter(([, value]) => value > 0)
     .map(([key, value]) => {
-      // Assuming the key is the user-defined category name
       return { key, value };
     });
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-2xl font-semibold flex items-center gap-2">
           <MapPin className="h-6 w-6 text-primary" />
           {yatra.name}
         </CardTitle>
+        {showAdminControls && (
+          <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
+            <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+            <span className="sr-only">Edit yatra</span>
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="flex-1 grid gap-3 text-sm">
         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
@@ -53,6 +63,12 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra }) => {
           )}
         </div>
       </CardContent>
+
+      <EditYatraDialog
+        yatra={yatra}
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
     </Card>
   );
 };

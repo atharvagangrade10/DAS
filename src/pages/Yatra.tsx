@@ -3,7 +3,7 @@
 import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Yatra } from "@/types/yatra";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,7 +51,7 @@ const YatraPage = () => {
       ) : yatras && yatras.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {yatras.map((yatra) => (
-            <YatraCard key={yatra.id} yatra={yatra} />
+            <YatraCard key={yatra.id} yatra={yatra} showAdminControls={true} />
           ))}
         </div>
       ) : (

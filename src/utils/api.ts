@@ -1,6 +1,6 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
-import { Yatra, YatraCreate } from "@/types/yatra";
+import { Yatra, YatraCreate, YatraUpdate } from "@/types/yatra";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -101,6 +101,10 @@ export const fetchYatras = async (): Promise<Yatra[]> => {
 
 export const createYatra = async (yatraData: YatraCreate): Promise<Yatra> => {
   return mutateAuthenticated(`${API_BASE_URL}/yatra/create`, "POST", yatraData);
+};
+
+export const updateYatra = async (yatraId: string, yatraData: YatraUpdate): Promise<Yatra> => {
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/${yatraId}`, "PUT", yatraData);
 };
 
 // --- Public Endpoints (Unprotected) ---

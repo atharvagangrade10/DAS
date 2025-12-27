@@ -16,3 +16,10 @@ export interface YatraCreate {
   date_end: string;
   registration_fees: RegistrationFees;
 }
+
+export interface YatraUpdate {
+  name?: string;
+  date_start?: string;
+  date_end?: string;
+  registration_fees?: RegistrationFees;
+}

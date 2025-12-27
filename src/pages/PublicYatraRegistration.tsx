@@ -346,9 +346,20 @@ const PublicYatraRegistration = () => {
                 autoComplete="off"
               >
                 {/* 
-                   Using readOnly + onFocus to trick the browser into not autofilling on load.
-                   The input only becomes editable when the user actually focuses on it.
+                   Hidden username field to catch the phone number autofill.
+                   This satisfies the browser's need to fill a "username" 
+                   and prevents it from guessing the password fields.
                 */}
+                <div style={{ display: 'none' }}>
+                  <input 
+                    type="text" 
+                    name="username" 
+                    autoComplete="username" 
+                    value={form.getValues("phone") || ""} 
+                    readOnly 
+                  />
+                </div>
+                
                 <FormField
                   control={passwordForm.control}
                   name="p_val"

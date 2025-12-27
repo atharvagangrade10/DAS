@@ -48,16 +48,15 @@ const registrationSchema = z.object({
 });
 
 const passwordSchema = z.object({
-  new_password: z.string().min(6, "Password must be at least 6 characters"),
-  confirm_password: z.string().min(6, "Please confirm your password"),
-}).refine((data) => data.new_password === data.confirm_password, {
+  pass_field: z.string().min(6, "Password must be at least 6 characters"),
+  verify_field: z.string().min(6, "Please confirm your password"),
+}).refine((data) => data.pass_field === data.verify_field, {
   message: "Passwords do not match",
-  path: ["confirm_password"],
+  path: ["verify_field"],
 });
 
 const PublicYatraRegistration = () => {
   const navigate = useNavigate();
-  // Steps: 1 (Registration Form), 2 (Set Password)
   const [step, setStep] = React.useState(1);
   const [participantId, setParticipantId] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
@@ -85,8 +84,8 @@ const PublicYatraRegistration = () => {
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
-      new_password: "",
-      confirm_password: "",
+      pass_field: "",
+      verify_field: "",
     },
   });
 
@@ -140,7 +139,7 @@ const PublicYatraRegistration = () => {
   const passwordMutation = useMutation({
     mutationFn: async (values: z.infer<typeof passwordSchema>) => {
       if (!participantId) throw new Error("Participant ID is missing");
-      await setPasswordPublic(participantId, values.new_password);
+      await setPasswordPublic(participantId, values.pass_field);
     },
     onSuccess: () => {
       toast.success("Password set successfully! Please log in.");
@@ -343,16 +342,25 @@ const PublicYatraRegistration = () => {
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} className="space-y-6">
                 {/* 
-                   Browser autofill often looks for a username field before the password field.
-                   By providing a hidden but present field, we guide it correctly.
+                   Off-screen username field to guide browser password managers. 
+                   Using off-screen positioning instead of display:none as some browsers ignore hidden inputs.
                 */}
-                <div style={{ display: 'none' }}>
-                  <input type="text" name="username" autoComplete="username" value={form.getValues("phone")} readOnly />
+                <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
+                  <input 
+                    type="text" 
+                    name="user_login_hint" 
+                    autoComplete="username" 
+                    value={form.getValues("phone")} 
+                    tabIndex={-1}
+                    readOnly 
+                  />
+                  {/* Dummy password field to catch the very first autofill attempt */}
+                  <input type="password" name="dummy_pass" autoComplete="new-password" tabIndex={-1} />
                 </div>
                 
                 <FormField
                   control={passwordForm.control}
-                  name="new_password"
+                  name="pass_field"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
@@ -363,6 +371,7 @@ const PublicYatraRegistration = () => {
                             type={showPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
+                            name="pass_field"
                           />
                           <button
                             type="button"
@@ -379,7 +388,7 @@ const PublicYatraRegistration = () => {
                 />
                 <FormField
                   control={passwordForm.control}
-                  name="confirm_password"
+                  name="verify_field"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
@@ -390,6 +399,7 @@ const PublicYatraRegistration = () => {
                             type={showConfirmPassword ? "text" : "password"} 
                             placeholder="••••••••"
                             autoComplete="new-password"
+                            name="verify_field"
                           />
                           <button
                             type="button"

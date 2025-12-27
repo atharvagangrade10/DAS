@@ -13,6 +13,7 @@ import Stats from "./pages/Stats";
 import YatraPage from "./pages/Yatra";
 import ProfilePage from "./pages/Profile";
 import PublicYatraRegistration from "./pages/PublicYatraRegistration";
+import PublicSetPassword from "./pages/PublicSetPassword";
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -56,7 +57,7 @@ const App = () => {
       </QueryClientProvider>
     );
   }
-  
+
   if (isAuthLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -75,16 +76,17 @@ const App = () => {
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/yatra/maheswar-yatra-new-year" element={<PublicYatraRegistration />} />
-            
+            <Route path="/public/set-password" element={<PublicSetPassword />} />
+
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
                 <Route path="profile" element={<ProfilePage />} />
-                
+
                 {/* Devotee Friend / Manager Routes */}
                 <Route path="friends" element={<DevoteeFriendRoute><Friends /></DevoteeFriendRoute>} />
-                
+
                 {/* Manager Only Routes */}
                 <Route path="attendance" element={<ManagerRoute><Attendance /></ManagerRoute>} />
                 <Route path="programs" element={<ManagerRoute><Programs /></ManagerRoute>} />
@@ -93,7 +95,7 @@ const App = () => {
                 <Route path="stats" element={<ManagerRoute><Stats /></ManagerRoute>} />
               </Route>
             </Route>
-            
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

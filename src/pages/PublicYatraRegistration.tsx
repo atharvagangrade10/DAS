@@ -26,8 +26,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format, differenceInYears } from "date-fns";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
-import { createAccountCheck, createParticipantPublic, setPasswordPublic } from "@/utils/api";
+import { Loader2, ArrowRight } from "lucide-react";
+import { createAccountCheck, createParticipantPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 
 const PROFESSIONS = ["Student", "Employee", "Teacher", "Doctor", "Business", "Housewife", "Retired", "Other"];
@@ -47,20 +47,8 @@ const registrationSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
 });
 
-const passwordSchema = z.object({
-  sec_p: z.string().min(6, "Password must be at least 6 characters"),
-  sec_v: z.string().min(6, "Please confirm your password"),
-}).refine((data) => data.sec_p === data.sec_v, {
-  message: "Passwords do not match",
-  path: ["sec_v"],
-});
-
 const PublicYatraRegistration = () => {
   const navigate = useNavigate();
-  const [step, setStep] = React.useState(1);
-  const [participantId, setParticipantId] = React.useState<string | null>(null);
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const targetYatraName = "Maheshwar New Year Trip";
 
   const form = useForm<z.infer<typeof registrationSchema>>({
@@ -81,14 +69,6 @@ const PublicYatraRegistration = () => {
     },
   });
 
-  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      sec_p: "",
-      sec_v: "",
-    },
-  });
-
   const dobValue = form.watch("dob");
   const professionType = form.watch("profession_type");
 
@@ -102,7 +82,7 @@ const PublicYatraRegistration = () => {
   const accountMutation = useMutation({
     mutationFn: async (values: z.infer<typeof registrationSchema>) => {
       const response = await createAccountCheck(values.phone);
-      
+
       if (response.status === "Login") {
         toast.info("Account already exists. Please log in.");
         navigate("/login");
@@ -110,8 +90,7 @@ const PublicYatraRegistration = () => {
       }
 
       if (response.status === "SetPassword") {
-        setParticipantId(response.participant_id);
-        setStep(2);
+        navigate("/public/set-password", { state: { participantId: response.participant_id } });
         return;
       }
 
@@ -127,8 +106,7 @@ const PublicYatraRegistration = () => {
           devotee_friend_name: "None",
         };
         const newParticipant = await createParticipantPublic(participantData);
-        setParticipantId(newParticipant.id);
-        setStep(2);
+        navigate("/public/set-password", { state: { participantId: newParticipant.id } });
       }
     },
     onError: (error: Error) => {
@@ -136,271 +114,169 @@ const PublicYatraRegistration = () => {
     },
   });
 
-  const passwordMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof passwordSchema>) => {
-      if (!participantId) throw new Error("Participant ID is missing");
-      await setPasswordPublic(participantId, values.sec_p);
-    },
-    onSuccess: () => {
-      toast.success("Password set successfully! Please log in.");
-      navigate("/login");
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to set password", { description: error.message });
-    },
-  });
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
+      <div className="max-w-2xl w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Registration</h1>
+          <p className="text-gray-600 text-lg">{targetYatraName}</p>
+        </div>
 
-  if (step === 1) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-        <div className="max-w-2xl w-full space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Registration</h1>
-            <p className="text-gray-600 text-lg">{targetYatraName}</p>
-          </div>
-
-          <Card className="shadow-xl">
-            <CardHeader>
-              <CardTitle>Participant Information</CardTitle>
-              <CardDescription>
-                Fill in your details to get started with the trip registration.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((v) => accountMutation.mutate(v))} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="full_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl><Input {...field} placeholder="Full Name" autoComplete="name" /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="initiated_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Initiated Name (Optional)</FormLabel>
-                          <FormControl><Input {...field} autoComplete="additional-name" /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+        <Card className="shadow-xl">
+          <CardHeader>
+            <CardTitle>Participant Information</CardTitle>
+            <CardDescription>
+              Fill in your details to get started with the trip registration.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit((v) => accountMutation.mutate(v))} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="full_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number (10 digits)</FormLabel>
-                        <FormControl><Input {...field} type="tel" placeholder="e.g. 9876543210" autoComplete="tel" /></FormControl>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl><Input {...field} placeholder="Full Name" autoComplete="name" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="space-y-4 pt-4 border-t">
-                    <FormField
-                      control={form.control}
-                      name="dob"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <DOBInput value={field.value} onChange={field.onChange} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gender</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Male">Male</SelectItem>
-                              <SelectItem value="Female">Female</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="chanting_rounds"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Chanting Rounds</FormLabel>
-                          <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
                   <FormField
                     control={form.control}
-                    name="profession_type"
+                    name="initiated_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Profession</FormLabel>
+                        <FormLabel>Initiated Name (Optional)</FormLabel>
+                        <FormControl><Input {...field} autoComplete="additional-name" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number (10 digits)</FormLabel>
+                      <FormControl><Input {...field} type="tel" placeholder="e.g. 9876543210" autoComplete="tel" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-4 pt-4 border-t">
+                  <FormField
+                    control={form.control}
+                    name="dob"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <DOBInput value={field.value} onChange={field.onChange} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Profession" /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {PROFESSIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {professionType === "Other" && (
-                    <FormField
-                      control={form.control}
-                      name="profession_other"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Specify Profession</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
                   <FormField
                     control={form.control}
-                    name="place_name"
+                    name="chanting_rounds"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Workplace / Institution</FormLabel>
-                        <FormControl><Input {...field} autoComplete="organization" /></FormControl>
+                        <FormLabel>Chanting Rounds</FormLabel>
+                        <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
 
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Residential Address</FormLabel>
-                        <FormControl><Input {...field} autoComplete="street-address" /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button type="submit" className="w-full text-lg py-6" disabled={accountMutation.isPending}>
-                    {accountMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Confirm and View Trip Details"}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 2: Set Password
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <KeyRound className="mx-auto h-12 w-12 text-primary" />
-          <h1 className="text-3xl font-extrabold text-gray-900 mt-4">Secure Your Account</h1>
-          <p className="text-gray-600 mt-2">Create a password to access your dashboard later.</p>
-        </div>
-
-        <Card className="shadow-xl">
-          <CardHeader>
-            <CardTitle>Set Password</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...passwordForm}>
-              <form 
-                onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} 
-                className="space-y-6"
-              >
                 <FormField
-                  control={passwordForm.control}
-                  name="sec_p"
+                  control={form.control}
+                  name="profession_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            {...field} 
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="••••••••"
-                            autoComplete="new-password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={passwordForm.control}
-                  name="sec_v"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            {...field} 
-                            type={showConfirmPassword ? "text" : "password"} 
-                            placeholder="••••••••"
-                            autoComplete="new-password"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                          >
-                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </FormControl>
+                      <FormLabel>Profession</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Profession" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PROFESSIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <Button type="submit" className="w-full" disabled={passwordMutation.isPending}>
-                  {passwordMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Set Password and Login"}
+                {professionType === "Other" && (
+                  <FormField
+                    control={form.control}
+                    name="profession_other"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Specify Profession</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="place_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Workplace / Institution</FormLabel>
+                      <FormControl><Input {...field} autoComplete="organization" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Residential Address</FormLabel>
+                      <FormControl><Input {...field} autoComplete="street-address" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full text-lg py-6" disabled={accountMutation.isPending}>
+                  {accountMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Confirm and View Trip Details"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </form>
             </Form>

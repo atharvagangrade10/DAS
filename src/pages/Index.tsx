@@ -1,46 +1,129 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
+import { fetchYatras, fetchAttendedPrograms } from "@/utils/api";
+import { Yatra } from "@/types/yatra";
+import { AttendedProgram } from "@/types/participant";
+import YatraCard from "@/components/YatraCard";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, CheckCircle2, MapPin } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
 const Index = () => {
+  const { user } = useAuth();
+
+  // Fetch Yatras
+  const { data: yatras, isLoading: isLoadingYatras } = useQuery<Yatra[], Error>({
+    queryKey: ["yatras"],
+    queryFn: fetchYatras,
+  });
+
+  // Fetch Attended Programs for the logged-in user
+  const { data: attendedPrograms, isLoading: isLoadingAttendance } = useQuery<AttendedProgram[], Error>({
+    queryKey: ["attendedPrograms", user?.user_id],
+    queryFn: () => fetchAttendedPrograms(user!.user_id),
+    enabled: !!user?.user_id,
+  });
+
   return (
-    <div className="flex flex-col items-center justify-center p-6 sm:p-8 md:p-10 min-h-[calc(100vh-10rem)]"> {/* Increased padding and min-height */}
-      <div className="text-center mb-10"> {/* Increased margin-bottom */}
-        <h1 className="text-5xl sm:text-6xl font-extrabold mb-4 text-gray-900 dark:text-white leading-tight">Welcome to DAS</h1> {/* Larger text, tighter leading */}
-        <p className="text-xl sm:text-2xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto"> {/* Larger text, max-width for readability */}
-          Your comprehensive system for managing programs, attendees, and attendance.
+    <div className="container mx-auto p-6 sm:p-8 space-y-12">
+      <div className="text-left">
+        <h1 className="text-4xl font-extrabold mb-2 text-gray-900 dark:text-white">
+          Hare Krishna, {user?.full_name}!
+        </h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400">
+          Welcome to your spiritual dashboard.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl"> {/* Increased max-width */}
-        <Card className="flex flex-col items-center justify-center p-6 text-center shadow-lg hover:shadow-xl transition-shadow duration-300"> {/* Added shadow and hover effect */}
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-primary dark:text-primary-foreground">Friends Overview</CardTitle> {/* Applied primary color */}
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">Quick insights into your friends network.</p>
-            {/* Future content like friend count, recent activity */}
-          </CardContent>
-        </Card>
+      {/* Yatras Section */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-2 border-b pb-2">
+          <MapPin className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold">Upcoming Yatras</h2>
+        </div>
+        
+        {isLoadingYatras ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : yatras && yatras.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {yatras.map((yatra) => (
+              <YatraCard key={yatra.id} yatra={yatra} />
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-muted/30 border-dashed">
+            <CardContent className="py-10 text-center text-muted-foreground">
+              No upcoming yatras scheduled at the moment.
+            </CardContent>
+          </Card>
+        )}
+      </section>
 
-        <Card className="flex flex-col items-center justify-center p-6 text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-primary dark:text-primary-foreground">Attendance Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">See a summary of recent attendance records.</p>
-            {/* Future content like attendance charts, upcoming sessions */}
-          </CardContent>
-        </Card>
+      {/* Programs Attended Section */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-2 border-b pb-2">
+          <CheckCircle2 className="h-6 w-6 text-green-600" />
+          <h2 className="text-2xl font-bold">Programs Attended</h2>
+        </div>
 
-        <Card className="flex flex-col items-center justify-center p-6 text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-primary dark:text-primary-foreground">Programs Snapshot</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">Get a quick look at your active programs.</p>
-            {/* Future content like program count, next program */}
-          </CardContent>
-        </Card>
-      </div>
+        {isLoadingAttendance ? (
+          <div className="space-y-4">
+            {[...Array(2)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : attendedPrograms && attendedPrograms.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {attendedPrograms.map((program) => (
+              <Card key={program.program_id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="py-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-xl">{program.program_name}</CardTitle>
+                      <CardDescription className="flex items-center gap-1 mt-1">
+                        <CalendarDays className="h-3 w-3" />
+                        {format(parseISO(program.start_date), "MMM yyyy")}
+                      </CardDescription>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                      {program.sessions_attended.length} Sessions
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-4 pt-0">
+                  <div className="flex flex-wrap gap-2">
+                    {program.sessions_attended.slice(0, 5).map((session) => (
+                      <Badge key={session.attendance_id} variant="outline" className="font-normal">
+                        {session.session_name}
+                      </Badge>
+                    ))}
+                    {program.sessions_attended.length > 5 && (
+                      <span className="text-xs text-muted-foreground self-center">
+                        +{program.sessions_attended.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-muted/30 border-dashed">
+            <CardContent className="py-10 text-center text-muted-foreground">
+              You haven't attended any programs yet. Start your journey today!
+            </CardContent>
+          </Card>
+        )}
+      </section>
     </div>
   );
 };

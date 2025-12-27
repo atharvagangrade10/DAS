@@ -5,21 +5,28 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, LogOut, User, Settings } from "lucide-react";
+import { MenuIcon, LogOut, User, Settings, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface NavLinkProps {
   to: string;
   children: React.ReactNode;
+  onClick?: () => void;
 }
 
-const NavLink: React.FC<NavLinkProps> = ({ to, children }) => {
+const NavLink: React.FC<NavLinkProps> = ({ to, children, onClick }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
 
   return (
-    <Link to={to}>
+    <Link to={to} onClick={onClick}>
       <Button
         variant="ghost"
         className={cn(
@@ -42,19 +49,35 @@ const SidebarNav = () => {
   const navigate = useNavigate();
 
   const isManager = user?.role === 'Manager';
+  const isDevoteeFriend = user?.role === 'DevoteeFriend' || isManager;
+
+  const handleLinkClick = () => {
+    if (isMobile) setIsOpen(false);
+  };
 
   const navItems = (
     <nav className="flex flex-col space-y-1 p-4 flex-1">
-      <NavLink to="/">Home</NavLink>
+      <NavLink to="/" onClick={handleLinkClick}>Home</NavLink>
+      
+      {isDevoteeFriend && (
+        <NavLink to="/friends" onClick={handleLinkClick}>Devotee Friend</NavLink>
+      )}
+
       {isManager && (
-        <>
-          <NavLink to="/friends">Friends</NavLink>
-          <NavLink to="/attendance">Attendance</NavLink>
-          <NavLink to="/programs">Programs</NavLink>
-          <NavLink to="/yatra">Yatra</NavLink>
-          <NavLink to="/participants">Participants</NavLink>
-          <NavLink to="/stats">Stats</NavLink>
-        </>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="manager-tools" className="border-none">
+            <AccordionTrigger className="px-4 py-4 text-lg font-medium text-sidebar-foreground hover:no-underline hover:bg-sidebar-accent/50 rounded-md">
+              Manager
+            </AccordionTrigger>
+            <AccordionContent className="pt-1 pb-2 space-y-1">
+              <NavLink to="/attendance" onClick={handleLinkClick}>Attendance</NavLink>
+              <NavLink to="/programs" onClick={handleLinkClick}>Programs</NavLink>
+              <NavLink to="/yatra" onClick={handleLinkClick}>Yatra</NavLink>
+              <NavLink to="/participants" onClick={handleLinkClick}>Participants</NavLink>
+              <NavLink to="/stats" onClick={handleLinkClick}>Stats</NavLink>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       )}
     </nav>
   );

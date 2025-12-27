@@ -31,6 +31,14 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const DevoteeFriendRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  if (user?.role !== 'DevoteeFriend' && user?.role !== 'Manager') {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
 const App = () => {
   const { isLoading: isAuthLoading } = useAuth();
   const [isAppReady, setIsAppReady] = React.useState(false);
@@ -74,8 +82,10 @@ const App = () => {
                 <Route index element={<Index />} />
                 <Route path="profile" element={<ProfilePage />} />
                 
+                {/* Devotee Friend / Manager Routes */}
+                <Route path="friends" element={<DevoteeFriendRoute><Friends /></DevoteeFriendRoute>} />
+                
                 {/* Manager Only Routes */}
-                <Route path="friends" element={<ManagerRoute><Friends /></ManagerRoute>} />
                 <Route path="attendance" element={<ManagerRoute><Attendance /></ManagerRoute>} />
                 <Route path="programs" element={<ManagerRoute><Programs /></ManagerRoute>} />
                 <Route path="yatra" element={<ManagerRoute><YatraPage /></ManagerRoute>} />

@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format, differenceInYears } from "date-fns";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, Lock, KeyRound } from "lucide-react";
+import { Loader2, ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { createAccountCheck, createParticipantPublic, setPasswordPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 
@@ -60,6 +60,8 @@ const PublicYatraRegistration = () => {
   // Steps: 1 (Registration Form), 2 (Set Password)
   const [step, setStep] = React.useState(1);
   const [participantId, setParticipantId] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const targetYatraName = "Maheshwar New Year Trip";
 
   const form = useForm<z.infer<typeof registrationSchema>>({
@@ -326,7 +328,7 @@ const PublicYatraRegistration = () => {
   // Step 2: Set Password
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-md w-full space-y-8">
         <div className="text-center">
           <KeyRound className="mx-auto h-12 w-12 text-primary" />
           <h1 className="text-3xl font-extrabold text-gray-900 mt-4">Secure Your Account</h1>
@@ -348,8 +350,18 @@ const PublicYatraRegistration = () => {
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input {...field} type="password" placeholder="••••••••" />
-                          <Lock className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            {...field} 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="••••••••" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -364,8 +376,18 @@ const PublicYatraRegistration = () => {
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input {...field} type="password" placeholder="••••••••" />
-                          <Lock className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            {...field} 
+                            type={showConfirmPassword ? "text" : "password"} 
+                            placeholder="••••••••" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />

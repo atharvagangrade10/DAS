@@ -108,6 +108,26 @@ export const updateYatra = async (yatraId: string, yatraData: YatraUpdate): Prom
   return mutateAuthenticated(`${API_BASE_URL}/yatra/update/${yatraId}`, "PUT", yatraData);
 };
 
+export interface RazorpayOrderRequest {
+  yatra_id: string;
+  fee_category: string;
+  amount: number; // Amount in INR (or base currency)
+}
+
+export interface RazorpayOrderResponse {
+  order_id: string;
+  amount: number; // Amount in smallest unit (e.g., paise)
+  currency: string;
+  yatra_name: string;
+  fee_category: string;
+  participant_name: string;
+  participant_phone: string;
+}
+
+export const createRazorpayOrder = async (data: RazorpayOrderRequest): Promise<RazorpayOrderResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/create-order`, "POST", data);
+};
+
 // --- Public Endpoints (Unprotected) ---
 
 export const fetchYatrasPublic = async (): Promise<Yatra[]> => {

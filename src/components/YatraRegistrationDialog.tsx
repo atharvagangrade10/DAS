@@ -16,6 +16,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Yatra } from "@/types/yatra";
 import { toast } from "sonner";
 import { ShieldCheck, CreditCard, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import useRazorpay from "@/hooks/use-razorpay";
+import { createRazorpayOrder } from "@/utils/api";
+import { useMutation } from "@tanstack/react-query";
 
 interface YatraRegistrationDialogProps {
   yatra: Yatra;
@@ -28,9 +32,11 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
   isOpen,
   onOpenChange,
 }) => {
+  const { user } = useAuth();
+  const { isRazorpayReady, displayRazorpay } = useRazorpay();
+  
   const [hasConsented, setHasConsented] = React.useState(false);
   const [selectedFeeKey, setSelectedFeeKey] = React.useState<string>("");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // Filter out zero fees
   const availableFees = Object.entries(yatra.registration_fees).filter(
@@ -43,23 +49,65 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
     }
   }, [availableFees, selectedFeeKey]);
 
-  const handleRegister = async () => {
+  const selectedFeeAmount = availableFees.find(([key]) => key === selectedFeeKey)?.[1] || 0;
+
+  const orderMutation = useMutation({
+    mutationFn: () => createRazorpayOrder({
+      yatra_id: yatra.id,
+      fee_category: selectedFeeKey,
+      amount: selectedFeeAmount,
+    }),
+    onSuccess: (order) => {
+      // Step 2: Display Razorpay checkout
+      displayRazorpay({
+        order,
+        onSuccess: (response) => {
+          // Handle successful payment response (e.g., verify payment on backend, update UI)
+          toast.success("Payment successful!", {
+            description: `Registration confirmed for ${yatra.name}. Payment ID: ${response.razorpay_payment_id}`,
+          });
+          onOpenChange(false);
+        },
+        onFailure: (error) => {
+          // Handle payment failure
+          console.error("Razorpay Payment Failed:", error);
+          toast.error("Payment failed", {
+            description: error.description || "An error occurred during payment.",
+          });
+        },
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Registration failed", {
+        description: error.message || "Could not create payment order.",
+      });
+    },
+  });
+
+  const handleRegister = () => {
+    if (!user) {
+      toast.error("Please log in to register for a Yatra.");
+      return;
+    }
     if (!hasConsented) {
       toast.error("Please provide your consent to proceed.");
       return;
     }
+    if (!selectedFeeKey || selectedFeeAmount <= 0) {
+        toast.error("Please select a valid registration category.");
+        return;
+    }
+    if (!isRazorpayReady) {
+        toast.info("Payment gateway is still loading. Please wait a moment.");
+        return;
+    }
     
-    setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success("Registration initiated!", {
-      description: `You have selected the "${selectedFeeKey}" category for ${yatra.name}. Redirecting to payment...`,
-    });
-    
-    setIsSubmitting(false);
-    onOpenChange(false);
+    // Step 1: Create Razorpay Order on the backend
+    orderMutation.mutate();
   };
+
+  const isSubmitting = orderMutation.isPending;
+  const isButtonDisabled = !hasConsented || isSubmitting || !isRazorpayReady || !selectedFeeKey || selectedFeeAmount <= 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -99,6 +147,9 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                 </div>
               ))}
             </RadioGroup>
+            {availableFees.length === 0 && (
+                <p className="text-sm text-muted-foreground">No paid registration categories available for this Yatra.</p>
+            )}
           </div>
 
           <div className="rounded-lg bg-muted p-4 text-sm space-y-2">
@@ -131,12 +182,12 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             onClick={handleRegister}
-            disabled={!hasConsented || isSubmitting}
+            disabled={isButtonDisabled}
             className="flex items-center gap-2"
           >
             {isSubmitting ? (
@@ -144,7 +195,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
             ) : (
               <CreditCard className="h-4 w-4" />
             )}
-            Proceed to Pay
+            {isSubmitting ? "Processing..." : `Pay ₹${selectedFeeAmount}`}
           </Button>
         </DialogFooter>
       </DialogContent>

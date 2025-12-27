@@ -157,6 +157,33 @@ export const setPasswordPublic = async (participant_id: string, password: string
   return response.json();
 };
 
+export const forgotPassword = async (phone: string): Promise<{ token: string }> => {
+  const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to initiate password reset' }));
+    throw new Error(errorData.detail || "Failed to initiate password reset");
+  }
+  // Assuming the backend returns { token: "..." }
+  return response.json();
+};
+
+export const resetPassword = async (token: string, new_password: string): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to reset password' }));
+    throw new Error(errorData.detail || "Failed to reset password");
+  }
+  return response.json();
+};
+
 export const searchParticipantPublic = async (phone: string): Promise<Participant[]> => {
   const response = await fetch(`${API_BASE_URL}/participants/search?query=${encodeURIComponent(phone)}`, {
     headers: { "Content-Type": "application/json" }

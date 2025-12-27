@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -47,9 +47,8 @@ const registrationSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
 });
 
-const PublicYatraRegistration = () => {
+const RegisterPage = () => {
   const navigate = useNavigate();
-  const targetYatraName = "Maheshwar New Year Trip";
 
   const form = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
@@ -115,18 +114,18 @@ const PublicYatraRegistration = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center py-12 px-4">
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Registration</h1>
-          <p className="text-gray-600 text-lg">{targetYatraName}</p>
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">New Account Registration</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Create your participant profile to access DAS features.</p>
         </div>
 
         <Card className="shadow-xl">
           <CardHeader>
             <CardTitle>Participant Information</CardTitle>
             <CardDescription>
-              Fill in your details to get started with the trip registration.
+              Fill in your details. Your phone number will be your unique identifier.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -273,18 +272,37 @@ const PublicYatraRegistration = () => {
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email (Optional)</FormLabel>
+                      <FormControl><Input {...field} type="email" autoComplete="email" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <Button type="submit" className="w-full text-lg py-6" disabled={accountMutation.isPending}>
-                  {accountMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Confirm and View Trip Details"}
+                  {accountMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Register and Set Password"}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </form>
             </Form>
           </CardContent>
         </Card>
+        
+        <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+          Already have an account?{" "}
+          <Link to="/login" className="text-primary hover:underline font-medium">
+            Log In
+          </Link>
+        </div>
       </div>
     </div>
   );
 };
 
-export default PublicYatraRegistration;
+export default RegisterPage;

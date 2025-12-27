@@ -13,8 +13,10 @@ import Stats from "./pages/Stats";
 import YatraPage from "./pages/Yatra";
 import ProfilePage from "./pages/Profile";
 import PaymentHistory from "./pages/PaymentHistory";
-import PublicYatraRegistration from "./pages/PublicYatraRegistration";
+import RegisterPage from "./pages/RegisterPage"; // Updated import
 import PublicSetPassword from "./pages/PublicSetPassword";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"; // New import
+import ResetPasswordPage from "./pages/ResetPasswordPage"; // New import
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -76,7 +78,9 @@ const App = () => {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/yatra/maheswar-yatra-new-year" element={<PublicYatraRegistration />} />
+            <Route path="/register" element={<RegisterPage />} /> {/* Updated route */}
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} /> {/* New route */}
+            <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* New route (uses query param) */}
             <Route path="/public/set-password" element={<PublicSetPassword />} />
 
             {/* Protected Routes */}

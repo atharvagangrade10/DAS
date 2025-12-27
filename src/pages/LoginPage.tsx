@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { LoginRequest } from '@/types/auth';
 
 const loginSchema = z.object({
@@ -146,7 +146,19 @@ const LoginPage = () => {
               </Button>
             </form>
           </Form>
+          
+          <div className="mt-4 text-center text-sm">
+            <Link to="/forgot-password" className="text-primary hover:underline">
+              Forgot Password?
+            </Link>
+          </div>
         </CardContent>
+        <div className="p-4 border-t text-center text-sm bg-gray-50 dark:bg-gray-800 rounded-b-xl">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-primary hover:underline font-medium">
+            Register here
+          </Link>
+        </div>
       </Card>
     </div>
   );

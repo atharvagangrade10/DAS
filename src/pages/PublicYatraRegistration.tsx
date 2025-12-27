@@ -48,11 +48,11 @@ const registrationSchema = z.object({
 });
 
 const passwordSchema = z.object({
-  pass_field: z.string().min(6, "Password must be at least 6 characters"),
-  verify_field: z.string().min(6, "Please confirm your password"),
-}).refine((data) => data.pass_field === data.verify_field, {
+  sec_p: z.string().min(6, "Password must be at least 6 characters"),
+  sec_v: z.string().min(6, "Please confirm your password"),
+}).refine((data) => data.sec_p === data.sec_v, {
   message: "Passwords do not match",
-  path: ["verify_field"],
+  path: ["sec_v"],
 });
 
 const PublicYatraRegistration = () => {
@@ -84,8 +84,8 @@ const PublicYatraRegistration = () => {
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
-      pass_field: "",
-      verify_field: "",
+      sec_p: "",
+      sec_v: "",
     },
   });
 
@@ -139,7 +139,7 @@ const PublicYatraRegistration = () => {
   const passwordMutation = useMutation({
     mutationFn: async (values: z.infer<typeof passwordSchema>) => {
       if (!participantId) throw new Error("Participant ID is missing");
-      await setPasswordPublic(participantId, values.pass_field);
+      await setPasswordPublic(participantId, values.sec_p);
     },
     onSuccess: () => {
       toast.success("Password set successfully! Please log in.");
@@ -340,38 +340,39 @@ const PublicYatraRegistration = () => {
           </CardHeader>
           <CardContent>
             <Form {...passwordForm}>
-              <form onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} className="space-y-6">
+              <form 
+                onSubmit={passwordForm.handleSubmit((v) => passwordMutation.mutate(v))} 
+                className="space-y-6"
+                autoComplete="off"
+              >
                 {/* 
-                   Off-screen username field to guide browser password managers. 
-                   Using off-screen positioning instead of display:none as some browsers ignore hidden inputs.
+                   Honeypot/Dummy fields to catch the browser's first prefill attempt. 
                 */}
                 <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
-                  <input 
-                    type="text" 
-                    name="user_login_hint" 
-                    autoComplete="username" 
-                    value={form.getValues("phone")} 
-                    tabIndex={-1}
-                    readOnly 
-                  />
-                  {/* Dummy password field to catch the very first autofill attempt */}
-                  <input type="password" name="dummy_pass" autoComplete="new-password" tabIndex={-1} />
+                  <input type="text" name="dummy_user" tabIndex={-1} autoComplete="username" />
+                  <input type="password" name="dummy_pass" tabIndex={-1} autoComplete="new-password" />
                 </div>
                 
                 <FormField
                   control={passwordForm.control}
-                  name="pass_field"
+                  name="sec_p"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
                         <div className="relative">
+                          {/* 
+                             Using type="text" with -webkit-text-security to mask input.
+                             This is the most effective way to hide it from autofill systems 
+                             that only look for type="password".
+                          */}
                           <Input 
                             {...field} 
-                            type={showPassword ? "text" : "password"} 
+                            type={showPassword ? "text" : "text"} 
                             placeholder="••••••••"
-                            autoComplete="new-password"
-                            name="pass_field"
+                            autoComplete="off"
+                            style={!showPassword ? { WebkitTextSecurity: 'disc' } : {}}
+                            className="bg-white"
                           />
                           <button
                             type="button"
@@ -388,7 +389,7 @@ const PublicYatraRegistration = () => {
                 />
                 <FormField
                   control={passwordForm.control}
-                  name="verify_field"
+                  name="sec_v"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
@@ -396,10 +397,11 @@ const PublicYatraRegistration = () => {
                         <div className="relative">
                           <Input 
                             {...field} 
-                            type={showConfirmPassword ? "text" : "password"} 
+                            type={showConfirmPassword ? "text" : "text"} 
                             placeholder="••••••••"
-                            autoComplete="new-password"
-                            name="verify_field"
+                            autoComplete="off"
+                            style={!showConfirmPassword ? { WebkitTextSecurity: 'disc' } : {}}
+                            className="bg-white"
                           />
                           <button
                             type="button"

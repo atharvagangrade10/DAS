@@ -25,11 +25,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format, differenceInYears } from "date-fns";
 import { toast } from "sonner";
-import { Loader2, ArrowRight, CheckCircle2, MapPin, Calendar, IndianRupee } from "lucide-react";
+import { Loader2, ArrowRight, CheckCircle2, MapPin, Calendar, IndianRupee, Lock } from "lucide-react";
 import { searchParticipantPublic, upsertParticipantPublic, fetchYatrasPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 import { Yatra } from "@/types/yatra";
 import { Badge } from "@/components/ui/badge";
+import { API_BASE_URL } from "@/config/api";
 
 const PROFESSIONS = ["Student", "Employee", "Teacher", "Doctor", "Business", "Housewife", "Retired", "Other"];
 
@@ -37,6 +38,7 @@ const formSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
   initiated_name: z.string().optional().or(z.literal('')),
   phone: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   address: z.string().min(1, "Address is required"),
   place_name: z.string().optional().or(z.literal('')),
   age: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().int().min(0).nullable()),
@@ -50,7 +52,6 @@ const formSchema = z.object({
 
 const PublicYatraRegistration = () => {
   const [step, setStep] = React.useState(1);
-  const [participantId, setParticipantId] = React.useState<string | null>(null);
   const targetYatraName = "Maheshwar New Year Trip";
 
   const { data: yatras, isLoading: isLoadingYatra } = useQuery<Yatra[]>({
@@ -66,6 +67,7 @@ const PublicYatraRegistration = () => {
       full_name: "",
       initiated_name: "",
       phone: "",
+      password: "",
       address: "",
       place_name: "",
       age: undefined,
@@ -102,16 +104,52 @@ const PublicYatraRegistration = () => {
         place_name: values.place_name || null,
         dob: values.dob ? format(values.dob, "yyyy-MM-dd") : null,
         profession: profession || null,
-        devotee_friend: "None", // Defaulted to None as requested to skip selection
+        devotee_friend: "None",
       };
 
-      // 2. Upsert
-      return await upsertParticipantPublic(payload, matched?.id);
+      if (matched) {
+        // 2. If exists, attempt login to get token
+        const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: values.full_name, // Backend might require full_name for matching
+            phone: values.phone,
+            password: values.password,
+          }),
+        });
+
+        if (!loginResponse.ok) {
+          const errorData = await loginResponse.json();
+          throw new Error(errorData.detail || "Authentication failed. Please check your name, phone, and password.");
+        }
+
+        const authData = await loginResponse.json();
+        const token = authData.access_token;
+
+        // 3. Update with token
+        const updateResponse = await fetch(`${API_BASE_URL}/participants/${matched.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json();
+          throw new Error(errorData.detail || "Failed to update participant details.");
+        }
+        return updateResponse.json();
+      } else {
+        // 4. Create new participant
+        return await upsertParticipantPublic(payload);
+      }
     },
-    onSuccess: (data) => {
-      setParticipantId(data.id);
+    onSuccess: () => {
       setStep(2);
-      toast.success("Details updated successfully!");
+      toast.success("Registration processed successfully!");
     },
     onError: (error: Error) => {
       toast.error("Error processing registration", { description: error.message });
@@ -134,7 +172,9 @@ const PublicYatraRegistration = () => {
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle>Participant Information</CardTitle>
-              <CardDescription>Please provide your details for the trip records.</CardDescription>
+              <CardDescription>
+                If you have registered before, please use your existing phone and password to update your details.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -146,7 +186,7 @@ const PublicYatraRegistration = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Full Name</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
+                          <FormControl><Input {...field} placeholder="Full Name (as registered)" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -164,19 +204,37 @@ const PublicYatraRegistration = () => {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number (10 digits)</FormLabel>
-                        <FormControl><Input {...field} type="tel" /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number (10 digits)</FormLabel>
+                          <FormControl><Input {...field} type="tel" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Account Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input {...field} type="password" placeholder="••••••" />
+                              <Lock className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4 pt-4 border-t">
                     <FormField
                       control={form.control}
                       name="dob"
@@ -282,7 +340,7 @@ const PublicYatraRegistration = () => {
                   />
 
                   <Button type="submit" className="w-full text-lg py-6" disabled={mutation.isPending}>
-                    {mutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Continue to Trip Details"}
+                    {mutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Confirm and View Trip Details"}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </form>
@@ -299,8 +357,8 @@ const PublicYatraRegistration = () => {
       <div className="max-w-2xl w-full space-y-8">
         <div className="bg-white p-8 rounded-2xl shadow-xl border border-green-100 flex flex-col items-center text-center">
           <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Details Confirmed!</h2>
-          <p className="text-gray-600 mb-8">Your participant information has been updated for the database.</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Registration Complete!</h2>
+          <p className="text-gray-600 mb-8">Your information has been successfully verified and updated.</p>
           
           <div className="w-full space-y-6 text-left">
             <h3 className="text-xl font-bold flex items-center gap-2 text-primary border-b pb-2">

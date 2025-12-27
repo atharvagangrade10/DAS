@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, Check } from "lucide-react";
 import { Yatra } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,10 @@ import YatraRegistrationDialog from "./YatraRegistrationDialog";
 interface YatraCardProps {
   yatra: Yatra;
   showAdminControls?: boolean;
+  isRegistered?: boolean; // New prop
 }
 
-const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false }) => {
+const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
 
@@ -67,13 +68,20 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false 
 
         {!showAdminControls && (
           <div className="pt-4">
-            <Button 
-              className="w-full flex items-center gap-2" 
-              onClick={() => setIsRegisterDialogOpen(true)}
-            >
-              <ClipboardCheck className="h-4 w-4" />
-              Register Now
-            </Button>
+            {isRegistered ? (
+              <Button className="w-full flex items-center gap-2 bg-green-500 hover:bg-green-600" disabled>
+                <Check className="h-4 w-4" />
+                Registered
+              </Button>
+            ) : (
+              <Button 
+                className="w-full flex items-center gap-2" 
+                onClick={() => setIsRegisterDialogOpen(true)}
+              >
+                <ClipboardCheck className="h-4 w-4" />
+                Register Now
+              </Button>
+            )}
           </div>
         )}
       </CardContent>

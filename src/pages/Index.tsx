@@ -3,8 +3,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { fetchYatras, fetchAttendedPrograms } from "@/utils/api";
-import { Yatra } from "@/types/yatra";
+import { fetchYatras, fetchAttendedPrograms, fetchPaymentHistory } from "@/utils/api";
+import { Yatra, PaymentRecord } from "@/types/yatra";
 import { AttendedProgram } from "@/types/participant";
 import YatraCard from "@/components/YatraCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,6 +28,23 @@ const Index = () => {
     queryFn: () => fetchAttendedPrograms(user!.user_id),
     enabled: !!user?.user_id,
   });
+  
+  // Fetch Payment History for the logged-in user
+  const { data: paymentHistory, isLoading: isLoadingPayments } = useQuery<PaymentRecord[], Error>({
+    queryKey: ["paymentHistory", user?.user_id],
+    queryFn: () => fetchPaymentHistory(user!.user_id),
+    enabled: !!user?.user_id,
+  });
+
+  // Determine which Yatras the user has successfully paid for
+  const registeredYatraIds = React.useMemo(() => {
+    if (!paymentHistory) return new Set<string>();
+    return new Set(
+      paymentHistory
+        .filter(p => p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
+        .map(p => p.yatra_id)
+    );
+  }, [paymentHistory]);
 
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-12">
@@ -47,7 +64,7 @@ const Index = () => {
           <h2 className="text-2xl font-bold">Upcoming Yatras</h2>
         </div>
         
-        {isLoadingYatras ? (
+        {isLoadingYatras || isLoadingPayments ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(3)].map((_, i) => (
               <Skeleton key={i} className="h-48 w-full rounded-xl" />
@@ -56,7 +73,11 @@ const Index = () => {
         ) : yatras && yatras.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {yatras.map((yatra) => (
-              <YatraCard key={yatra.id} yatra={yatra} />
+              <YatraCard 
+                key={yatra.id} 
+                yatra={yatra} 
+                isRegistered={registeredYatraIds.has(yatra.id)} // Pass registration status
+              />
             ))}
           </div>
         ) : (

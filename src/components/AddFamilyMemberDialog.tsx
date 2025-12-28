@@ -84,6 +84,18 @@ interface AddFamilyMemberDialogProps {
   defaultAddress?: string;
 }
 
+const getInverseRelation = (relation: string, currentUserGender: string): string => {
+  switch (relation) {
+    case "Husband": return "Wife";
+    case "Wife": return "Husband";
+    case "Child": return currentUserGender === "Female" ? "Mother" : "Father";
+    case "Father":
+    case "Mother":
+      return currentUserGender === "Female" ? "Daughter" : "Son";
+    default: return "Relative";
+  }
+};
+
 const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   isOpen,
   onOpenChange,
@@ -135,32 +147,37 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     if (relationValue === "Wife" || relationValue === "Mother") form.setValue("gender", "Female");
   }, [relationValue, form]);
 
-  const linkMutation = useMutation({
-    mutationFn: async ({ relation, participant_id }: { relation: string, participant_id: string }) => {
+  const twoWayLinkMutation = useMutation({
+    mutationFn: async ({ relation, targetId }: { relation: string, targetId: string }) => {
       if (!user?.user_id) return;
 
-      // Fetch latest profile to ensure we have current list
-      const latestProfile = await fetchParticipantById(user.user_id);
-      const currentLinks = latestProfile.related_participant_ids || [];
-
-      // Don't add if already exists
-      if (currentLinks.some(link => link.participant_id === participant_id)) {
-        return latestProfile;
+      // 1. Update Current User's Profile
+      const currentUserProfile = await fetchParticipantById(user.user_id);
+      const currentUserLinks = currentUserProfile.related_participant_ids || [];
+      if (!currentUserLinks.some(l => l.participant_id === targetId)) {
+        await updateParticipant(user.user_id, {
+          ...currentUserProfile,
+          related_participant_ids: [...currentUserLinks, { relation, participant_id: targetId }]
+        });
       }
 
-      const newLinks: RelatedParticipant[] = [...currentLinks, { relation, participant_id }];
+      // 2. Update target participant's profile (The Inverse Link)
+      const targetProfile = await fetchParticipantById(targetId);
+      const targetLinks = targetProfile.related_participant_ids || [];
+      const inverseRelation = getInverseRelation(relation, user.gender || "Male");
       
-      const payload = {
-        ...latestProfile,
-        related_participant_ids: newLinks
-      };
+      if (!targetLinks.some(l => l.participant_id === user.user_id)) {
+        await updateParticipant(targetId, {
+          ...targetProfile,
+          related_participant_ids: [...targetLinks, { relation: inverseRelation, participant_id: user.user_id }]
+        });
+      }
 
-      const updated = await updateParticipant(user.user_id, payload);
-      return updated;
+      return await fetchParticipantById(user.user_id);
     },
-    onSuccess: (updatedParticipant) => {
-      if (updatedParticipant) {
-        updateUser({ ...user!, related_participant_ids: updatedParticipant.related_participant_ids });
+    onSuccess: (updatedUser) => {
+      if (updatedUser) {
+        updateUser({ ...user!, related_participant_ids: updatedUser.related_participant_ids });
         queryClient.invalidateQueries({ queryKey: ["relatedParticipants", user?.user_id] });
       }
     }
@@ -173,37 +190,35 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       
       let participantId: string | undefined;
 
-      if (values.relation !== "Child") {
-        const existing = await searchParticipantPublic(values.phone);
-        if (existing && existing.length > 0) {
-          participantId = existing[0].id;
-          toast.info(`Linked to existing participant: ${existing[0].full_name}`);
-        } else {
-          const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
-          const response = await createParticipantPublic({
-            full_name,
-            first_name: values.first_name,
-            last_name: values.last_name,
-            initiated_name: values.initiated_name || null,
-            phone: values.phone,
-            gender: values.gender,
-            dob: format(values.dob, "yyyy-MM-dd"),
-            age: calculated_age,
-            address: values.address,
-            profession: profession || null,
-            place_name: values.place_name || null,
-            chanting_rounds: values.chanting_rounds,
-            email: values.email || null,
-            date_joined: format(new Date(), "yyyy-MM-dd"),
-            devotee_friend_name: user?.devotee_friend_name || "None",
-          });
-          participantId = response.id;
-        }
+      // Check if participant already exists by phone
+      const existing = await searchParticipantPublic(values.phone);
+      if (existing && existing.length > 0) {
+        participantId = existing[0].id;
+        toast.info(`Linked to existing participant: ${existing[0].full_name}`);
+      } else {
+        const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
+        const response = await createParticipantPublic({
+          full_name,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          initiated_name: values.initiated_name || null,
+          phone: values.phone,
+          gender: values.gender,
+          dob: format(values.dob, "yyyy-MM-dd"),
+          age: calculated_age,
+          address: values.address,
+          profession: profession || null,
+          place_name: values.place_name || null,
+          chanting_rounds: values.chanting_rounds,
+          email: values.email || null,
+          date_joined: format(new Date(), "yyyy-MM-dd"),
+          devotee_friend_name: user?.devotee_friend_name || "None",
+        });
+        participantId = response.id;
       }
 
-      // If we have an ID, update the link in the background
       if (participantId) {
-        linkMutation.mutate({ relation: values.relation, participant_id: participantId });
+        await twoWayLinkMutation.mutateAsync({ relation: values.relation, targetId: participantId });
       }
 
       return { ...values, calculated_age, full_name, participant_id: participantId };
@@ -212,6 +227,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       onAdd(data as FamilyMemberData);
       form.reset();
       onOpenChange(false);
+      toast.success("Family member linked successfully!");
     },
     onError: (error: Error) => {
       toast.error("Process failed", { description: error.message });
@@ -223,6 +239,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     if (!p) return;
     const dobDate = p.dob ? parseISO(p.dob) : null;
     const profInit = p.profession ? (PROFESSIONS.includes(p.profession) ? { type: p.profession, other: "" } : { type: "Other", other: p.profession }) : { type: "Student", other: "" };
+    
     form.reset({
       relation: "Husband",
       first_name: p.first_name || "",

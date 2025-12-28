@@ -68,24 +68,29 @@ const useRazorpay = () => {
       currency: invoice.currency,
       name: "DAS Yatra Registration",
       description: `${invoice.yatra_name} - ${invoice.fee_category}`,
-      // Use order_id if available for standard verification flow
+      // Passing the order_id linked to the invoice
       order_id: invoice.order_id, 
       handler: async (response: any) => {
+        console.log("Razorpay Response Received:", response);
         const verificationToastId = toast.loading("Verifying payment...");
+        
         try {
-            // Extract the signature from either the standard field or the invoice-specific field
-            const signature = response.razorpay_signature || response.razorpay_invoice_signature;
-            
-            if (!signature) {
-                throw new Error("Payment signature missing from Razorpay response.");
+            // Defensively map the payload. If values are missing, use null to ensure keys are sent in JSON.
+            const payload = {
+                razorpay_order_id: response.razorpay_order_id || invoice.order_id || null,
+                razorpay_invoice_id: response.razorpay_invoice_id || invoice.id || null,
+                razorpay_payment_id: response.razorpay_payment_id || null,
+                razorpay_signature: response.razorpay_signature || response.razorpay_invoice_signature || null,
+            };
+
+            console.log("Sending Verification Payload:", payload);
+
+            if (!payload.razorpay_signature) {
+                console.error("Signature missing in Razorpay response:", response);
+                throw new Error("Payment signature could not be found in the gateway response.");
             }
 
-            const verificationData = await verifyPayment(yatraId, {
-                razorpay_order_id: response.razorpay_order_id || invoice.order_id,
-                razorpay_invoice_id: response.razorpay_invoice_id || invoice.id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: signature,
-            });
+            const verificationData = await verifyPayment(yatraId, payload);
 
             toast.dismiss(verificationToastId);
 

@@ -46,7 +46,7 @@ const PROFESSIONS = [
 ];
 
 const familyMemberSchema = z.object({
-  relation: z.enum(["Husband", "Wife", "Child"]),
+  relation: z.enum(["Husband", "Wife", "Child", "Father", "Mother"]),
   full_name: z.string().min(1, "Full name is required"),
   initiated_name: z.string().optional(),
   phone: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits"),
@@ -103,8 +103,8 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   const professionType = form.watch("profession_type");
 
   React.useEffect(() => {
-    if (relationValue === "Husband") form.setValue("gender", "Male");
-    if (relationValue === "Wife") form.setValue("gender", "Female");
+    if (relationValue === "Husband" || relationValue === "Father") form.setValue("gender", "Male");
+    if (relationValue === "Wife" || relationValue === "Mother") form.setValue("gender", "Female");
   }, [relationValue, form]);
 
   const onSubmit = (values: z.infer<typeof familyMemberSchema>) => {
@@ -136,7 +136,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="flex gap-4"
+                      className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="Husband" id="r-husband" />
@@ -149,6 +149,14 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="Child" id="r-child" />
                         <Label htmlFor="r-child">Child</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Father" id="r-father" />
+                        <Label htmlFor="r-father">Father</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Mother" id="r-mother" />
+                        <Label htmlFor="r-mother">Mother</Label>
                       </div>
                     </RadioGroup>
                   </FormControl>

@@ -2,12 +2,20 @@ export interface RegistrationFees {
   [key: string]: number;
 }
 
+export interface MemberPrices {
+  Husband: number;
+  Wife: number;
+  Child: number;
+}
+
 export interface Yatra {
   id: string;
   name: string;
-  date_start: string; // ISO date string (YYYY-MM-DD)
-  date_end: string; // ISO date string (YYYY-MM-DD)
+  date_start: string;
+  date_end: string;
   registration_fees: RegistrationFees;
+  can_add_members: boolean;
+  member_prices: MemberPrices;
 }
 
 export interface YatraCreate {
@@ -15,6 +23,8 @@ export interface YatraCreate {
   date_start: string;
   date_end: string;
   registration_fees: RegistrationFees;
+  can_add_members: boolean;
+  member_prices: MemberPrices;
 }
 
 export interface YatraUpdate {
@@ -22,6 +32,8 @@ export interface YatraUpdate {
   date_start?: string;
   date_end?: string;
   registration_fees?: RegistrationFees;
+  can_add_members?: boolean;
+  member_prices?: MemberPrices;
 }
 
 export interface PaymentRecord {
@@ -30,6 +42,6 @@ export interface PaymentRecord {
   amount: number;
   status: string;
   transaction_id: string;
-  date: string; // ISO date string (YYYY-MM-DD)
+  date: string;
   receipt_url?: string | null;
 }

@@ -20,9 +20,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { YatraCreate } from "@/types/yatra";
 import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
@@ -50,6 +52,10 @@ const formSchema = z.object({
   date_start: z.date({ required_error: "Start date is required" }),
   date_end: z.date({ required_error: "End date is required" }),
   fees: z.array(FeeItemSchema).min(1, "At least one registration fee category is required."),
+  can_add_members: z.boolean().default(false),
+  husband_price: z.number().min(0),
+  wife_price: z.number().min(0),
+  child_price: z.number().min(0),
 }).refine((data) => data.date_end >= data.date_start, {
   message: "End date cannot be before start date.",
   path: ["date_end"],
@@ -67,7 +73,11 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
       name: "",
       date_start: undefined,
       date_end: undefined,
-      fees: [{ category_name: "Standard", fee_amount: 0 }], // Initial default fee
+      fees: [{ category_name: "Standard", fee_amount: 0 }],
+      can_add_members: false,
+      husband_price: 0,
+      wife_price: 0,
+      child_price: 0,
     },
   });
 
@@ -75,6 +85,8 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
     control: form.control,
     name: "fees",
   });
+
+  const canAddMembers = form.watch("can_add_members");
 
   const mutation = useMutation({
     mutationFn: (data: YatraCreate) => createYatra(data),
@@ -93,7 +105,6 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const registration_fees = values.fees.reduce((acc, fee) => {
-      // Use the category name as the key in the dictionary payload
       acc[fee.category_name] = fee.fee_amount;
       return acc;
     }, {} as Record<string, number>);
@@ -103,17 +114,23 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
       date_start: format(values.date_start, "yyyy-MM-dd"),
       date_end: format(values.date_end, "yyyy-MM-dd"),
       registration_fees,
+      can_add_members: values.can_add_members,
+      member_prices: {
+        Husband: values.husband_price,
+        Wife: values.wife_price,
+        Child: values.child_price,
+      },
     };
     mutation.mutate(yatraData);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Yatra (Trip)</DialogTitle>
+          <DialogTitle>Create New Yatra</DialogTitle>
           <DialogDescription>
-            Fill in the details to create a new Yatra.
+            Configure trip details and member pricing.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -141,29 +158,14 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
+                          <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -179,29 +181,14 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
+                          <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -209,19 +196,71 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
                 )}
               />
             </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <FormField
+                control={form.control}
+                name="can_add_members"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Allow Family Members</FormLabel>
+                      <FormDescription>Enable participants to add family members during registration.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {canAddMembers && (
+                <div className="grid grid-cols-3 gap-3 p-3 bg-muted/30 rounded-md">
+                  <FormField
+                    control={form.control}
+                    name="husband_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Husband (₹)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="wife_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Wife (₹)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="child_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Child (₹)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
             
             <div className="space-y-3 pt-2 border-t">
               <div className="flex justify-between items-center">
-                <FormLabel className="text-base font-semibold">Registration Fees (INR)</FormLabel>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({ category_name: "", fee_amount: 0 })}
-                  className="flex items-center gap-1"
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  Add Category
+                <FormLabel className="text-base font-semibold">Standard Registration Fees (INR)</FormLabel>
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ category_name: "", fee_amount: 0 })} className="flex items-center gap-1">
+                  <PlusCircle className="h-4 w-4" /> Add Category
                 </Button>
               </div>
 
@@ -234,9 +273,7 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs font-normal text-muted-foreground">Category Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
+                          <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -248,32 +285,18 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({
                         <FormItem>
                           <FormLabel className="text-xs font-normal text-muted-foreground">Fee Amount</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                              min="0"
-                            />
+                            <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))} min="0" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => remove(index)}
-                    className="mt-7 text-red-500 hover:text-red-700"
-                    disabled={fields.length === 1} // Prevent deleting the last field
-                  >
+                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="mt-7 text-red-500 hover:text-red-700" disabled={fields.length === 1}>
                     <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Remove fee category</span>
                   </Button>
                 </div>
               ))}
-              <FormMessage>{form.formState.errors.fees?.message}</FormMessage>
             </div>
 
             <DialogFooter>

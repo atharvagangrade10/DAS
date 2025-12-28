@@ -100,7 +100,12 @@ const SidebarNav = () => {
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10 border border-primary/20">
                 {user.profile_photo_url ? (
-                  <AvatarImage src={user.profile_photo_url} alt={user.full_name} className="object-cover" />
+                  <AvatarImage 
+                    key={user.profile_photo_url}
+                    src={user.profile_photo_url} 
+                    alt={user.full_name} 
+                    className="object-cover h-full w-full" 
+                  />
                 ) : null}
                 <AvatarFallback className="bg-primary/10 text-primary">
                   <User className="h-5 w-5" />

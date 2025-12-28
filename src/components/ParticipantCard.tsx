@@ -91,7 +91,12 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
             {participant.profile_photo_url ? (
-              <AvatarImage src={participant.profile_photo_url} alt={participant.full_name} className="object-cover" />
+              <AvatarImage 
+                key={participant.profile_photo_url}
+                src={participant.profile_photo_url} 
+                alt={participant.full_name} 
+                className="object-cover h-full w-full" 
+              />
             ) : null}
             <AvatarFallback className="bg-primary/10 text-primary">
               <User className="h-8 w-8" />

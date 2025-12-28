@@ -55,7 +55,12 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       <div className="relative">
         <Avatar className="h-32 w-32 border-2 border-muted shadow-sm">
           {value ? (
-            <AvatarImage src={value} alt="Profile preview" className="object-cover" />
+            <AvatarImage 
+              key={value} // Force re-render when the URL changes
+              src={value} 
+              alt="Profile preview" 
+              className="object-cover h-full w-full" 
+            />
           ) : null}
           <AvatarFallback className="bg-muted text-muted-foreground">
             <User className="h-12 w-12" />
@@ -73,7 +78,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
         )}
 
         {isUploading && (
-          <div className="absolute inset-0 bg-background/60 rounded-full flex items-center justify-center">
+          <div className="absolute inset-0 bg-background/60 rounded-full flex items-center justify-center z-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}

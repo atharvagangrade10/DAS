@@ -14,8 +14,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LoginRequest } from '@/types/auth';
 
 const loginSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  last_name: z.string().min(1, "Last name is required"),
   phone: z.string().min(10, "Phone must be 10 digits").max(10, "Phone must be 10 digits"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
@@ -28,8 +26,6 @@ const LoginPage = () => {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      first_name: "",
-      last_name: "",
       phone: "",
       password: "",
     },
@@ -44,10 +40,7 @@ const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
-    const full_name = `${values.first_name.trim()} ${values.last_name.trim()}`;
-    
     const loginData: LoginRequest = {
-      full_name: full_name,
       phone: values.phone,
       password: values.password,
     };
@@ -63,40 +56,11 @@ const LoginPage = () => {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">Login to DAS</CardTitle>
-          <CardDescription>Enter your credentials to access the system.</CardDescription>
+          <CardDescription>Enter your phone number and password to access the system.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="first_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="First Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="last_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Last Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
               <FormField
                 control={form.control}
                 name="phone"

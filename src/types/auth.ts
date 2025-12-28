@@ -1,3 +1,5 @@
+"use client";
+
 export interface AuthUser {
   user_id: string;
   full_name: string;
@@ -12,7 +14,7 @@ export interface AuthUser {
   profession?: string | null;
   devotee_friend_name?: string;
   chanting_rounds?: number | null;
-  role: 'Attendee' | 'Manager' | 'DevoteeFriend' | 'Volunteer'; // Added Volunteer role
+  role: 'Attendee' | 'Manager' | 'DevoteeFriend' | 'Volunteer';
 }
 
 export interface AuthTokenResponse extends AuthUser {
@@ -21,7 +23,6 @@ export interface AuthTokenResponse extends AuthUser {
 }
 
 export interface LoginRequest {
-  full_name: string;
   phone: string;
   password: string;
 }

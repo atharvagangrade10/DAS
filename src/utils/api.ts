@@ -135,7 +135,8 @@ export const createRazorpayInvoice = async (data: RazorpayInvoiceRequest): Promi
 };
 
 export interface RazorpayVerificationRequest {
-  razorpay_order_id: string;
+  razorpay_order_id?: string;
+  razorpay_invoice_id?: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
 }

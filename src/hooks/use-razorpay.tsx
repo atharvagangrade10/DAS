@@ -73,9 +73,10 @@ const useRazorpay = () => {
       handler: async (response: any) => {
         const verificationToastId = toast.loading("Verifying payment...");
         try {
-            // Ensure we send the razorpay_order_id. Fallback to invoice.order_id if the response one is missing
+            // Updated to pass razorpay_invoice_id from the original invoice object
             const verificationData = await verifyPayment(yatraId, {
                 razorpay_order_id: response.razorpay_order_id || invoice.order_id,
+                razorpay_invoice_id: response.razorpay_invoice_id || invoice.id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
             });

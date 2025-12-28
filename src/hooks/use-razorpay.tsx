@@ -68,17 +68,23 @@ const useRazorpay = () => {
       currency: invoice.currency,
       name: "DAS Yatra Registration",
       description: `${invoice.yatra_name} - ${invoice.fee_category}`,
-      // We must pass the order_id for signature verification to work correctly on the backend
+      // Use order_id if available for standard verification flow
       order_id: invoice.order_id, 
       handler: async (response: any) => {
         const verificationToastId = toast.loading("Verifying payment...");
         try {
-            // Updated to pass razorpay_invoice_id from the original invoice object
+            // Extract the signature from either the standard field or the invoice-specific field
+            const signature = response.razorpay_signature || response.razorpay_invoice_signature;
+            
+            if (!signature) {
+                throw new Error("Payment signature missing from Razorpay response.");
+            }
+
             const verificationData = await verifyPayment(yatraId, {
                 razorpay_order_id: response.razorpay_order_id || invoice.order_id,
                 razorpay_invoice_id: response.razorpay_invoice_id || invoice.id,
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
+                razorpay_signature: signature,
             });
 
             toast.dismiss(verificationToastId);
@@ -87,7 +93,7 @@ const useRazorpay = () => {
                 onSuccess(response);
             } else {
                 onFailure({
-                    description: "Payment verification failed. Please contact support with your payment ID.",
+                    description: "Payment verification failed. Please contact support.",
                     error: verificationData,
                 });
             }

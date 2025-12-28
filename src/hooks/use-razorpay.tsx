@@ -68,13 +68,14 @@ const useRazorpay = () => {
       currency: invoice.currency,
       name: "DAS Yatra Registration",
       description: `${invoice.yatra_name} - ${invoice.fee_category}`,
-      // Backend verify_payment uses order_id for signature verification
+      // We must pass the order_id for signature verification to work correctly on the backend
       order_id: invoice.order_id, 
       handler: async (response: any) => {
         const verificationToastId = toast.loading("Verifying payment...");
         try {
+            // Ensure we send the razorpay_order_id. Fallback to invoice.order_id if the response one is missing
             const verificationData = await verifyPayment(yatraId, {
-                razorpay_order_id: response.razorpay_order_id,
+                razorpay_order_id: response.razorpay_order_id || invoice.order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
             });

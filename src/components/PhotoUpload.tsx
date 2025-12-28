@@ -11,9 +11,15 @@ interface PhotoUploadProps {
   value?: string | null;
   onChange: (url: string | null) => void;
   label?: string;
+  participantId?: string; // Required for upload API
 }
 
-const PhotoUpload: React.FC<PhotoUploadProps> = ({ value, onChange, label = "Profile Photo" }) => {
+const PhotoUpload: React.FC<PhotoUploadProps> = ({ 
+  value, 
+  onChange, 
+  label = "Profile Photo",
+  participantId = "new_participant" // Default for creation flows
+}) => {
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -21,7 +27,6 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ value, onChange, label = "Pro
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check file size (e.g., 5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File is too large (max 5MB)");
       return;
@@ -29,7 +34,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ value, onChange, label = "Pro
 
     try {
       setIsUploading(true);
-      const url = await uploadPhoto(file);
+      const url = await uploadPhoto(file, participantId);
       onChange(url);
       toast.success("Photo uploaded successfully!");
     } catch (error: any) {

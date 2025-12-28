@@ -161,9 +161,10 @@ export const fetchPaymentHistory = async (participantId: string): Promise<Paymen
   return fetchAuthenticated(`${API_BASE_URL}/yatra/payment-history/${participantId}`);
 };
 
-export const uploadPhoto = async (file: File): Promise<string> => {
+export const uploadPhoto = async (file: File, participantId: string): Promise<string> => {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("participant_id", participantId);
   
   const token = localStorage.getItem('das_auth_token');
   const headers: HeadersInit = {};

@@ -273,7 +273,11 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <PhotoUpload value={field.value} onChange={field.onChange} />
+                      <PhotoUpload 
+                        value={field.value} 
+                        onChange={field.onChange} 
+                        participantId={participant.id} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

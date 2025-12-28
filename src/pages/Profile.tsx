@@ -239,7 +239,11 @@ const ProfilePage = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <PhotoUpload value={field.value} onChange={field.onChange} />
+                        <PhotoUpload 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                          participantId={user?.user_id} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

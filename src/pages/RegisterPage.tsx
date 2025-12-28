@@ -99,6 +99,7 @@ const RegisterPage = () => {
         const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
         const participantData = {
           ...values,
+          full_name: `${values.first_name} ${values.last_name}`,
           initiated_name: values.initiated_name || null,
           place_name: values.place_name || null,
           profession: profession || null,

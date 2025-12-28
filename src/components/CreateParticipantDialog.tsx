@@ -131,7 +131,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
-  const { data: devoteeFriends, isLoading: isLoadingFriends } = useQuery<
+  const { data: devoteeFriends } = useQuery<
     DevoteeFriend[],
     Error
   >({
@@ -176,6 +176,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
         : values.profession_type;
 
       const payload = {
+        full_name: `${values.first_name} ${values.last_name}`,
         first_name: values.first_name,
         last_name: values.last_name,
         initiated_name: values.initiated_name || null,
@@ -429,7 +430,6 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    disabled={isLoadingFriends}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -438,11 +438,6 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="None">None</SelectItem>
-                      {devoteeFriends?.map((friend) => (
-                        <SelectItem key={friend.id} value={friend.name}>
-                          {friend.name}
-                        </SelectItem>
-                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

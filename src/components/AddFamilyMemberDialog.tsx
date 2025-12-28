@@ -92,17 +92,13 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
 }) => {
   const { user, token } = useAuth();
   
-  // Fetch names for related participants
-  const { data: relatedParticipants, isLoading: isLoadingRelated } = useQuery<Participant[]>({
+  const { data: relatedParticipants } = useQuery<Participant[]>({
     queryKey: ["relatedParticipants", user?.user_id],
     queryFn: async () => {
-      // 1. Fetch current user's participant profile to get the IDs
       const mainParticipant = await fetchParticipantById(user!.user_id);
       if (!mainParticipant.related_participant_ids || mainParticipant.related_participant_ids.length === 0) {
         return [];
       }
-
-      // 2. Fetch full details for each related participant
       const promises = mainParticipant.related_participant_ids.map(rel => 
         fetchParticipantById(rel.participant_id)
       );
@@ -143,15 +139,12 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
       const full_name = `${values.first_name} ${values.last_name}`;
       
-      // For Children, we still skip the database check/creation as requested previously
       if (values.relation === "Child") {
         return { ...values, calculated_age, full_name };
       }
 
-      // Check if participant already exists by phone
       const existing = await searchParticipantPublic(values.phone);
       if (existing && existing.length > 0) {
-        // Participant exists, use the first match
         const found = existing[0];
         toast.info(`Linked to existing participant: ${found.full_name}`);
         return { 
@@ -162,9 +155,9 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
         };
       }
 
-      // Create new participant if they don't exist
       const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
       const response = await createParticipantPublic({
+        full_name,
         first_name: values.first_name,
         last_name: values.last_name,
         initiated_name: values.initiated_name || null,
@@ -199,12 +192,10 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   const handleSelectExisting = (id: string) => {
     const p = relatedParticipants?.find(part => part.id === id);
     if (!p) return;
-
     const dobDate = p.dob ? parseISO(p.dob) : null;
     const profInit = p.profession ? (PROFESSIONS.includes(p.profession) ? { type: p.profession, other: "" } : { type: "Other", other: p.profession }) : { type: "Student", other: "" };
-
     form.reset({
-      relation: "Husband", // Default guess, user can change
+      relation: "Husband",
       first_name: p.first_name || "",
       last_name: p.last_name || "",
       initiated_name: p.initiated_name || "",
@@ -218,7 +209,6 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       chanting_rounds: p.chanting_rounds || 0,
       email: p.email || "",
     });
-    
     toast.success(`Loaded details for ${p.full_name}`);
   };
 

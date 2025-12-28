@@ -72,8 +72,11 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
     mutationFn: async () => {
       if (!user?.user_id) throw new Error("User ID is missing.");
       
-      // Register each family member as a participant in the database
+      // Register adult family members as participants in the database
+      // Children are skipped as requested
       for (const m of members) {
+        if (m.relation === "Child") continue;
+
         const profession = m.profession_type === "Other" ? m.profession_other : m.profession_type;
         await createParticipantPublic({
           full_name: m.full_name,

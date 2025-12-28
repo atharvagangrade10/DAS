@@ -52,7 +52,8 @@ const PROFESSIONS = [
 
 const familyMemberSchema = z.object({
   relation: z.enum(["Husband", "Wife", "Child", "Father", "Mother"]),
-  full_name: z.string().min(1, "Full name is required"),
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
   initiated_name: z.string().optional().or(z.literal('')),
   phone: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits"),
   address: z.string().min(1, "Address is required"),
@@ -70,6 +71,7 @@ const familyMemberSchema = z.object({
 
 export type FamilyMemberData = z.infer<typeof familyMemberSchema> & {
   calculated_age: number;
+  full_name: string;
   participant_id?: string;
 };
 
@@ -91,7 +93,8 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     resolver: zodResolver(familyMemberSchema),
     defaultValues: {
       relation: "Child",
-      full_name: "",
+      first_name: "",
+      last_name: "",
       initiated_name: "",
       phone: "",
       address: defaultAddress,
@@ -116,15 +119,17 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof familyMemberSchema>) => {
       const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
+      const full_name = `${values.first_name} ${values.last_name}`;
       
-      // Skip participant creation for children as per instructions
+      // Skip participant creation for children
       if (values.relation === "Child") {
-        return { ...values, calculated_age };
+        return { ...values, calculated_age, full_name };
       }
 
       const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
       const response = await createParticipantPublic({
-        full_name: values.full_name,
+        first_name: values.first_name,
+        last_name: values.last_name,
         initiated_name: values.initiated_name || null,
         phone: values.phone,
         gender: values.gender,
@@ -139,7 +144,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
         devotee_friend_name: user?.devotee_friend_name || "None",
       });
 
-      return { ...values, calculated_age, participant_id: response.id };
+      return { ...values, calculated_age, full_name, participant_id: response.id };
     },
     onSuccess: (data) => {
       onAdd(data as FamilyMemberData);
@@ -198,10 +203,10 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="full_name"
+                name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -209,16 +214,28 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               />
               <FormField
                 control={form.control}
-                name="initiated_name"
+                name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Initiated Name (Optional)</FormLabel>
+                    <FormLabel>Last Name</FormLabel>
                     <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="initiated_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Initiated Name (Optional)</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

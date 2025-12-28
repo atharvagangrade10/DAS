@@ -59,7 +59,8 @@ const PROFESSIONS = [
 ];
 
 const formSchema = z.object({
-  full_name: z.string().min(1, "Full name is required"),
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
   initiated_name: z.string().optional().or(z.literal('')),
   phone: z.string()
     .optional()
@@ -141,7 +142,8 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      full_name: "",
+      first_name: "",
+      last_name: "",
       initiated_name: "",
       phone: "",
       address: "",
@@ -174,7 +176,8 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
         : values.profession_type;
 
       const payload = {
-        full_name: values.full_name,
+        first_name: values.first_name,
+        last_name: values.last_name,
         initiated_name: values.initiated_name || null,
         phone: values.phone,
         address: values.address,
@@ -220,19 +223,30 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="first_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="last_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="initiated_name"

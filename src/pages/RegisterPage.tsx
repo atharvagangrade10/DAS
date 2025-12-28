@@ -33,7 +33,8 @@ import DOBInput from "@/components/DOBInput";
 const PROFESSIONS = ["Student", "Employee", "Teacher", "Doctor", "Business", "Housewife", "Retired", "Other"];
 
 const registrationSchema = z.object({
-  full_name: z.string().min(1, "Full name is required"),
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
   initiated_name: z.string().optional().or(z.literal('')),
   phone: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits"),
   address: z.string().min(1, "Address is required"),
@@ -53,7 +54,8 @@ const RegisterPage = () => {
   const form = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
-      full_name: "",
+      first_name: "",
+      last_name: "",
       initiated_name: "",
       phone: "",
       address: "",
@@ -134,27 +136,39 @@ const RegisterPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="full_name"
+                    name="first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl><Input {...field} placeholder="Full Name" autoComplete="name" /></FormControl>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl><Input {...field} placeholder="First Name" autoComplete="given-name" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="initiated_name"
+                    name="last_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Initiated Name (Optional)</FormLabel>
-                        <FormControl><Input {...field} autoComplete="additional-name" /></FormControl>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl><Input {...field} placeholder="Last Name" autoComplete="family-name" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="initiated_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Initiated Name (Optional)</FormLabel>
+                      <FormControl><Input {...field} autoComplete="additional-name" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

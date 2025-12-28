@@ -12,7 +12,7 @@ export interface AuthUser {
   profession?: string | null;
   devotee_friend_name?: string;
   chanting_rounds?: number | null;
-  role: 'Attendee' | 'Manager' | 'DevoteeFriend'; // Updated role field
+  role: 'Attendee' | 'Manager' | 'DevoteeFriend' | 'Volunteer'; // Added Volunteer role
 }
 
 export interface AuthTokenResponse extends AuthUser {

@@ -1,11 +1,10 @@
-export interface RegistrationFees {
-  [key: string]: number;
-}
+"use client";
 
-export interface MemberPrices {
-  Husband: number;
-  Wife: number;
-  Child: number;
+export interface RegistrationFee {
+  option_name: string;
+  amount: number;
+  child_amount?: number | null;
+  child_condition_by_age?: number | null;
 }
 
 export interface Yatra {
@@ -13,27 +12,24 @@ export interface Yatra {
   name: string;
   date_start: string;
   date_end: string;
-  registration_fees: RegistrationFees;
+  registration_fees: RegistrationFee[];
   can_add_members: boolean;
-  member_prices: MemberPrices;
 }
 
 export interface YatraCreate {
   name: string;
   date_start: string;
   date_end: string;
-  registration_fees: RegistrationFees;
+  registration_fees: RegistrationFee[];
   can_add_members: boolean;
-  member_prices: MemberPrices;
 }
 
 export interface YatraUpdate {
   name?: string;
   date_start?: string;
   date_end?: string;
-  registration_fees?: RegistrationFees;
+  registration_fees?: RegistrationFee[];
   can_add_members?: boolean;
-  member_prices?: MemberPrices;
 }
 
 export interface PaymentRecord {

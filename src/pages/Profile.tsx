@@ -159,6 +159,7 @@ const ProfilePage = () => {
         : values.profession_type;
 
       const payload = {
+        participant_id: user.user_id, // Include participant_id in the body
         full_name: values.full_name,
         initiated_name: values.initiated_name || null,
         phone: values.phone,

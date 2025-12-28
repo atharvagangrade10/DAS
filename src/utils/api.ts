@@ -82,7 +82,9 @@ export const updateParticipant = async (
   participantId: string,
   data: any,
 ): Promise<Participant> => {
-  return mutateAuthenticated(`${API_BASE_URL}/participants/${participantId}`, "PUT", data);
+  // Ensure participant_id is in the body as some backends require it for validation
+  const payload = { ...data, participant_id: participantId };
+  return mutateAuthenticated(`${API_BASE_URL}/participants/${participantId}`, "PUT", payload);
 };
 
 export const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
@@ -275,7 +277,7 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
   const response = await fetch(url, {
     method: id ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ ...data, participant_id: id }),
   });
 
   if (!response.ok) {

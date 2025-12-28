@@ -154,12 +154,13 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
       const full_name = `${values.first_name} ${values.last_name}`;
       
-      let memberId: string;
+      let memberId: string | undefined;
 
       // 1. Find or Create the Member
       const existing = await searchParticipantPublic(values.phone);
       if (existing && existing.length > 0) {
-        memberId = existing[0].id;
+        // Handle cases where the ID might be named differently in the response
+        memberId = existing[0].id || (existing[0] as any).participant_id || (existing[0] as any).user_id;
         toast.info(`Found existing participant: ${existing[0].full_name}`);
       } else {
         const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
@@ -180,7 +181,11 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
           date_joined: format(new Date(), "yyyy-MM-dd"),
           devotee_friend_name: user?.devotee_friend_name || "None",
         });
-        memberId = response.id;
+        memberId = response.id || (response as any).participant_id;
+      }
+
+      if (!memberId) {
+        throw new Error("Could not determine the participant ID for the family member.");
       }
 
       // 2. Establish Two-Way Links
@@ -188,10 +193,14 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       // Update Current User (Link to Member)
       const currentUserProfile = await fetchParticipantById(user.user_id);
       const currentUserLinks = currentUserProfile.related_participant_ids || [];
+      
       if (!currentUserLinks.some(l => l.participant_id === memberId)) {
         const updatedCurrentUser = await updateParticipant(user.user_id, {
           ...currentUserProfile,
-          related_participant_ids: [...currentUserLinks, { relation: values.relation, participant_id: memberId }]
+          related_participant_ids: [
+            ...currentUserLinks, 
+            { relation: values.relation, participant_id: memberId }
+          ]
         });
         // Sync local auth state
         updateUser({ ...user, related_participant_ids: updatedCurrentUser.related_participant_ids });
@@ -205,7 +214,10 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       if (!memberLinks.some(l => l.participant_id === user.user_id)) {
         await updateParticipant(memberId, {
           ...memberProfile,
-          related_participant_ids: [...memberLinks, { relation: inverseRelation, participant_id: user.user_id }]
+          related_participant_ids: [
+            ...memberLinks, 
+            { relation: inverseRelation, participant_id: user.user_id }
+          ]
         });
       }
 
@@ -219,6 +231,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       toast.success("Family member linked successfully!");
     },
     onError: (error: Error) => {
+      console.error("Family linking error:", error);
       toast.error("Linking failed", { description: error.message });
     },
   });

@@ -34,7 +34,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { format, differenceInYears, parseISO, isValid } from "date-fns";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, UserPlus, Zap } from "lucide-react";
 import { toast } from "sonner";
 import DOBInput from "./DOBInput";
 import { createParticipantPublic, searchParticipantPublic, fetchParticipantById, updateParticipant } from "@/utils/api";
@@ -105,16 +105,19 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
   
-  const { data: relatedParticipants } = useQuery<Participant[]>({
+  // State to hold the relationship data from the main profile
+  const [profileRelationships, setProfileRelationships] = React.useState<RelatedParticipant[]>([]);
+
+  const { data: relatedParticipants, isLoading: isLoadingRelated } = useQuery<Participant[]>({
     queryKey: ["relatedParticipants", user?.user_id],
     queryFn: async () => {
       const mainParticipant = await fetchParticipantById(user!.user_id);
-      if (!mainParticipant.related_participant_ids || mainParticipant.related_participant_ids.length === 0) {
-        return [];
-      }
-      const promises = mainParticipant.related_participant_ids.map(rel => 
-        fetchParticipantById(rel.participant_id)
-      );
+      const links = mainParticipant.related_participant_ids || [];
+      setProfileRelationships(links);
+      
+      if (links.length === 0) return [];
+      
+      const promises = links.map(rel => fetchParticipantById(rel.participant_id));
       return Promise.all(promises);
     },
     enabled: isOpen && !!user?.user_id,
@@ -159,9 +162,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       // 1. Find or Create the Member
       const existing = await searchParticipantPublic(values.phone);
       if (existing && existing.length > 0) {
-        // Handle cases where the ID might be named differently in the response
         memberId = existing[0].id || (existing[0] as any).participant_id || (existing[0] as any).user_id;
-        toast.info(`Found existing participant: ${existing[0].full_name}`);
       } else {
         const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
         const response = await createParticipantPublic({
@@ -184,13 +185,9 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
         memberId = response.id || (response as any).participant_id;
       }
 
-      if (!memberId) {
-        throw new Error("Could not determine the participant ID for the family member.");
-      }
+      if (!memberId) throw new Error("Could not determine participant ID.");
 
-      // 2. Establish Two-Way Links
-      
-      // Update Current User (Link to Member)
+      // 2. Establish Links (Sequential calls)
       const currentUserProfile = await fetchParticipantById(user.user_id);
       const currentUserLinks = currentUserProfile.related_participant_ids || [];
       
@@ -202,11 +199,9 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
             { relation: values.relation, participant_id: memberId }
           ]
         });
-        // Sync local auth state
         updateUser({ ...user, related_participant_ids: updatedCurrentUser.related_participant_ids });
       }
 
-      // Update Member (Link back to Current User)
       const memberProfile = await fetchParticipantById(memberId);
       const memberLinks = memberProfile.related_participant_ids || [];
       const inverseRelation = getInverseRelation(values.relation, user.gender || "Male");
@@ -228,36 +223,46 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       form.reset();
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["relatedParticipants", user?.user_id] });
-      toast.success("Family member linked successfully!");
+      toast.success("Family member linked and added!");
     },
     onError: (error: Error) => {
-      console.error("Family linking error:", error);
       toast.error("Linking failed", { description: error.message });
     },
   });
 
-  const handleSelectExisting = (id: string) => {
-    const p = relatedParticipants?.find(part => part.id === id);
-    if (!p) return;
+  const handleQuickAdd = (p: Participant) => {
+    const relInfo = profileRelationships.find(rel => rel.participant_id === p.id);
     const dobDate = p.dob ? parseISO(p.dob) : null;
-    const profInit = p.profession ? (PROFESSIONS.includes(p.profession) ? { type: p.profession, other: "" } : { type: "Other", other: p.profession }) : { type: "Student", other: "" };
+    const calculated_age = dobDate && isValid(dobDate) ? differenceInYears(new Date(), dobDate) : (p.age || 0);
     
-    form.reset({
-      relation: "Husband",
-      first_name: p.first_name || "",
-      last_name: p.last_name || "",
+    // Map backend role/relation to frontend expected enum
+    const validRelations = ["Husband", "Wife", "Child", "Father", "Mother"];
+    const relation = validRelations.includes(relInfo?.relation || "") 
+      ? (relInfo!.relation as any) 
+      : "Child";
+
+    const memberData: FamilyMemberData = {
+      relation,
+      first_name: p.first_name || p.full_name.split(' ')[0],
+      last_name: p.last_name || p.full_name.split(' ').slice(1).join(' '),
       initiated_name: p.initiated_name || "",
-      phone: p.phone || "",
-      address: p.address || defaultAddress,
+      phone: p.phone,
+      address: p.address,
       place_name: p.place_name || "",
-      dob: dobDate && isValid(dobDate) ? dobDate : undefined,
-      gender: (p.gender as "Male" | "Female" | "Other") || "Male",
-      profession_type: profInit.type,
-      profession_other: profInit.other,
+      dob: dobDate && isValid(dobDate) ? dobDate : new Date(),
+      gender: (p.gender as any) || "Male",
+      profession_type: p.profession || "Student",
+      profession_other: "",
       chanting_rounds: p.chanting_rounds || 0,
       email: p.email || "",
-    });
-    toast.success(`Loaded details for ${p.full_name}`);
+      calculated_age,
+      full_name: p.full_name,
+      participant_id: p.id,
+    };
+
+    onAdd(memberData);
+    onOpenChange(false);
+    toast.success(`${p.full_name} added to trip!`);
   };
 
   const onSubmit = (values: z.infer<typeof familyMemberSchema>) => {
@@ -270,29 +275,41 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add Family Member</DialogTitle>
           <DialogDescription>
-            Select from existing members or enter new details.
+            Register a new relative or select from your linked members.
           </DialogDescription>
         </DialogHeader>
 
-        {relatedParticipants && relatedParticipants.length > 0 && (
+        {isLoadingRelated ? (
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : relatedParticipants && relatedParticipants.length > 0 && (
           <div className="space-y-3 mb-6 p-4 bg-primary/5 rounded-lg border border-primary/10">
-            <Label className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Quick Select Existing Member
+            <Label className="flex items-center gap-2 font-bold text-primary">
+              <Zap className="h-4 w-4 fill-primary" />
+              Quick Add Linked Member
             </Label>
-            <Select onValueChange={handleSelectExisting}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a family member" />
-              </SelectTrigger>
-              <SelectContent>
-                {relatedParticipants.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.full_name} ({p.phone})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Separator className="my-4" />
+            <div className="grid gap-2">
+              {relatedParticipants.map((p) => {
+                const rel = profileRelationships.find(r => r.participant_id === p.id)?.relation || "Relative";
+                return (
+                  <div key={p.id} className="flex items-center justify-between p-2 rounded bg-background border text-sm">
+                    <div>
+                      <span className="font-semibold">{p.full_name}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">({rel})</span>
+                    </div>
+                    <Button size="sm" variant="secondary" onClick={() => handleQuickAdd(p)}>
+                      Add to Trip
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <Separator className="flex-1" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">OR REGISTER NEW</span>
+              <Separator className="flex-1" />
+            </div>
           </div>
         )}
 
@@ -365,7 +382,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number (10 digits)</FormLabel>
+                  <FormLabel>Phone Number</FormLabel>
                   <FormControl><Input {...field} type="tel" /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -476,22 +493,10 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email (Optional)</FormLabel>
-                  <FormControl><Input type="email" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <DialogFooter>
               <Button type="submit" className="w-full" disabled={mutation.isPending}>
                 {mutation.isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
-                Add to Trip
+                Register and Add
               </Button>
             </DialogFooter>
           </form>

@@ -18,10 +18,9 @@ import { toast } from "sonner";
 import { ShieldCheck, CreditCard, Loader2, UserPlus, Trash2, Baby } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import useRazorpay from "@/hooks/use-razorpay";
-import { createRazorpayInvoice, createParticipantPublic } from "@/utils/api";
+import { createRazorpayInvoice } from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
 import AddFamilyMemberDialog, { FamilyMemberData } from "./AddFamilyMemberDialog";
-import { format } from "date-fns";
 
 interface YatraRegistrationDialogProps {
   yatra: Yatra;
@@ -72,28 +71,8 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
     mutationFn: async () => {
       if (!user?.user_id) throw new Error("User ID is missing.");
       
-      // Register adult family members as participants in the database
-      // Children are skipped as requested
-      for (const m of members) {
-        if (m.relation === "Child") continue;
-
-        const profession = m.profession_type === "Other" ? m.profession_other : m.profession_type;
-        await createParticipantPublic({
-          full_name: m.full_name,
-          initiated_name: m.initiated_name || null,
-          phone: m.phone,
-          gender: m.gender,
-          dob: format(m.dob, "yyyy-MM-dd"),
-          age: m.calculated_age,
-          address: m.address,
-          profession: profession || null,
-          place_name: m.place_name || null,
-          chanting_rounds: m.chanting_rounds,
-          email: m.email || null,
-          date_joined: format(new Date(), "yyyy-MM-dd"),
-          devotee_friend_name: user.devotee_friend_name || "None",
-        });
-      }
+      // Participant creation for family members is now handled in AddFamilyMemberDialog
+      // when they are first added to the local members list.
 
       return createRazorpayInvoice({
         yatra_id: yatra.id,

@@ -4,6 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useMutation } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +33,11 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { format, differenceInYears } from "date-fns";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import DOBInput from "./DOBInput";
+import { createParticipantPublic } from "@/utils/api";
+import { useAuth } from "@/context/AuthContext";
 
 const PROFESSIONS = [
   "Student",
@@ -48,12 +53,11 @@ const PROFESSIONS = [
 const familyMemberSchema = z.object({
   relation: z.enum(["Husband", "Wife", "Child", "Father", "Mother"]),
   full_name: z.string().min(1, "Full name is required"),
-  initiated_name: z.string().optional(),
+  initiated_name: z.string().optional().or(z.literal('')),
   phone: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits"),
   address: z.string().min(1, "Address is required"),
-  place_name: z.string().optional(),
+  place_name: z.string().optional().or(z.literal('')),
   dob: z.date({ required_error: "Date of birth is required" }),
-  age: z.number().optional(),
   gender: z.enum(["Male", "Female", "Other"]),
   profession_type: z.string().optional(),
   profession_other: z.string().optional(),
@@ -66,6 +70,7 @@ const familyMemberSchema = z.object({
 
 export type FamilyMemberData = z.infer<typeof familyMemberSchema> & {
   calculated_age: number;
+  participant_id?: string;
 };
 
 interface AddFamilyMemberDialogProps {
@@ -81,6 +86,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   onAdd,
   defaultAddress = "",
 }) => {
+  const { user } = useAuth();
   const form = useForm<z.infer<typeof familyMemberSchema>>({
     resolver: zodResolver(familyMemberSchema),
     defaultValues: {
@@ -107,11 +113,49 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     if (relationValue === "Wife" || relationValue === "Mother") form.setValue("gender", "Female");
   }, [relationValue, form]);
 
+  const mutation = useMutation({
+    mutationFn: async (values: z.infer<typeof familyMemberSchema>) => {
+      const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
+      
+      // Skip participant creation for children as per instructions
+      if (values.relation === "Child") {
+        return { ...values, calculated_age };
+      }
+
+      const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
+      const response = await createParticipantPublic({
+        full_name: values.full_name,
+        initiated_name: values.initiated_name || null,
+        phone: values.phone,
+        gender: values.gender,
+        dob: format(values.dob, "yyyy-MM-dd"),
+        age: calculated_age,
+        address: values.address,
+        profession: profession || null,
+        place_name: values.place_name || null,
+        chanting_rounds: values.chanting_rounds,
+        email: values.email || null,
+        date_joined: format(new Date(), "yyyy-MM-dd"),
+        devotee_friend_name: user?.devotee_friend_name || "None",
+      });
+
+      return { ...values, calculated_age, participant_id: response.id };
+    },
+    onSuccess: (data) => {
+      onAdd(data as FamilyMemberData);
+      form.reset();
+      onOpenChange(false);
+      if (data.participant_id) {
+        toast.success("Family member registered successfully!");
+      }
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to register family member", { description: error.message });
+    },
+  });
+
   const onSubmit = (values: z.infer<typeof familyMemberSchema>) => {
-    const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
-    onAdd({ ...values, calculated_age });
-    form.reset();
-    onOpenChange(false);
+    mutation.mutate(values);
   };
 
   return (
@@ -120,7 +164,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add Family Member</DialogTitle>
           <DialogDescription>
-            Enter the details for the family member you wish to register for this trip.
+            Enter full details to register this family member for the trip.
           </DialogDescription>
         </DialogHeader>
 
@@ -138,26 +182,12 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
                       defaultValue={field.value}
                       className="flex flex-wrap gap-4"
                     >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Husband" id="r-husband" />
-                        <Label htmlFor="r-husband">Husband</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Wife" id="r-wife" />
-                        <Label htmlFor="r-wife">Wife</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Child" id="r-child" />
-                        <Label htmlFor="r-child">Child</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Father" id="r-father" />
-                        <Label htmlFor="r-father">Father</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Mother" id="r-mother" />
-                        <Label htmlFor="r-mother">Mother</Label>
-                      </div>
+                      {["Husband", "Wife", "Child", "Father", "Mother"].map((r) => (
+                        <div key={r} className="flex items-center space-x-2">
+                          <RadioGroupItem value={r} id={`r-${r.toLowerCase()}`} />
+                          <Label htmlFor={`r-${r.toLowerCase()}`}>{r}</Label>
+                        </div>
+                      ))}
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
@@ -165,7 +195,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="full_name"
@@ -179,16 +209,28 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               />
               <FormField
                 control={form.control}
-                name="phone"
+                name="initiated_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl><Input {...field} type="tel" /></FormControl>
+                    <FormLabel>Initiated Name (Optional)</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number (10 digits)</FormLabel>
+                  <FormControl><Input {...field} type="tel" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -272,6 +314,18 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
 
             <FormField
               control={form.control}
+              name="place_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Workplace / Institution</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="address"
               render={({ field }) => (
                 <FormItem>
@@ -282,8 +336,23 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email (Optional)</FormLabel>
+                  <FormControl><Input type="email" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
-              <Button type="submit" className="w-full">Add to Trip</Button>
+              <Button type="submit" className="w-full" disabled={mutation.isPending}>
+                {mutation.isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
+                Add to Trip
+              </Button>
             </DialogFooter>
           </form>
         </Form>

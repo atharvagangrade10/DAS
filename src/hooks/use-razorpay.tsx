@@ -68,8 +68,8 @@ const useRazorpay = () => {
       currency: invoice.currency,
       name: "DAS Yatra Registration",
       description: `${invoice.yatra_name} - ${invoice.fee_category}`,
-      // When using Invoice API, Razorpay typically expects invoice_id
-      invoice_id: invoice.id, 
+      // Backend verify_payment uses order_id for signature verification
+      order_id: invoice.order_id, 
       handler: async (response: any) => {
         const verificationToastId = toast.loading("Verifying payment...");
         try {
@@ -106,6 +106,7 @@ const useRazorpay = () => {
         yatra_id: yatraId,
         fee_category: invoice.fee_category,
         participant_id: user.user_id,
+        invoice_id: invoice.id
       },
       theme: {
         color: "#3b82f6",

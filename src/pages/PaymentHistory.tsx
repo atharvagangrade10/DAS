@@ -3,7 +3,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CreditCard, History, Info, ReceiptText, IndianRupee } from "lucide-react";
+import { CreditCard, History, Info, ReceiptText, IndianRupee, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/context/AuthContext";
 import { fetchPaymentHistory } from "@/utils/api";
@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 
 const PaymentHistory = () => {
   const { user } = useAuth();
@@ -46,6 +47,7 @@ const PaymentHistory = () => {
     switch (lowerStatus) {
       case "success":
       case "paid":
+      case "completed":
         return <Badge className="bg-green-500 hover:bg-green-500 text-white">Success</Badge>;
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
@@ -60,7 +62,7 @@ const PaymentHistory = () => {
   const renderMobileView = (payments: PaymentRecord[]) => (
     <div className="space-y-4">
       {payments.map((payment) => (
-        <Card key={payment.transaction_id} className="shadow-sm">
+        <Card key={payment.transaction_id || Math.random().toString()} className="shadow-sm">
           <CardContent className="p-4 space-y-2">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-lg">{payment.yatra_name}</span>
@@ -77,8 +79,18 @@ const PaymentHistory = () => {
                 {payment.amount}
               </span>
             </div>
+            {payment.receipt_url && (
+              <div className="pt-2">
+                <Button variant="outline" size="sm" className="w-full text-xs" asChild>
+                  <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3 mr-2" />
+                    View Receipt
+                  </a>
+                </Button>
+              </div>
+            )}
             <div className="text-xs text-muted-foreground break-all">
-              Txn ID: {payment.transaction_id}
+              Txn ID: {payment.transaction_id || "N/A"}
             </div>
           </CardContent>
         </Card>
@@ -91,21 +103,32 @@ const PaymentHistory = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px]">Yatra Name</TableHead>
+            <TableHead className="w-[180px]">Yatra Name</TableHead>
             <TableHead>Date</TableHead>
             <TableHead className="text-right">Amount (₹)</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="w-[250px]">Transaction ID</TableHead>
+            <TableHead>Action</TableHead>
+            <TableHead className="w-[200px]">Transaction ID</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {payments.map((payment) => (
-            <TableRow key={payment.transaction_id}>
+            <TableRow key={payment.transaction_id || Math.random().toString()}>
               <TableCell className="font-medium">{payment.yatra_name}</TableCell>
               <TableCell>{format(parseISO(payment.date), "MMM dd, yyyy")}</TableCell>
               <TableCell className="text-right font-semibold">{payment.amount}</TableCell>
               <TableCell>{getStatusBadge(payment.status)}</TableCell>
-              <TableCell className="text-xs text-muted-foreground break-all">{payment.transaction_id}</TableCell>
+              <TableCell>
+                {payment.receipt_url ? (
+                  <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
+                    <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Receipt
+                    </a>
+                  </Button>
+                ) : "-"}
+              </TableCell>
+              <TableCell className="text-xs text-muted-foreground break-all">{payment.transaction_id || "N/A"}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -129,7 +152,7 @@ const PaymentHistory = () => {
         <Info className="h-4 w-4" />
         <AlertTitle>Note</AlertTitle>
         <AlertDescription>
-          This history includes payments made via the online portal. For offline registrations, please contact the manager.
+          This history includes payments made via the online portal. Receipts are available for completed transactions.
         </AlertDescription>
       </Alert>
 

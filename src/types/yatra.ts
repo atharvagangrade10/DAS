@@ -31,4 +31,5 @@ export interface PaymentRecord {
   status: string;
   transaction_id: string;
   date: string; // ISO date string (YYYY-MM-DD)
+  receipt_url?: string | null;
 }

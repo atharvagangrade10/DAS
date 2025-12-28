@@ -116,6 +116,7 @@ export interface RazorpayInvoiceRequest {
 
 export interface RazorpayInvoiceResponse {
   id: string;
+  order_id: string; // The order ID associated with the invoice
   amount: number;
   currency: string;
   yatra_name: string;
@@ -125,8 +126,8 @@ export interface RazorpayInvoiceResponse {
 }
 
 export const createRazorpayInvoice = async (data: RazorpayInvoiceRequest): Promise<RazorpayInvoiceResponse> => {
-  // Switched from /order to /invoice
-  return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/invoice`, "POST", {
+  // Matches backend route @router.post("/{yatra_id}/order")
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/order`, "POST", {
     participant_id: data.participant_id,
     amount: data.amount,
     fee_category: data.fee_category,

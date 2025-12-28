@@ -10,13 +10,15 @@ const Layout = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen w-full bg-background overflow-hidden">
       <SidebarNav />
-      <div className="flex flex-col flex-1 overflow-y-auto">
-        <main className={`flex-1 p-4 ${isMobile ? "pt-20" : ""}`}>
-          <Outlet />
+      <div className="flex flex-col flex-1 h-full min-w-0">
+        <main className={`flex-1 overflow-y-auto p-4 ${isMobile ? "pt-20" : ""}`}>
+          <div className="max-w-7xl mx-auto w-full">
+            <Outlet />
+          </div>
+          <MadeWithDyad />
         </main>
-        <MadeWithDyad />
       </div>
     </div>
   );

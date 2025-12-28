@@ -184,7 +184,8 @@ export const uploadPhoto = async (file: File, participantId: string): Promise<st
   }
 
   const data = await response.json();
-  return data.url;
+  // Using the 'link' property as specified in the backend response
+  return data.link;
 };
 
 // --- Public Endpoints (Unprotected) ---

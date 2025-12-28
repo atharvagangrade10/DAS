@@ -27,6 +27,7 @@ interface FamilyMember {
   relation: "Husband" | "Wife" | "Child";
   phone: string;
   gender: "Male" | "Female";
+  age?: number;
 }
 
 interface YatraRegistrationDialogProps {
@@ -50,7 +51,8 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
     full_name: "",
     relation: "Wife",
     phone: "",
-    gender: "Female"
+    gender: "Female",
+    age: undefined
   });
 
   const selectedOption = yatra.registration_fees.find(f => f.option_name === selectedOptionName) || yatra.registration_fees[0];
@@ -63,7 +65,15 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
 
   const calculateMemberPrice = (member: FamilyMember) => {
     if (member.relation === "Child") {
-      return selectedOption.child_amount ?? selectedOption.amount;
+      const age = member.age || 0;
+      const ageLimit = selectedOption.child_condition_by_age;
+      const childPrice = selectedOption.child_amount ?? selectedOption.amount;
+
+      // If age is greater than limit, they pay. Else, it's free.
+      if (ageLimit !== undefined && ageLimit !== null) {
+        return age > ageLimit ? childPrice : 0;
+      }
+      return childPrice;
     }
     return selectedOption.amount;
   };
@@ -81,6 +91,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
           full_name: m.full_name,
           phone: m.phone,
           gender: m.gender,
+          age: m.age,
           address: user.address || "Family Member",
           date_joined: new Date().toISOString().split('T')[0],
           devotee_friend_name: user.devotee_friend_name || "None",
@@ -117,8 +128,12 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
       toast.error("Member name and phone are required.");
       return;
     }
+    if (newMember.relation === "Child" && (newMember.age === undefined || newMember.age === null)) {
+      toast.error("Age is required for children.");
+      return;
+    }
     setMembers([...members, { ...newMember }]);
-    setNewMember({ full_name: "", relation: "Wife", phone: "", gender: "Female" });
+    setNewMember({ full_name: "", relation: "Wife", phone: "", gender: "Female", age: undefined });
   };
 
   const removeMember = (index: number) => {
@@ -148,7 +163,8 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                       <span className="font-medium">{option.option_name}</span>
                       {option.child_amount !== undefined && (
                          <span className="text-[10px] ml-2 text-muted-foreground flex items-center gap-1">
-                           <Baby className="h-2 w-2" /> Child: ₹{option.child_amount}
+                           <Baby className="h-2 w-2" /> Child: ₹{option.child_amount} 
+                           {option.child_condition_by_age && ` (Free ≤ ${option.child_condition_by_age}y)`}
                          </span>
                       )}
                     </div>
@@ -169,7 +185,12 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
               <div className="grid gap-3 p-3 border rounded-lg bg-muted/20">
                 <RadioGroup 
                   value={newMember.relation} 
-                  onValueChange={(val: any) => setNewMember({ ...newMember, relation: val, gender: val === "Husband" ? "Male" : "Female" })} 
+                  onValueChange={(val: any) => setNewMember({ 
+                    ...newMember, 
+                    relation: val, 
+                    gender: val === "Husband" ? "Male" : "Female",
+                    age: val !== "Child" ? undefined : newMember.age
+                  })} 
                   className="flex gap-4"
                 >
                   {["Husband", "Wife", "Child"].map((rel) => (
@@ -181,13 +202,31 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                 </RadioGroup>
                 
                 <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="Full Name" value={newMember.full_name} onChange={e => setNewMember({ ...newMember, full_name: e.target.value })} />
-                  <Input placeholder="Phone" value={newMember.phone} onChange={e => setNewMember({ ...newMember, phone: e.target.value })} />
+                  <Input 
+                    placeholder="Full Name" 
+                    value={newMember.full_name} 
+                    onChange={e => setNewMember({ ...newMember, full_name: e.target.value })} 
+                  />
+                  <Input 
+                    placeholder="Phone" 
+                    value={newMember.phone} 
+                    onChange={e => setNewMember({ ...newMember, phone: e.target.value })} 
+                  />
                 </div>
                 
-                <Button variant="outline" size="sm" onClick={addMember} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" /> Add Member (₹{calculateMemberPrice(newMember)})
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  {newMember.relation === "Child" && (
+                    <Input 
+                      type="number" 
+                      placeholder="Age" 
+                      value={newMember.age ?? ""} 
+                      onChange={e => setNewMember({ ...newMember, age: e.target.value === "" ? undefined : Number(e.target.value) })} 
+                    />
+                  )}
+                  <Button variant="outline" size="sm" onClick={addMember} className={newMember.relation !== "Child" ? "col-span-2" : ""}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Member (₹{calculateMemberPrice(newMember)})
+                  </Button>
+                </div>
               </div>
 
               {members.length > 0 && (
@@ -196,10 +235,14 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                     <div key={i} className="flex items-center justify-between p-2 rounded bg-muted">
                       <div className="text-sm">
                         <span className="font-medium">{m.full_name}</span>
-                        <span className="text-muted-foreground ml-2">({m.relation})</span>
+                        <span className="text-muted-foreground ml-2">
+                          ({m.relation}{m.age !== undefined ? `, ${m.age}y` : ""})
+                        </span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold">₹{calculateMemberPrice(m)}</span>
+                        <span className={`text-xs font-semibold ${calculateMemberPrice(m) === 0 ? "text-green-600" : ""}`}>
+                          {calculateMemberPrice(m) === 0 ? "FREE" : `₹${calculateMemberPrice(m)}`}
+                        </span>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeMember(i)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>

@@ -64,7 +64,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                       <p className="flex items-center gap-1">
                         <Baby className="h-3 w-3" /> 
                         Child Price: ₹{fee.child_amount} 
-                        {fee.child_condition_by_age && ` (Up to ${fee.child_condition_by_age} yrs)`}
+                        {fee.child_condition_by_age && ` (Free if ≤ ${fee.child_condition_by_age} years)`}
                       </p>
                     </TooltipContent>
                   )}

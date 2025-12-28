@@ -4,7 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -32,12 +32,14 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { format, differenceInYears } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { format, differenceInYears, parseISO, isValid } from "date-fns";
+import { Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import DOBInput from "./DOBInput";
-import { createParticipantPublic } from "@/utils/api";
+import { createParticipantPublic, searchParticipantPublic, fetchParticipantById } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
+import { Participant } from "@/types/participant";
 
 const PROFESSIONS = [
   "Student",
@@ -88,7 +90,27 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   onAdd,
   defaultAddress = "",
 }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  
+  // Fetch names for related participants
+  const { data: relatedParticipants, isLoading: isLoadingRelated } = useQuery<Participant[]>({
+    queryKey: ["relatedParticipants", user?.user_id],
+    queryFn: async () => {
+      // 1. Fetch current user's participant profile to get the IDs
+      const mainParticipant = await fetchParticipantById(user!.user_id);
+      if (!mainParticipant.related_participant_ids || mainParticipant.related_participant_ids.length === 0) {
+        return [];
+      }
+
+      // 2. Fetch full details for each related participant
+      const promises = mainParticipant.related_participant_ids.map(rel => 
+        fetchParticipantById(rel.participant_id)
+      );
+      return Promise.all(promises);
+    },
+    enabled: isOpen && !!user?.user_id,
+  });
+
   const form = useForm<z.infer<typeof familyMemberSchema>>({
     resolver: zodResolver(familyMemberSchema),
     defaultValues: {
@@ -121,11 +143,26 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
       const full_name = `${values.first_name} ${values.last_name}`;
       
-      // Skip participant creation for children
+      // For Children, we still skip the database check/creation as requested previously
       if (values.relation === "Child") {
         return { ...values, calculated_age, full_name };
       }
 
+      // Check if participant already exists by phone
+      const existing = await searchParticipantPublic(values.phone);
+      if (existing && existing.length > 0) {
+        // Participant exists, use the first match
+        const found = existing[0];
+        toast.info(`Linked to existing participant: ${found.full_name}`);
+        return { 
+          ...values, 
+          calculated_age, 
+          full_name: found.full_name, 
+          participant_id: found.id 
+        };
+      }
+
+      // Create new participant if they don't exist
       const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
       const response = await createParticipantPublic({
         first_name: values.first_name,
@@ -151,13 +188,39 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       form.reset();
       onOpenChange(false);
       if (data.participant_id) {
-        toast.success("Family member registered successfully!");
+        toast.success("Family member processed successfully!");
       }
     },
     onError: (error: Error) => {
-      toast.error("Failed to register family member", { description: error.message });
+      toast.error("Process failed", { description: error.message });
     },
   });
+
+  const handleSelectExisting = (id: string) => {
+    const p = relatedParticipants?.find(part => part.id === id);
+    if (!p) return;
+
+    const dobDate = p.dob ? parseISO(p.dob) : null;
+    const profInit = p.profession ? (PROFESSIONS.includes(p.profession) ? { type: p.profession, other: "" } : { type: "Other", other: p.profession }) : { type: "Student", other: "" };
+
+    form.reset({
+      relation: "Husband", // Default guess, user can change
+      first_name: p.first_name || "",
+      last_name: p.last_name || "",
+      initiated_name: p.initiated_name || "",
+      phone: p.phone || "",
+      address: p.address || defaultAddress,
+      place_name: p.place_name || "",
+      dob: dobDate && isValid(dobDate) ? dobDate : undefined,
+      gender: (p.gender as "Male" | "Female" | "Other") || "Male",
+      profession_type: profInit.type,
+      profession_other: profInit.other,
+      chanting_rounds: p.chanting_rounds || 0,
+      email: p.email || "",
+    });
+    
+    toast.success(`Loaded details for ${p.full_name}`);
+  };
 
   const onSubmit = (values: z.infer<typeof familyMemberSchema>) => {
     mutation.mutate(values);
@@ -169,9 +232,31 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add Family Member</DialogTitle>
           <DialogDescription>
-            Enter full details to register this family member for the trip.
+            Select from existing members or enter new details.
           </DialogDescription>
         </DialogHeader>
+
+        {relatedParticipants && relatedParticipants.length > 0 && (
+          <div className="space-y-3 mb-6 p-4 bg-primary/5 rounded-lg border border-primary/10">
+            <Label className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              Quick Select Existing Member
+            </Label>
+            <Select onValueChange={handleSelectExisting}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a family member" />
+              </SelectTrigger>
+              <SelectContent>
+                {relatedParticipants.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.full_name} ({p.phone})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Separator className="my-4" />
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
@@ -184,7 +269,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex flex-wrap gap-4"
                     >
                       {["Husband", "Wife", "Child", "Father", "Mother"].map((r) => (
@@ -289,7 +374,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Chanting Rounds</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -302,7 +387,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Profession</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger><SelectValue placeholder="Profession" /></SelectTrigger>
                     </FormControl>

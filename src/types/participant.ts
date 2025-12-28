@@ -16,8 +16,15 @@ export interface AttendedProgram {
   sessions_attended: AttendedSession[];
 }
 
+export interface RelatedParticipant {
+  relation: string;
+  participant_id: string;
+}
+
 export interface Participant {
   id: string;
+  first_name: string;
+  last_name: string;
   full_name: string;
   initiated_name: string | null;
   phone: string;
@@ -30,6 +37,7 @@ export interface Participant {
   profession: string | null;
   devotee_friend_name: string;
   chanting_rounds: number | null;
-  date_joined: string; // Added to match backend date_joined
+  date_joined: string;
   role: 'Attendee' | 'Manager' | 'DevoteeFriend' | 'Volunteer';
+  related_participant_ids?: RelatedParticipant[];
 }

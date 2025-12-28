@@ -147,54 +147,20 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     if (relationValue === "Wife" || relationValue === "Mother") form.setValue("gender", "Female");
   }, [relationValue, form]);
 
-  const twoWayLinkMutation = useMutation({
-    mutationFn: async ({ relation, targetId }: { relation: string, targetId: string }) => {
-      if (!user?.user_id) return;
-
-      // 1. Update Current User's Profile
-      const currentUserProfile = await fetchParticipantById(user.user_id);
-      const currentUserLinks = currentUserProfile.related_participant_ids || [];
-      if (!currentUserLinks.some(l => l.participant_id === targetId)) {
-        await updateParticipant(user.user_id, {
-          ...currentUserProfile,
-          related_participant_ids: [...currentUserLinks, { relation, participant_id: targetId }]
-        });
-      }
-
-      // 2. Update target participant's profile (The Inverse Link)
-      const targetProfile = await fetchParticipantById(targetId);
-      const targetLinks = targetProfile.related_participant_ids || [];
-      const inverseRelation = getInverseRelation(relation, user.gender || "Male");
-      
-      if (!targetLinks.some(l => l.participant_id === user.user_id)) {
-        await updateParticipant(targetId, {
-          ...targetProfile,
-          related_participant_ids: [...targetLinks, { relation: inverseRelation, participant_id: user.user_id }]
-        });
-      }
-
-      return await fetchParticipantById(user.user_id);
-    },
-    onSuccess: (updatedUser) => {
-      if (updatedUser) {
-        updateUser({ ...user!, related_participant_ids: updatedUser.related_participant_ids });
-        queryClient.invalidateQueries({ queryKey: ["relatedParticipants", user?.user_id] });
-      }
-    }
-  });
-
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof familyMemberSchema>) => {
+      if (!user?.user_id) throw new Error("Authentication required.");
+
       const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
       const full_name = `${values.first_name} ${values.last_name}`;
       
-      let participantId: string | undefined;
+      let memberId: string;
 
-      // Check if participant already exists by phone
+      // 1. Find or Create the Member
       const existing = await searchParticipantPublic(values.phone);
       if (existing && existing.length > 0) {
-        participantId = existing[0].id;
-        toast.info(`Linked to existing participant: ${existing[0].full_name}`);
+        memberId = existing[0].id;
+        toast.info(`Found existing participant: ${existing[0].full_name}`);
       } else {
         const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
         const response = await createParticipantPublic({
@@ -214,23 +180,46 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
           date_joined: format(new Date(), "yyyy-MM-dd"),
           devotee_friend_name: user?.devotee_friend_name || "None",
         });
-        participantId = response.id;
+        memberId = response.id;
       }
 
-      if (participantId) {
-        await twoWayLinkMutation.mutateAsync({ relation: values.relation, targetId: participantId });
+      // 2. Establish Two-Way Links
+      
+      // Update Current User (Link to Member)
+      const currentUserProfile = await fetchParticipantById(user.user_id);
+      const currentUserLinks = currentUserProfile.related_participant_ids || [];
+      if (!currentUserLinks.some(l => l.participant_id === memberId)) {
+        const updatedCurrentUser = await updateParticipant(user.user_id, {
+          ...currentUserProfile,
+          related_participant_ids: [...currentUserLinks, { relation: values.relation, participant_id: memberId }]
+        });
+        // Sync local auth state
+        updateUser({ ...user, related_participant_ids: updatedCurrentUser.related_participant_ids });
       }
 
-      return { ...values, calculated_age, full_name, participant_id: participantId };
+      // Update Member (Link back to Current User)
+      const memberProfile = await fetchParticipantById(memberId);
+      const memberLinks = memberProfile.related_participant_ids || [];
+      const inverseRelation = getInverseRelation(values.relation, user.gender || "Male");
+      
+      if (!memberLinks.some(l => l.participant_id === user.user_id)) {
+        await updateParticipant(memberId, {
+          ...memberProfile,
+          related_participant_ids: [...memberLinks, { relation: inverseRelation, participant_id: user.user_id }]
+        });
+      }
+
+      return { ...values, calculated_age, full_name, participant_id: memberId };
     },
     onSuccess: (data) => {
       onAdd(data as FamilyMemberData);
       form.reset();
       onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["relatedParticipants", user?.user_id] });
       toast.success("Family member linked successfully!");
     },
     onError: (error: Error) => {
-      toast.error("Process failed", { description: error.message });
+      toast.error("Linking failed", { description: error.message });
     },
   });
 

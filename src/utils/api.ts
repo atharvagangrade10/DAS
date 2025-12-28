@@ -104,20 +104,19 @@ export const createYatra = async (yatraData: YatraCreate): Promise<Yatra> => {
 };
 
 export const updateYatra = async (yatraId: string, yatraData: YatraUpdate): Promise<Yatra> => {
-  // Fixed the endpoint path to include /update/ to match backend conventions
   return mutateAuthenticated(`${API_BASE_URL}/yatra/update/${yatraId}`, "PUT", yatraData);
 };
 
-export interface RazorpayOrderRequest {
+export interface RazorpayInvoiceRequest {
   yatra_id: string;
   fee_category: string;
-  amount: number; // Amount in INR (or base currency)
-  participant_id: string; // Added participant_id as per new requirement
+  amount: number;
+  participant_id: string;
 }
 
-export interface RazorpayOrderResponse {
-  id: string; // Renamed from order_id to id to match sample code
-  amount: number; // Amount in smallest unit (e.g., paise)
+export interface RazorpayInvoiceResponse {
+  id: string;
+  amount: number;
   currency: string;
   yatra_name: string;
   fee_category: string;
@@ -125,12 +124,12 @@ export interface RazorpayOrderResponse {
   participant_phone: string;
 }
 
-export const createRazorpayOrder = async (data: RazorpayOrderRequest): Promise<RazorpayOrderResponse> => {
-  // Updated endpoint to match the specified structure: /yatra/{yatra_id}/order
-  return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/order`, "POST", {
+export const createRazorpayInvoice = async (data: RazorpayInvoiceRequest): Promise<RazorpayInvoiceResponse> => {
+  // Switched from /order to /invoice
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/invoice`, "POST", {
     participant_id: data.participant_id,
     amount: data.amount,
-    fee_category: data.fee_category, // Keeping fee_category for backend context
+    fee_category: data.fee_category,
   });
 };
 
@@ -141,7 +140,6 @@ export interface RazorpayVerificationRequest {
 }
 
 export const verifyPayment = async (yatraId: string, data: RazorpayVerificationRequest): Promise<any> => {
-  // New endpoint for payment verification: /yatra/{yatra_id}/verify-payment
   return mutateAuthenticated(`${API_BASE_URL}/yatra/${yatraId}/verify-payment`, "POST", data);
 };
 
@@ -208,7 +206,6 @@ export const forgotPassword = async (phone: string): Promise<any> => {
     const errorData = await response.json().catch(() => ({ detail: 'Failed to initiate password reset' }));
     throw new Error(errorData.detail || "Failed to initiate password reset");
   }
-  // Return the raw JSON response object
   return response.json();
 };
 

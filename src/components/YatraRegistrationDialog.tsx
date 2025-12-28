@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { ShieldCheck, CreditCard, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import useRazorpay from "@/hooks/use-razorpay";
-import { createRazorpayOrder } from "@/utils/api";
+import { createRazorpayInvoice } from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
 
 interface YatraRegistrationDialogProps {
@@ -51,30 +51,27 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
 
   const selectedFeeAmount = availableFees.find(([key]) => key === selectedFeeKey)?.[1] || 0;
 
-  const orderMutation = useMutation({
+  const invoiceMutation = useMutation({
     mutationFn: () => {
-      if (!user?.user_id) throw new Error("User ID is missing for order creation.");
-      return createRazorpayOrder({
+      if (!user?.user_id) throw new Error("User ID is missing for registration.");
+      return createRazorpayInvoice({
         yatra_id: yatra.id,
         fee_category: selectedFeeKey,
         amount: selectedFeeAmount,
-        participant_id: user.user_id, // Pass participant_id as required by the new API structure
+        participant_id: user.user_id,
       });
     },
-    onSuccess: (order) => {
-      // Step 2: Display Razorpay checkout
+    onSuccess: (invoice) => {
       displayRazorpay({
-        yatraId: yatra.id, // Pass yatraId for verification step
-        order,
+        yatraId: yatra.id,
+        invoice,
         onSuccess: (response) => {
-          // This is called after successful payment AND successful backend verification
           toast.success("Registration successful!", {
             description: `You are registered for ${yatra.name}. Payment ID: ${response.razorpay_payment_id}`,
           });
           onOpenChange(false);
         },
         onFailure: (error) => {
-          // Handle payment failure or verification failure
           console.error("Payment Failed/Verification Error:", error);
           toast.error("Payment failed", {
             description: error.description || "An error occurred during payment or verification.",
@@ -84,7 +81,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
     },
     onError: (error: Error) => {
       toast.error("Registration failed", {
-        description: error.message || "Could not create payment order.",
+        description: error.message || "Could not create payment invoice.",
       });
     },
   });
@@ -107,11 +104,10 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
         return;
     }
     
-    // Step 1: Create Razorpay Order on the backend
-    orderMutation.mutate();
+    invoiceMutation.mutate();
   };
 
-  const isSubmitting = orderMutation.isPending;
+  const isSubmitting = invoiceMutation.isPending;
   const isButtonDisabled = !hasConsented || isSubmitting || !isRazorpayReady || !selectedFeeKey || selectedFeeAmount <= 0;
 
   return (

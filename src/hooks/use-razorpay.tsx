@@ -4,7 +4,7 @@ import React from "react";
 import { toast } from "sonner";
 import { RAZORPAY_KEY_ID } from "@/config/api";
 import { useAuth } from "@/context/AuthContext";
-import { RazorpayOrderResponse, verifyPayment } from "@/utils/api"; // Import verifyPayment
+import { RazorpayInvoiceResponse, verifyPayment } from "@/utils/api";
 
 // Extend Window interface to include Razorpay
 declare global {
@@ -14,8 +14,8 @@ declare global {
 }
 
 interface PaymentOptions {
-  yatraId: string; // Added yatraId for verification step
-  order: RazorpayOrderResponse;
+  yatraId: string;
+  invoice: RazorpayInvoiceResponse;
   onSuccess: (response: any) => void;
   onFailure: (error: any) => void;
 }
@@ -51,7 +51,7 @@ const useRazorpay = () => {
     }
   }, []);
 
-  const displayRazorpay = React.useCallback(({ yatraId, order, onSuccess, onFailure }: PaymentOptions) => {
+  const displayRazorpay = React.useCallback(({ yatraId, invoice, onSuccess, onFailure }: PaymentOptions) => {
     if (!isScriptLoaded || !window.Razorpay) {
       toast.error("Razorpay script not loaded yet. Please try again.");
       return;
@@ -64,13 +64,13 @@ const useRazorpay = () => {
 
     const options = {
       key: RAZORPAY_KEY_ID,
-      amount: order.amount, // Amount is in smallest currency unit (e.g., paise)
-      currency: order.currency,
+      amount: invoice.amount,
+      currency: invoice.currency,
       name: "DAS Yatra Registration",
-      description: `${order.yatra_name} - ${order.fee_category}`,
-      order_id: order.id, // Use order.id from the backend response
+      description: `${invoice.yatra_name} - ${invoice.fee_category}`,
+      // When using Invoice API, Razorpay typically expects invoice_id
+      invoice_id: invoice.id, 
       handler: async (response: any) => {
-        // Step 3: Verify Payment on the backend
         const verificationToastId = toast.loading("Verifying payment...");
         try {
             const verificationData = await verifyPayment(yatraId, {
@@ -84,8 +84,6 @@ const useRazorpay = () => {
             if (verificationData.status === "success") {
                 onSuccess(response);
             } else {
-                // Verification failed, but payment might have succeeded on Razorpay side.
-                // This usually means a security issue or data mismatch.
                 onFailure({
                     description: "Payment verification failed. Please contact support with your payment ID.",
                     error: verificationData,
@@ -106,11 +104,11 @@ const useRazorpay = () => {
       },
       notes: {
         yatra_id: yatraId,
-        fee_category: order.fee_category,
+        fee_category: invoice.fee_category,
         participant_id: user.user_id,
       },
       theme: {
-        color: "#3b82f6", // Tailwind blue-500
+        color: "#3b82f6",
       },
     };
 

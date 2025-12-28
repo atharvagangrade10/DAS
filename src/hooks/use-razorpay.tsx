@@ -62,23 +62,28 @@ const useRazorpay = () => {
         return;
     }
 
+    // Determine the actual Order ID. 
+    // Based on logs, invoice.id often contains the 'order_...' string.
+    const actualOrderId = invoice.order_id || (invoice.id?.startsWith('order_') ? invoice.id : null);
+
     const options = {
       key: RAZORPAY_KEY_ID,
       amount: invoice.amount,
       currency: invoice.currency,
       name: "DAS Yatra Registration",
       description: `${invoice.yatra_name} - ${invoice.fee_category}`,
-      // Passing the order_id linked to the invoice
-      order_id: invoice.order_id, 
+      // Pass the correct order_id to enable signature generation
+      order_id: actualOrderId, 
       handler: async (response: any) => {
         console.log("Razorpay Response Received:", response);
         const verificationToastId = toast.loading("Verifying payment...");
         
         try {
-            // Defensively map the payload. If values are missing, use null to ensure keys are sent in JSON.
+            // Defensively map the payload. 
+            // We ensure we send the order_id we used to initiate the payment if Razorpay doesn't return it.
             const payload = {
-                razorpay_order_id: response.razorpay_order_id || invoice.order_id || null,
-                razorpay_invoice_id: response.razorpay_invoice_id || invoice.id || null,
+                razorpay_order_id: response.razorpay_order_id || actualOrderId || null,
+                razorpay_invoice_id: response.razorpay_invoice_id || (invoice.id?.startsWith('inv_') ? invoice.id : null) || invoice.id || null,
                 razorpay_payment_id: response.razorpay_payment_id || null,
                 razorpay_signature: response.razorpay_signature || response.razorpay_invoice_signature || null,
             };
@@ -86,8 +91,8 @@ const useRazorpay = () => {
             console.log("Sending Verification Payload:", payload);
 
             if (!payload.razorpay_signature) {
-                console.error("Signature missing in Razorpay response:", response);
-                throw new Error("Payment signature could not be found in the gateway response.");
+                console.error("Signature missing in Razorpay response. Options used:", options);
+                throw new Error("Payment signature could not be found. Please ensure the backend provides a valid Razorpay Order ID.");
             }
 
             const verificationData = await verifyPayment(yatraId, payload);

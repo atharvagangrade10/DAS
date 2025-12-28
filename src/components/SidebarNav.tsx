@@ -5,9 +5,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, LogOut, User, Settings, CreditCard } from "lucide-react";
+import { MenuIcon, LogOut, User, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Accordion,
   AccordionContent,
@@ -97,9 +98,14 @@ const SidebarNav = () => {
         {user && (
           <div className="mb-4 flex flex-col gap-3 px-2">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                <User className="h-5 w-5 text-primary" />
-              </div>
+              <Avatar className="h-10 w-10 border border-primary/20">
+                {user.profile_photo_url ? (
+                  <AvatarImage src={user.profile_photo_url} alt={user.full_name} className="object-cover" />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  <User className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.phone}</p>

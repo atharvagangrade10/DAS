@@ -29,6 +29,7 @@ import { API_BASE_URL } from "@/config/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, User as UserIcon } from "lucide-react";
 import DOBInput from "@/components/DOBInput";
+import PhotoUpload from "@/components/PhotoUpload";
 import { Participant } from "@/types/participant";
 
 const PROFESSIONS = [
@@ -63,6 +64,7 @@ const profileSchema = z.object({
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
   email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  profile_photo_url: z.string().nullable().optional(),
 });
 
 const ProfilePage = () => {
@@ -113,6 +115,7 @@ const ProfilePage = () => {
       profession_other: "",
       chanting_rounds: undefined,
       email: "",
+      profile_photo_url: null,
     },
   });
 
@@ -132,6 +135,7 @@ const ProfilePage = () => {
         profession_other: profInit.other,
         chanting_rounds: participantData.chanting_rounds || undefined,
         email: participantData.email || "",
+        profile_photo_url: participantData.profile_photo_url || null,
       });
     }
   }, [participantData, form]);
@@ -166,7 +170,8 @@ const ProfilePage = () => {
         email: values.email,
         profession: profession || null,
         chanting_rounds: values.chanting_rounds,
-        devotee_friend: participantData?.devotee_friend_name || "None"
+        devotee_friend: participantData?.devotee_friend_name || "None",
+        profile_photo_url: values.profile_photo_url || null,
       };
       
       const response = await fetch(`${API_BASE_URL}/participants/${user.user_id}`, {
@@ -226,6 +231,21 @@ const ProfilePage = () => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex flex-col items-center mb-6">
+                <FormField
+                  control={form.control}
+                  name="profile_photo_url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <PhotoUpload value={field.value} onChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}

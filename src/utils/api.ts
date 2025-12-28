@@ -159,6 +159,31 @@ export const fetchPaymentHistory = async (participantId: string): Promise<Paymen
   return fetchAuthenticated(`${API_BASE_URL}/yatra/payment-history/${participantId}`);
 };
 
+export const uploadPhoto = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/drive/upload-photo`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }));
+    throw new Error(errorData.detail || "Upload failed");
+  }
+
+  const data = await response.json();
+  return data.url;
+};
+
 // --- Public Endpoints (Unprotected) ---
 
 export const fetchYatrasPublic = async (): Promise<Yatra[]> => {

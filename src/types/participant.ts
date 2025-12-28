@@ -40,4 +40,5 @@ export interface Participant {
   date_joined: string;
   role: 'Attendee' | 'Manager' | 'DevoteeFriend' | 'Volunteer';
   related_participant_ids?: RelatedParticipant[];
+  profile_photo_url?: string | null;
 }

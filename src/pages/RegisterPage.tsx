@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { Loader2, ArrowRight } from "lucide-react";
 import { createAccountCheck, createParticipantPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
+import PhotoUpload from "@/components/PhotoUpload";
 
 const PROFESSIONS = ["Student", "Employee", "Teacher", "Doctor", "Business", "Housewife", "Retired", "Other"];
 
@@ -46,6 +47,7 @@ const registrationSchema = z.object({
   profession_other: z.string().optional(),
   chanting_rounds: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().int().min(0).nullable()),
   email: z.string().email().optional().or(z.literal('')),
+  profile_photo_url: z.string().nullable().optional(),
 });
 
 const RegisterPage = () => {
@@ -67,6 +69,7 @@ const RegisterPage = () => {
       profession_other: "",
       chanting_rounds: 0,
       email: "",
+      profile_photo_url: null,
     },
   });
 
@@ -134,6 +137,21 @@ const RegisterPage = () => {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit((v) => accountMutation.mutate(v))} className="space-y-6">
+                <div className="flex flex-col items-center mb-6">
+                  <FormField
+                    control={form.control}
+                    name="profile_photo_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <PhotoUpload value={field.value} onChange={field.onChange} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}

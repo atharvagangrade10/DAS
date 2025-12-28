@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { API_BASE_URL } from "@/config/api";
 import DOBInput from "./DOBInput";
+import PhotoUpload from "./PhotoUpload";
 
 interface DevoteeFriend {
   id: string;
@@ -83,6 +84,7 @@ const formSchema = z.object({
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
   email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  profile_photo_url: z.string().nullable().optional(),
 });
 
 const getAuthHeaders = () => {
@@ -172,6 +174,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
       profession_other: profInit.other,
       chanting_rounds: participant.chanting_rounds || undefined,
       email: participant.email || "",
+      profile_photo_url: participant.profile_photo_url || null,
     },
   });
 
@@ -202,6 +205,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
         profession_other: pInit.other,
         chanting_rounds: participant.chanting_rounds || undefined,
         email: participant.email || "",
+        profile_photo_url: participant.profile_photo_url || null,
       });
     }
   }, [participant, form]);
@@ -225,6 +229,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
         profession: profession || null,
         devotee_friend: values.devotee_friend,
         chanting_rounds: values.chanting_rounds,
+        profile_photo_url: values.profile_photo_url || null,
       };
       return updateParticipant(participant.id, payload);
     },
@@ -261,6 +266,21 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <div className="mb-4">
+              <FormField
+                control={form.control}
+                name="profile_photo_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <PhotoUpload value={field.value} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="full_name"

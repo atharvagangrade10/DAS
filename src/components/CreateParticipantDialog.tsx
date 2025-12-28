@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { API_BASE_URL } from "@/config/api";
 import DOBInput from "./DOBInput";
+import PhotoUpload from "./PhotoUpload";
 
 interface DevoteeFriend {
   id: string;
@@ -85,6 +86,7 @@ const formSchema = z.object({
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
   email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  profile_photo_url: z.string().nullable().optional(),
 });
 
 const getAuthHeaders = () => {
@@ -156,6 +158,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
       profession_other: "",
       chanting_rounds: undefined,
       email: "",
+      profile_photo_url: null,
     },
   });
 
@@ -190,6 +193,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
         profession: profession || null,
         devotee_friend: values.devotee_friend,
         chanting_rounds: values.chanting_rounds,
+        profile_photo_url: values.profile_photo_url || null,
       };
       return createParticipant(payload);
     },
@@ -224,6 +228,21 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <div className="mb-4">
+              <FormField
+                control={form.control}
+                name="profile_photo_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <PhotoUpload value={field.value} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}

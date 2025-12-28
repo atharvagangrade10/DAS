@@ -9,6 +9,7 @@ import EditParticipantDialog from "./EditParticipantDialog";
 import { Participant } from "@/types/participant";
 import AttendedProgramsList from "./AttendedProgramsList";
 import { format, parseISO, isValid } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,23 +86,33 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
   }, [participant.dob]);
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex flex-col">
-          <CardTitle className="text-2xl font-semibold">{participant.full_name}</CardTitle>
-          {participant.initiated_name && (
-            <p className="text-sm font-medium text-primary/80 italic">({participant.initiated_name})</p>
-          )}
+    <Card className="hover:shadow-md transition-shadow overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b bg-muted/20">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
+            {participant.profile_photo_url ? (
+              <AvatarImage src={participant.profile_photo_url} alt={participant.full_name} className="object-cover" />
+            ) : null}
+            <AvatarFallback className="bg-primary/10 text-primary">
+              <User className="h-8 w-8" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <CardTitle className="text-xl font-bold">{participant.full_name}</CardTitle>
+            {participant.initiated_name && (
+              <p className="text-sm font-medium text-primary italic">({participant.initiated_name})</p>
+            )}
+          </div>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex space-x-1">
           <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
-            <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+            <Pencil className="h-4 w-4 text-muted-foreground hover:text-primary" />
             <span className="sr-only">Edit participant</span>
           </Button>
           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200">
-                <Trash2 className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-600">
+                <Trash2 className="h-4 w-4" />
                 <span className="sr-only">Delete participant</span>
               </Button>
             </AlertDialogTrigger>
@@ -123,7 +134,7 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
           </AlertDialog>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-2 text-sm">
+      <CardContent className="grid gap-2 text-sm pt-4">
         <div className="flex items-center gap-2">
           <p className="font-medium min-w-[120px]">Phone:</p>
           <PhoneDialer phoneNumber={participant.phone} participantName={participant.full_name} />

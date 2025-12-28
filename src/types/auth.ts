@@ -18,6 +18,7 @@ export interface AuthUser {
   chanting_rounds?: number | null;
   role: 'Attendee' | 'Manager' | 'DevoteeFriend' | 'Volunteer';
   related_participant_ids?: RelatedParticipant[];
+  profile_photo_url?: string | null;
 }
 
 export interface AuthTokenResponse extends AuthUser {
@@ -44,4 +45,5 @@ export interface RegisterRequest {
   profession: string | null;
   devotee_friend_name: string;
   chanting_rounds: number | null;
+  profile_photo_url?: string | null;
 }

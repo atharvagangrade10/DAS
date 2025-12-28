@@ -4,7 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -37,9 +37,9 @@ import { format, differenceInYears, parseISO, isValid } from "date-fns";
 import { Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 import DOBInput from "./DOBInput";
-import { createParticipantPublic, searchParticipantPublic, fetchParticipantById } from "@/utils/api";
+import { createParticipantPublic, searchParticipantPublic, fetchParticipantById, updateParticipant } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
-import { Participant } from "@/types/participant";
+import { Participant, RelatedParticipant } from "@/types/participant";
 
 const PROFESSIONS = [
   "Student",
@@ -90,7 +90,8 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   onAdd,
   defaultAddress = "",
 }) => {
-  const { user, token } = useAuth();
+  const { user, updateUser } = useAuth();
+  const queryClient = useQueryClient();
   
   const { data: relatedParticipants } = useQuery<Participant[]>({
     queryKey: ["relatedParticipants", user?.user_id],
@@ -134,55 +135,83 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     if (relationValue === "Wife" || relationValue === "Mother") form.setValue("gender", "Female");
   }, [relationValue, form]);
 
+  const linkMutation = useMutation({
+    mutationFn: async ({ relation, participant_id }: { relation: string, participant_id: string }) => {
+      if (!user?.user_id) return;
+
+      // Fetch latest profile to ensure we have current list
+      const latestProfile = await fetchParticipantById(user.user_id);
+      const currentLinks = latestProfile.related_participant_ids || [];
+
+      // Don't add if already exists
+      if (currentLinks.some(link => link.participant_id === participant_id)) {
+        return latestProfile;
+      }
+
+      const newLinks: RelatedParticipant[] = [...currentLinks, { relation, participant_id }];
+      
+      const payload = {
+        ...latestProfile,
+        related_participant_ids: newLinks
+      };
+
+      const updated = await updateParticipant(user.user_id, payload);
+      return updated;
+    },
+    onSuccess: (updatedParticipant) => {
+      if (updatedParticipant) {
+        updateUser({ ...user!, related_participant_ids: updatedParticipant.related_participant_ids });
+        queryClient.invalidateQueries({ queryKey: ["relatedParticipants", user?.user_id] });
+      }
+    }
+  });
+
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof familyMemberSchema>) => {
       const calculated_age = values.dob ? differenceInYears(new Date(), values.dob) : 0;
       const full_name = `${values.first_name} ${values.last_name}`;
       
-      if (values.relation === "Child") {
-        return { ...values, calculated_age, full_name };
+      let participantId: string | undefined;
+
+      if (values.relation !== "Child") {
+        const existing = await searchParticipantPublic(values.phone);
+        if (existing && existing.length > 0) {
+          participantId = existing[0].id;
+          toast.info(`Linked to existing participant: ${existing[0].full_name}`);
+        } else {
+          const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
+          const response = await createParticipantPublic({
+            full_name,
+            first_name: values.first_name,
+            last_name: values.last_name,
+            initiated_name: values.initiated_name || null,
+            phone: values.phone,
+            gender: values.gender,
+            dob: format(values.dob, "yyyy-MM-dd"),
+            age: calculated_age,
+            address: values.address,
+            profession: profession || null,
+            place_name: values.place_name || null,
+            chanting_rounds: values.chanting_rounds,
+            email: values.email || null,
+            date_joined: format(new Date(), "yyyy-MM-dd"),
+            devotee_friend_name: user?.devotee_friend_name || "None",
+          });
+          participantId = response.id;
+        }
       }
 
-      const existing = await searchParticipantPublic(values.phone);
-      if (existing && existing.length > 0) {
-        const found = existing[0];
-        toast.info(`Linked to existing participant: ${found.full_name}`);
-        return { 
-          ...values, 
-          calculated_age, 
-          full_name: found.full_name, 
-          participant_id: found.id 
-        };
+      // If we have an ID, update the link in the background
+      if (participantId) {
+        linkMutation.mutate({ relation: values.relation, participant_id: participantId });
       }
 
-      const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
-      const response = await createParticipantPublic({
-        full_name,
-        first_name: values.first_name,
-        last_name: values.last_name,
-        initiated_name: values.initiated_name || null,
-        phone: values.phone,
-        gender: values.gender,
-        dob: format(values.dob, "yyyy-MM-dd"),
-        age: calculated_age,
-        address: values.address,
-        profession: profession || null,
-        place_name: values.place_name || null,
-        chanting_rounds: values.chanting_rounds,
-        email: values.email || null,
-        date_joined: format(new Date(), "yyyy-MM-dd"),
-        devotee_friend_name: user?.devotee_friend_name || "None",
-      });
-
-      return { ...values, calculated_age, full_name, participant_id: response.id };
+      return { ...values, calculated_age, full_name, participant_id: participantId };
     },
     onSuccess: (data) => {
       onAdd(data as FamilyMemberData);
       form.reset();
       onOpenChange(false);
-      if (data.participant_id) {
-        toast.success("Family member processed successfully!");
-      }
     },
     onError: (error: Error) => {
       toast.error("Process failed", { description: error.message });

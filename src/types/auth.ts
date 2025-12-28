@@ -1,5 +1,7 @@
 "use client";
 
+import { RelatedParticipant } from "./participant";
+
 export interface AuthUser {
   user_id: string;
   full_name: string;
@@ -15,6 +17,7 @@ export interface AuthUser {
   devotee_friend_name?: string;
   chanting_rounds?: number | null;
   role: 'Attendee' | 'Manager' | 'DevoteeFriend' | 'Volunteer';
+  related_participant_ids?: RelatedParticipant[];
 }
 
 export interface AuthTokenResponse extends AuthUser {

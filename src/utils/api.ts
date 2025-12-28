@@ -78,6 +78,13 @@ export const fetchParticipantById = async (id: string): Promise<Participant> => 
   return fetchAuthenticated(`${API_BASE_URL}/participants/${id}`);
 };
 
+export const updateParticipant = async (
+  participantId: string,
+  data: any,
+): Promise<Participant> => {
+  return mutateAuthenticated(`${API_BASE_URL}/participants/${participantId}`, "PUT", data);
+};
+
 export const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/register/devoteefriends`);
 };

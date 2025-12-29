@@ -38,7 +38,7 @@ const registrationSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   initiated_name: z.string().optional().or(z.literal('')),
-  phone: z.string().regex(/^\d{10}$/, "Phone number must be 10 digits"),
+  phone: z.string().min(1, "Phone number is required").regex(/^\d{10}$/, "Phone number must be 10 digits"),
   address: z.string().min(1, "Address is required"),
   place_name: z.string().optional().or(z.literal('')),
   age: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().int().min(0).nullable()),
@@ -107,6 +107,8 @@ const RegisterPage = () => {
       }
 
       if (response.status === "Register") {
+        // Explicitly set the value to ensure it's preserved in the form state
+        form.setValue("phone", phone);
         setShowFullForm(true);
       }
     } catch (error: any) {

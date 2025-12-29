@@ -33,7 +33,7 @@ export interface Participant {
   age: number | null;
   dob: string | null;
   gender: string;
-  email: string;
+  email: string; // Made mandatory
   profession: string | null;
   devotee_friend_name: string;
   chanting_rounds: number | null;

@@ -63,7 +63,7 @@ const profileSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
-  email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
   profile_photo_url: z.string().nullable().optional(),
 });
 
@@ -134,7 +134,7 @@ const ProfilePage = () => {
         profession_type: profInit.type,
         profession_other: profInit.other,
         chanting_rounds: participantData.chanting_rounds || undefined,
-        email: participantData.email || "",
+        email: participantData.email, // Email is now mandatory
         profile_photo_url: participantData.profile_photo_url || null,
       });
     }
@@ -295,7 +295,7 @@ const ProfilePage = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input {...field} type="email" placeholder="email@example.com" />
                     </FormControl>

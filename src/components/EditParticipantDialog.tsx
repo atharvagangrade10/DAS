@@ -83,7 +83,7 @@ const formSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
-  email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
   profile_photo_url: z.string().nullable().optional(),
 });
 
@@ -173,7 +173,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
       profession_type: profInit.type,
       profession_other: profInit.other,
       chanting_rounds: participant.chanting_rounds || undefined,
-      email: participant.email || "",
+      email: participant.email, // Email is now mandatory
       profile_photo_url: participant.profile_photo_url || null,
     },
   });
@@ -204,7 +204,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
         profession_type: pInit.type,
         profession_other: pInit.other,
         chanting_rounds: participant.chanting_rounds || undefined,
-        email: participant.email || "",
+        email: participant.email, // Email is now mandatory
         profile_photo_url: participant.profile_photo_url || null,
       });
     }
@@ -463,7 +463,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email (Optional)</FormLabel>
+                  <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input type="email" {...field} />
                   </FormControl>

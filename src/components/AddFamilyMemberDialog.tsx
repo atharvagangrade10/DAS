@@ -68,7 +68,7 @@ const familyMemberSchema = z.object({
     (val) => (val === "" ? 0 : Number(val)),
     z.number().int().min(0).optional(),
   ),
-  email: z.string().email().optional().or(z.literal('')),
+  email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
 });
 
 export type FamilyMemberData = z.infer<typeof familyMemberSchema> & {
@@ -176,7 +176,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
           profession: profession || null,
           place_name: values.place_name || null,
           chanting_rounds: values.chanting_rounds,
-          email: values.email || null,
+          email: values.email, // Email is now mandatory
           date_joined: format(new Date(), "yyyy-MM-dd"),
           devotee_friend_name: user?.devotee_friend_name || "None",
         });
@@ -250,7 +250,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       profession_type: p.profession || "Student",
       profession_other: "",
       chanting_rounds: p.chanting_rounds || 0,
-      email: p.email || "",
+      email: p.email, // Email is now mandatory
       calculated_age,
       full_name: p.full_name,
       participant_id: p.id,
@@ -480,6 +480,18 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
                 <FormItem>
                   <FormLabel>Address <span className="text-red-500">*</span></FormLabel>
                   <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input {...field} type="email" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}

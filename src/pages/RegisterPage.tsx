@@ -46,7 +46,7 @@ const registrationSchema = z.object({
   profession_type: z.string().optional(),
   profession_other: z.string().optional(),
   chanting_rounds: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().int().min(0).nullable()),
-  email: z.string().email().optional().or(z.literal('')),
+  email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
   profile_photo_url: z.string().nullable().optional(),
 });
 
@@ -354,7 +354,7 @@ const RegisterPage = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email (Optional)</FormLabel>
+                          <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                           <FormControl><Input {...field} type="email" autoComplete="email" /></FormControl>
                           <FormMessage />
                         </FormItem>

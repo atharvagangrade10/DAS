@@ -85,7 +85,7 @@ const formSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
-  email: z.string().email("Invalid email address").optional().or(z.literal('')),
+  email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
   profile_photo_url: z.string().nullable().optional(),
 });
 
@@ -425,7 +425,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email (Optional)</FormLabel>
+                  <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input type="email" {...field} />
                   </FormControl>

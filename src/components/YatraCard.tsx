@@ -82,10 +82,10 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   }, [paymentHistory, yatra.id, isRegistered]);
 
   // Fetch registered participants for this yatra
-  // Enabled specifically when the dialog is open and the user has permission (Admin OR Registered)
-  const { data: registeredParticipants, isLoading: isLoadingParticipants } = useQuery<YatraParticipantResponse[], Error>({
+  const { data: registeredParticipants, isLoading: isLoadingParticipants, refetch } = useQuery<YatraParticipantResponse[], Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
+      console.log(`Fetching participants for Yatra: ${yatra.id}`);
       const response = await fetch(`${API_BASE_URL}/yatra/${yatra.id}/participants`, {
         headers: getAuthHeaders(),
       });
@@ -95,8 +95,15 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       return response.json();
     },
-    enabled: isRegisteredParticipantsDialogOpen && (showAdminControls || isRegisteredForYatra),
+    enabled: false, // We'll trigger this manually or via useEffect to ensure it hits every time
   });
+
+  // Trigger refetch when dialog opens
+  React.useEffect(() => {
+    if (isRegisteredParticipantsDialogOpen) {
+      refetch();
+    }
+  }, [isRegisteredParticipantsDialogOpen, refetch]);
 
   const handleViewProfile = (participantId: string) => {
     navigate(`/participants/${participantId}`);

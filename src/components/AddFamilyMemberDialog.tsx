@@ -30,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { format, differenceInYears, parseISO, isValid } from "date-fns";
@@ -130,7 +129,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       last_name: "",
       initiated_name: "",
       phone: "",
-      address: defaultAddress,
+      address: defaultAddress, // Use defaultAddress here
       place_name: "",
       gender: "Male",
       profession_type: "Student",
@@ -217,7 +216,20 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     },
     onSuccess: (data) => {
       onAdd(data as FamilyMemberData);
-      form.reset();
+      form.reset({
+        relation: "Child",
+        first_name: "",
+        last_name: "",
+        initiated_name: "",
+        phone: "",
+        address: defaultAddress, // Reset address to defaultAddress
+        place_name: "",
+        gender: "Male",
+        profession_type: "Student",
+        profession_other: "",
+        chanting_rounds: 0,
+        email: "",
+      });
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["relatedParticipants", user?.user_id] });
       toast.success("Family member linked and added!");
@@ -228,7 +240,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   });
 
   const handleQuickAdd = (p: Participant) => {
-    const relInfo = profileRelationships.find(rel => rel.participant_id === p.id);
+    const relInfo = profileRelationships.find(r => r.participant_id === p.id);
     const dobDate = p.dob ? parseISO(p.dob) : null;
     const calculated_age = dobDate && isValid(dobDate) ? differenceInYears(new Date(), dobDate) : (p.age || 0);
     
@@ -315,22 +327,20 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               control={form.control}
               name="relation"
               render={({ field }) => (
-                <FormItem className="space-y-3">
+                <FormItem>
                   <FormLabel>Relation <span className="text-red-500">*</span></FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="flex flex-col gap-2"
-                    >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select relation" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
                       {["Husband", "Wife", "Child", "Father", "Mother"].map((r) => (
-                        <div key={r} className="flex items-center space-x-2">
-                          <RadioGroupItem value={r} id={`r-${r.toLowerCase()}`} />
-                          <Label htmlFor={`r-${r.toLowerCase()}`}>{r}</Label>
-                        </div>
+                        <SelectItem key={r} value={r}>{r}</SelectItem>
                       ))}
-                    </RadioGroup>
-                  </FormControl>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

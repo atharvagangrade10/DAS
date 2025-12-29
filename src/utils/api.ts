@@ -108,6 +108,16 @@ export const fetchAttendedPrograms = async (
   );
 };
 
+export const fetchAttendedProgramsPublic = async (
+  participantId: string,
+): Promise<AttendedProgram[]> => {
+  const response = await fetch(`${API_BASE_URL}/participants/${participantId}/attended-programs`, {
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!response.ok) return [];
+  return response.json();
+};
+
 export const fetchYatras = async (): Promise<Yatra[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/yatra/`);
 };
@@ -268,6 +278,18 @@ export const searchParticipantPublic = async (phone: string): Promise<Participan
     headers: { "Content-Type": "application/json" }
   });
   if (!response.ok) return [];
+  return response.json();
+};
+
+export const fetchParticipantByPhonePublic = async (phone: string): Promise<Participant | null> => {
+  const response = await fetch(`${API_BASE_URL}/participants/phone/${phone}`, {
+    headers: { "Content-Type": "application/json" }
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch participant' }));
+    throw new Error(errorData.detail || "Failed to fetch participant");
+  }
   return response.json();
 };
 

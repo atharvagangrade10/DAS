@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { createParticipantPublic, searchParticipantPublic, fetchParticipantById, updateParticipant } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { Participant, RelatedParticipant } from "@/types/participant";
-import FamilyMemberFormFields from "./FamilyMemberFormFields";
+import YatraMemberForm from "./YatraMemberForm"; // Updated import
 
 const PROFESSIONS = [
   "Student",
@@ -320,7 +320,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-            <FamilyMemberFormFields 
+            <YatraMemberForm 
               form={form as any}
               professionType={professionType}
               PROFESSIONS={PROFESSIONS}

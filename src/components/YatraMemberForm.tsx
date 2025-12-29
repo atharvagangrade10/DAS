@@ -42,13 +42,13 @@ const familyMemberSchema = z.object({
 
 type FamilyMemberFormValues = z.infer<typeof familyMemberSchema>;
 
-interface FamilyMemberFormFieldsProps {
+interface YatraMemberFormProps {
   form: UseFormReturn<FamilyMemberFormValues>;
   professionType: string | undefined;
   PROFESSIONS: string[];
 }
 
-const FamilyMemberFormFields: React.FC<FamilyMemberFormFieldsProps> = ({
+const YatraMemberForm: React.FC<YatraMemberFormProps> = ({
   form,
   professionType,
   PROFESSIONS,
@@ -243,4 +243,4 @@ const FamilyMemberFormFields: React.FC<FamilyMemberFormFieldsProps> = ({
   );
 };
 
-export default FamilyMemberFormFields;
+export default YatraMemberForm;

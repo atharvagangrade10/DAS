@@ -32,7 +32,10 @@ const passwordSchema = z.object({
 const PublicSetPassword = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const participantId = searchParams.get('participantId'); // Read from query parameter
+    const rawParticipantId = searchParams.get('participantId');
+    
+    // Treat null, empty string, or the string "undefined" as invalid
+    const participantId = (rawParticipantId && rawParticipantId !== 'undefined') ? rawParticipantId : null;
     
     const [showPassword, setShowPassword] = React.useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);

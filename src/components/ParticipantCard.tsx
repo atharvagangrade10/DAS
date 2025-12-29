@@ -25,6 +25,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/config/api";
 
+interface DevoteeFriend {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+}
+
 interface ParticipantCardProps {
   participant: Participant;
   onParticipantUpdate?: (updatedParticipant: Participant | null) => void;
@@ -146,7 +153,7 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
         </div>
         <div className="flex items-center gap-2">
           <p className="font-medium min-w-[120px]">Email:</p>
-          <p className="text-gray-700 dark:text-gray-300 truncate">{participant.email || "N/A"}</p>
+          <p className="text-gray-700 dark:text-gray-300">{participant.email || "N/A"}</p>
         </div>
         <div className="flex items-center gap-2">
           <p className="font-medium min-w-[120px]">Profession:</p>

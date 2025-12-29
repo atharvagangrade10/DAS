@@ -40,6 +40,8 @@ import PhotoUpload from "./PhotoUpload";
 interface DevoteeFriend {
   id: string;
   name: string;
+  phone: string;
+  email: string;
 }
 
 interface EditParticipantDialogProps {
@@ -332,7 +334,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <DOBInput value={field.value} onChange={field.onChange} />
+                      <DOBInput value={field.value} onChange={field.onChange} label={<>Date of Birth <span className="text-red-500">*</span></> as any} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

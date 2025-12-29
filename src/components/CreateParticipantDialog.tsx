@@ -40,6 +40,8 @@ import PhotoUpload from "./PhotoUpload";
 interface DevoteeFriend {
   id: string;
   name: string;
+  phone: string;
+  email: string;
 }
 
 interface CreateParticipantDialogProps {

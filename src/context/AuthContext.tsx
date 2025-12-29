@@ -20,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'das_auth_token';
 const USER_STORAGE_KEY = 'das_auth_user';
+const PROFILE_PHOTO_STORAGE_KEY = 'das_profile_photos'; // New key for profile photos
 
 // --- Global Unauthorized Handler Mechanism ---
 let onUnauthorizedHandler: (() => void) | null = null;

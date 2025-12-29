@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, Check, Baby } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, Check, Baby, ThumbsUp } from "lucide-react";
 import { Yatra } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -101,13 +101,22 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         {!showAdminControls && (
           <div className="pt-4">
             {isRegisteredForYatra ? (
-              <Button className="w-full flex items-center gap-2 bg-green-500 hover:bg-green-600" disabled>
-                <Check className="h-4 w-4" />
-                Registered
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button className="w-full flex items-center gap-2" variant="outline" disabled>
+                      <ThumbsUp className="h-4 w-4 text-green-500" />
+                      <span className="text-green-600 dark:text-green-400 font-medium">Registered</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>You have successfully registered for this trip.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ) : (
               <Button 
-                className="w-full flex items-center gap-2 bg-green-500 hover:bg-green-600" 
+                className="w-full flex items-center gap-2" 
                 onClick={() => setIsRegisterDialogOpen(true)}
                 disabled={isLoadingHistory}
               >

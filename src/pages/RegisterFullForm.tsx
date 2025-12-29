@@ -91,6 +91,7 @@ const RegisterFullForm = () => {
 
   const accountMutation = useMutation({
     mutationFn: async (values: z.infer<typeof registrationSchema>) => {
+      console.log("Submitting registration data:", values);
       const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
       const participantData = {
         ...values,
@@ -103,18 +104,20 @@ const RegisterFullForm = () => {
         devotee_friend_name: "None",
       };
       
-      const newParticipant = await createParticipantPublic(participantData);
+      const response = await createParticipantPublic(participantData);
+      console.log("Registration API response:", response);
       
-      // Defensively capture the ID from various potential response fields
-      const pId = newParticipant?.id || 
-                  (newParticipant as any)?.participant_id || 
-                  (newParticipant as any)?.user_id;
+      // Capture the ID from any potential field the backend might use
+      const pId = response?.id || 
+                  (response as any)?.participant_id || 
+                  (response as any)?.user_id;
       
       if (!pId) {
-        console.error("Registration response missing ID:", newParticipant);
-        throw new Error("Profile created but no ID was returned. Please try logging in or contact support.");
+        console.error("No ID found in registration response:", response);
+        throw new Error("Registration succeeded but no ID was returned. Please try logging in.");
       }
       
+      console.log("Navigating to set-password with participant_id:", pId);
       navigate(`/public/set-password?participant_id=${pId}`);
     },
     onError: (error: Error) => {

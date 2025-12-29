@@ -33,17 +33,23 @@ const PublicSetPassword = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     
-    // Look for participant_id in the query string
-    const rawParticipantId = searchParams.get('participant_id') || searchParams.get('participantId');
+    // Look for participant_id with detailed logging
+    const rawId = searchParams.get('participant_id');
+    const legacyId = searchParams.get('participantId');
     
-    // Treat null, empty string, or the string "undefined" as invalid
-    const participantId = (rawParticipantId && rawParticipantId !== 'undefined') ? rawParticipantId : null;
-    
+    console.log("Parsing PublicSetPassword query params:", { 
+      participant_id: rawId, 
+      participantId: legacyId 
+    });
+
+    const participantId = rawId || legacyId;
+
     const [showPassword, setShowPassword] = React.useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
     React.useEffect(() => {
-        if (!participantId) {
+        if (!participantId || participantId === 'undefined' || participantId === 'null') {
+            console.error("Invalid participantId detected:", participantId);
             toast.error("Invalid session. Please register again.");
             navigate("/register", { replace: true });
         }
@@ -60,6 +66,7 @@ const PublicSetPassword = () => {
     const passwordMutation = useMutation({
         mutationFn: async (values: z.infer<typeof passwordSchema>) => {
             if (!participantId) throw new Error("Participant ID is missing");
+            console.log("Setting password for ID:", participantId);
             await setPasswordPublic(participantId, values.sec_p);
         },
         onSuccess: () => {
@@ -71,8 +78,7 @@ const PublicSetPassword = () => {
         },
     });
 
-    if (!participantId) {
-        // Render a loading state while redirecting if ID is missing
+    if (!participantId || participantId === 'undefined' || participantId === 'null') {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

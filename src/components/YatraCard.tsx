@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import EditYatraDialog from "./EditYatraDialog";
 import YatraRegistrationDialog from "./YatraRegistrationDialog";
+import { useQuery } from "@tanstack/react-query";
+import { fetchPaymentHistory } from "@/utils/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface YatraCardProps {
   yatra: Yatra;
@@ -18,8 +21,25 @@ interface YatraCardProps {
 }
 
 const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
+  const { user } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
+
+  // Fetch payment history to check registration status
+  const { data: paymentHistory, isLoading: isLoadingHistory } = useQuery<PaymentRecord[], Error>({
+    queryKey: ["paymentHistory", user?.user_id],
+    queryFn: () => fetchPaymentHistory(user!.user_id),
+    enabled: !!user?.user_id,
+  });
+
+  // Determine if the user is registered for this yatra
+  const isRegisteredForYatra = React.useMemo(() => {
+    if (!paymentHistory) return false;
+    return paymentHistory.some(p => 
+      p.yatra_id === yatra.id && 
+      (p.status.toLowerCase() === 'completed' || p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
+    );
+  }, [paymentHistory, yatra.id]);
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow overflow-hidden">
@@ -80,18 +100,19 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
 
         {!showAdminControls && (
           <div className="pt-4">
-            {isRegistered ? (
+            {isRegisteredForYatra ? (
               <Button className="w-full flex items-center gap-2 bg-green-500 hover:bg-green-600" disabled>
                 <Check className="h-4 w-4" />
                 Registered
               </Button>
             ) : (
               <Button 
-                className="w-full flex items-center gap-2" 
+                className="w-full flex items-center gap-2 bg-green-500 hover:bg-green-600" 
                 onClick={() => setIsRegisterDialogOpen(true)}
+                disabled={isLoadingHistory}
               >
                 <ClipboardCheck className="h-4 w-4" />
-                Register Now
+                Register
               </Button>
             )}
           </div>

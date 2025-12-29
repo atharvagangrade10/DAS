@@ -41,28 +41,38 @@ const DOBInput: React.FC<DOBInputProps> = ({ value, onChange, label = "Date of B
   const years = Array.from({ length: 120 }, (_, i) => (currentYear - i).toString());
 
   const handleValueChange = (dStr: string, mStr: string, yStr: string) => {
-    const d = parseInt(dStr);
-    const m = parseInt(mStr);
-    const y = parseInt(yStr);
+    // If any part is missing, set the external value to null and stop processing.
+    if (!dStr || !mStr || !yStr) {
+      onChange(null);
+      return;
+    }
+    
+    const d = parseInt(dStr, 10);
+    const m = parseInt(mStr, 10);
+    const y = parseInt(yStr, 10);
 
-    if (dStr && mStr && yStr) {
-      const date = new Date(y, m - 1, d);
-      const today = new Date();
-      const minDate = new Date(1900, 0, 1);
-
-      // Verify it's a valid calendar date
-      if (
-        date.getFullYear() === y && 
-        date.getMonth() === m - 1 && 
-        date.getDate() === d &&
-        isBefore(date, today) &&
-        isAfter(date, minDate)
-      ) {
-        onChange(date);
-      } else {
+    // Check if parsing resulted in valid numbers
+    if (isNaN(d) || isNaN(m) || isNaN(y)) {
         onChange(null);
-      }
+        return;
+    }
+
+    const date = new Date(y, m - 1, d);
+    const today = new Date();
+    const minDate = new Date(1900, 0, 1);
+
+    // Verify it's a valid calendar date (e.g., not Feb 30th)
+    // and check constraints (not in the future, not too far in the past)
+    if (
+      date.getFullYear() === y && 
+      date.getMonth() === m - 1 && 
+      date.getDate() === d &&
+      isBefore(date, today) &&
+      isAfter(date, minDate)
+    ) {
+      onChange(date);
     } else {
+      // If the date is invalid (e.g., Feb 30th, or future date)
       onChange(null);
     }
   };

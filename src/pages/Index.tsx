@@ -3,38 +3,48 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { fetchYatras, fetchAttendedPrograms, fetchPaymentHistory } from "@/utils/api";
+import { fetchYatras, fetchAttendedPrograms, fetchPaymentHistory, fetchParticipantById } from "@/utils/api";
 import { Yatra, PaymentRecord } from "@/types/yatra";
-import { AttendedProgram } from "@/types/participant";
+import { AttendedProgram, Participant } from "@/types/participant";
 import YatraCard from "@/components/YatraCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, CheckCircle2, MapPin } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { CalendarDays, CheckCircle2, MapPin, Loader2 } from "lucide-react";
+import { format, parseISO, isValid } from "date-fns";
 import CompleteProfileDialog from "@/components/CompleteProfileDialog";
 
 const Index = () => {
   const { user } = useAuth();
   const [isProfileIncomplete, setIsProfileIncomplete] = React.useState(false);
 
-  // Check for mandatory fields on mount or when user changes
+  // Fetch latest participant details
+  const { data: latestParticipantData, isLoading: isLoadingParticipant } = useQuery<Participant, Error>({
+    queryKey: ["latestParticipantDetails", user?.user_id],
+    queryFn: () => fetchParticipantById(user!.user_id),
+    enabled: !!user?.user_id,
+    staleTime: 60 * 1000, // Cache for 1 minute
+  });
+
+  // Check for mandatory fields based on fetched data
   React.useEffect(() => {
-    if (user) {
+    if (latestParticipantData) {
+      const p = latestParticipantData;
       const isIncomplete = 
-        !user.full_name || 
-        !user.phone || 
-        !user.address || 
-        !user.dob || 
-        !user.gender || 
-        !user.email ||
-        !user.profile_photo_url;
+        !p.full_name || 
+        !p.phone || 
+        !p.address || 
+        !p.dob || 
+        !p.gender || 
+        !p.email ||
+        !p.profile_photo_url;
       
-      if (isIncomplete) {
+      setIsProfileIncomplete(isIncomplete);
+    } else if (!isLoadingParticipant && user) {
+        // If fetching failed or returned null, assume incomplete if user exists but data is missing
         setIsProfileIncomplete(true);
-      }
     }
-  }, [user]);
+  }, [latestParticipantData, isLoadingParticipant, user]);
 
   // Fetch Yatras
   const { data: yatras, isLoading: isLoadingYatras } = useQuery<Yatra[], Error>({
@@ -66,11 +76,21 @@ const Index = () => {
     );
   }, [paymentHistory]);
 
+  // Handle initial loading state for participant data
+  if (isLoadingParticipant) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 sm:p-8 space-y-12">
       <div className="text-left">
         <h1 className="text-4xl font-extrabold mb-2 text-gray-900 dark:text-white">
-          Hare Krishna, {user?.full_name}!
+          Hare Krishna, {latestParticipantData?.full_name || user?.full_name || "Devotee"}!
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">
           Welcome to your spiritual dashboard.

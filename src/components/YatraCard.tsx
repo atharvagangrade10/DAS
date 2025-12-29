@@ -2,8 +2,8 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, Check, Baby, ThumbsUp, Users, Eye } from "lucide-react";
-import { Yatra } from "@/types/yatra";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby } from "lucide-react";
+import { Yatra, PaymentRecord } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,24 @@ import { fetchPaymentHistory } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { API_BASE_URL } from "@/config/api";
 
 interface YatraCardProps {
   yatra: Yatra;
   showAdminControls?: boolean;
   isRegistered?: boolean;
 }
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
 
 interface YatraParticipantResponse {
   participant_id: string;
@@ -42,9 +54,10 @@ interface YatraParticipantResponse {
   payment_amount?: number;
   transaction_id?: string;
   registration_date?: string;
+  created_at?: string;
 }
 
-const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
+const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
@@ -58,7 +71,17 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     enabled: !!user?.user_id,
   });
 
+  // Determine if the user is registered for this yatra
+  const isRegisteredForYatra = React.useMemo(() => {
+    if (!paymentHistory) return false;
+    return paymentHistory.some(p => 
+      p.yatra_id === yatra.id && 
+      (p.status.toLowerCase() === 'completed' || p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
+    );
+  }, [paymentHistory, yatra.id]);
+
   // Fetch registered participants for this yatra
+  // Enabled for admins OR if the user is registered
   const { data: registeredParticipants, isLoading: isLoadingParticipants } = useQuery<YatraParticipantResponse[], Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
@@ -71,17 +94,8 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       return response.json();
     },
-    enabled: showAdminControls,
+    enabled: showAdminControls || isRegisteredForYatra,
   });
-
-  // Determine if the user is registered for this yatra
-  const isRegisteredForYatra = React.useMemo(() => {
-    if (!paymentHistory) return false;
-    return paymentHistory.some(p => 
-      p.yatra_id === yatra.id && 
-      (p.status.toLowerCase() === 'completed' || p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
-    );
-  }, [paymentHistory, yatra.id]);
 
   const handleViewProfile = (participantId: string) => {
     navigate(`/participants/${participantId}`);
@@ -150,13 +164,17 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button className="w-full flex items-center gap-2" variant="outline" disabled>
+                    <Button 
+                      className="w-full flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" 
+                      variant="outline"
+                      onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
+                    >
                       <ThumbsUp className="h-4 w-4 text-green-500" />
-                      <span className="text-green-600 dark:text-green-400 font-medium">Registered</span>
+                      <span className="font-medium">Registered</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>You have successfully registered for this trip.</p>
+                    <p>Click to view trip participants</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -173,7 +191,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
           </div>
         )}
 
-        {/* Registered Participants Button - Only visible when showAdminControls is true */}
         {showAdminControls && (
           <div className="pt-4">
             <Button 
@@ -191,7 +208,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       <EditYatraDialog yatra={yatra} isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />
       <YatraRegistrationDialog yatra={yatra} isOpen={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen} />
       
-      {/* Registered Participants Dialog */}
       <RegisteredParticipantsDialog
         isOpen={isRegisteredParticipantsDialogOpen}
         onOpenChange={setIsRegisteredParticipantsDialogOpen}
@@ -203,7 +219,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   );
 };
 
-// Registered Participants Dialog Component
 interface RegisteredParticipantsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -228,7 +243,7 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
             Registered Participants
           </DialogTitle>
           <DialogDescription>
-            List of participants who have registered for this yatra.
+            List of participants registered for this yatra.
           </DialogDescription>
         </DialogHeader>
         
@@ -241,19 +256,23 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
             participants.map((participant) => (
               <Card key={participant.participant_id} className="p-4 border">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold">{participant.participant_info.full_name}</h4>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <h4 className="font-semibold truncate">{participant.participant_info.full_name}</h4>
                     <p className="text-sm text-muted-foreground">{participant.participant_info.phone}</p>
-                    <p className="text-xs text-muted-foreground">{participant.participant_info.email}</p>
+                    {participant.registration_date && (
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Reg: {format(new Date(participant.registration_date), "MMM dd, yyyy")}
+                      </p>
+                    )}
                   </div>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => onViewProfile(participant.participant_id)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-1 shrink-0"
                   >
                     <Eye className="h-4 w-4" />
-                    View Profile
+                    View
                   </Button>
                 </div>
               </Card>

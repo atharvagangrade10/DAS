@@ -8,15 +8,14 @@ import {
 } from "@/components/ui/popover";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { isValid, isAfter, isBefore } from "date-fns";
 
 interface DOBInputProps {
   value: Date | null | undefined;
@@ -29,43 +28,50 @@ const TypeableSelect = ({
   onChange,
   options,
   placeholder,
-  className,
+  maxLength,
 }: {
   value: string;
   onChange: (val: string) => void;
   options: string[];
   placeholder: string;
-  className?: string;
+  maxLength: number;
 }) => {
   const [open, setOpen] = React.useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className={cn("relative", className)}>
-          <Input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="w-full"
-            onFocus={() => setOpen(true)}
-          />
-        </div>
+        <Input
+          value={value}
+          onChange={(e) => {
+            const val = e.target.value;
+            // Only allow numbers and respect max length
+            if (/^\d*$/.test(val) && val.length <= maxLength) {
+              onChange(val);
+            }
+          }}
+          placeholder={placeholder}
+          onFocus={() => setOpen(true)}
+          className="w-full text-center"
+        />
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent 
+        className="p-0 w-[var(--radix-popover-trigger-width)]" 
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()} // Don't steal focus from input
+      >
         <Command>
-          <CommandInput placeholder={`Search ${placeholder.toLowerCase()}...`} className="h-9" />
           <CommandList>
-            <CommandEmpty>No results.</CommandEmpty>
             <CommandGroup className="max-h-[200px] overflow-y-auto">
               {options.map((option) => (
                 <CommandItem
                   key={option}
                   value={option}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue);
+                  onSelect={() => {
+                    onChange(option);
                     setOpen(false);
                   }}
+                  className="justify-center text-center cursor-pointer"
                 >
                   {option}
                 </CommandItem>
@@ -79,63 +85,61 @@ const TypeableSelect = ({
 };
 
 const DOBInput: React.FC<DOBInputProps> = ({ value, onChange, label = "Date of Birth" }) => {
-  const [day, setDay] = React.useState<string>(value ? value.getDate().toString().padStart(2, "0") : "");
-  const [month, setMonth] = React.useState<string>(value ? (value.getMonth() + 1).toString().padStart(2, "0") : "");
-  const [year, setYear] = React.useState<string>(value ? value.getFullYear().toString() : "");
+  // Use local state for the strings so typing isn't interrupted
+  const [day, setDay] = React.useState<string>("");
+  const [month, setMonth] = React.useState<string>("");
+  const [year, setYear] = React.useState<string>("");
 
+  // Initialize from value prop only once or when value changes from outside
   React.useEffect(() => {
-    if (value) {
-      setDay(value.getDate().toString().padStart(2, "0"));
-      setMonth((value.getMonth() + 1).toString().padStart(2, "0"));
-      setYear(value.getFullYear().toString());
-    } else {
-      setDay("");
-      setMonth("");
-      setYear("");
+    if (value && isValid(value)) {
+      const d = value.getDate().toString().padStart(2, "0");
+      const m = (value.getMonth() + 1).toString().padStart(2, "0");
+      const y = value.getFullYear().toString();
+      
+      // Only update if different to avoid focus/cursor jumps
+      if (d !== day) setDay(d);
+      if (m !== month) setMonth(m);
+      if (y !== year) setYear(y);
+    } else if (value === null || value === undefined) {
+      // If parent explicitly clears, we clear
+      if (day !== "" || month !== "" || year !== "") {
+        setDay("");
+        setMonth("");
+        setYear("");
+      }
     }
   }, [value]);
 
   const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, "0"));
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0"));
-  
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 120 }, (_, i) => (currentYear - i).toString());
 
-  const validateAndTriggerChange = (newDay: string, newMonth: string, newYear: string) => {
-    const d = parseInt(newDay);
-    const m = parseInt(newMonth);
-    const y = parseInt(newYear);
+  const validateAndTriggerChange = (dStr: string, mStr: string, yStr: string) => {
+    const d = parseInt(dStr);
+    const m = parseInt(mStr);
+    const y = parseInt(yStr);
 
-    if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
-      if (d > 0 && d <= 31 && m > 0 && m <= 12 && y > 1900) {
-        const date = new Date(y, m - 1, d);
-        // Check if the date is valid (e.g. avoids Feb 31st)
-        if (date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d) {
-          onChange(date);
-        } else {
-          onChange(null);
-        }
-      } else {
-        onChange(null);
+    if (!isNaN(d) && !isNaN(m) && !isNaN(y) && yStr.length === 4) {
+      const date = new Date(y, m - 1, d);
+      const today = new Date();
+      const minDate = new Date(1900, 0, 1);
+
+      // Verify it's a valid calendar date (e.g. Feb 30 is invalid)
+      if (
+        date.getFullYear() === y && 
+        date.getMonth() === m - 1 && 
+        date.getDate() === d &&
+        isBefore(date, today) &&
+        isAfter(date, minDate)
+      ) {
+        onChange(date);
+        return;
       }
-    } else {
-      onChange(null);
     }
-  };
-
-  const handleDayChange = (val: string) => {
-    setDay(val);
-    validateAndTriggerChange(val, month, year);
-  };
-
-  const handleMonthChange = (val: string) => {
-    setMonth(val);
-    validateAndTriggerChange(day, val, year);
-  };
-
-  const handleYearChange = (val: string) => {
-    setYear(val);
-    validateAndTriggerChange(day, month, val);
+    // If any part is incomplete or invalid, parent value is null
+    onChange(null);
   };
 
   return (
@@ -144,21 +148,33 @@ const DOBInput: React.FC<DOBInputProps> = ({ value, onChange, label = "Date of B
       <div className="grid grid-cols-3 gap-2">
         <TypeableSelect
           value={day}
-          onChange={handleDayChange}
+          onChange={(val) => {
+            setDay(val);
+            validateAndTriggerChange(val, month, year);
+          }}
           options={days}
           placeholder="DD"
+          maxLength={2}
         />
         <TypeableSelect
           value={month}
-          onChange={handleMonthChange}
+          onChange={(val) => {
+            setMonth(val);
+            validateAndTriggerChange(day, val, year);
+          }}
           options={months}
           placeholder="MM"
+          maxLength={2}
         />
         <TypeableSelect
           value={year}
-          onChange={handleYearChange}
+          onChange={(val) => {
+            setYear(val);
+            validateAndTriggerChange(day, month, val);
+          }}
           options={years}
           placeholder="YYYY"
+          maxLength={4}
         />
       </div>
     </div>

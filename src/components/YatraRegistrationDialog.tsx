@@ -129,7 +129,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                       <Label htmlFor={option.option_name} className="flex flex-1 items-center justify-between">
                         <div>
                           <span className="font-medium text-lg">{option.option_name}</span>
-                          {option.child_amount !== undefined && (
+                          {yatra.can_add_members && option.child_amount !== undefined && (
                             <div className="mt-1 text-sm text-green-600 dark:text-green-400">
                               <span className="flex items-center gap-2">
                                 <Baby className="h-4 w-4" />

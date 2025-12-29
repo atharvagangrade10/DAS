@@ -41,7 +41,9 @@ const ReceiptDialog: React.FC<ReceiptDialogProps> = ({ isOpen, onOpenChange, rec
             body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
             .container { width: 210mm; margin: 0 auto; padding: 20mm; box-sizing: border-box; }
             .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15mm; margin-bottom: 15mm; }
-            .title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+            .logo-section { text-align: center; margin-bottom: 10mm; }
+            .logo { width: 120px; height: 120px; margin: 0 auto; display: block; }
+            .title { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
             .subtitle { font-size: 12px; color: #666; }
             .section { margin-bottom: 10mm; }
             .label { font-weight: bold; display: inline-block; width: 45mm; }
@@ -53,6 +55,9 @@ const ReceiptDialog: React.FC<ReceiptDialogProps> = ({ isOpen, onOpenChange, rec
         <body>
           <div class="container">
             <div class="header">
+              <div class="logo-section">
+                <img src="/Logo.png" alt="Logo" class="logo" />
+              </div>
               <div class="title">Payment Receipt</div>
               <div class="subtitle">Generated on ${format(new Date(), "PPP")}</div>
             </div>

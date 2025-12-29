@@ -55,7 +55,7 @@ const LoginPage = () => {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src="/Logo.png" alt="Logo" className="h-16 w-16" />
+            <img src="/Logo.png" alt="Logo" className="h-24 w-24" />
           </div>
           <CardTitle className="text-3xl font-bold">Login to DAS</CardTitle>
           <CardDescription>Enter your phone number and password to access the system.</CardDescription>

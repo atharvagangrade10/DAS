@@ -142,7 +142,7 @@ const RegisterPage = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <img src="/Logo.png" alt="Logo" className="h-16 w-16" />
+            <img src="/Logo.png" alt="Logo" className="h-24 w-24" />
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">New Account Registration</h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">Create your participant profile to access DAS features.</p>

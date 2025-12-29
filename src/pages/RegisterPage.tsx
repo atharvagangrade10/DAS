@@ -173,7 +173,13 @@ const RegisterPage = () => {
                           <FormControl>
                             <div className="relative">
                               <Smartphone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                              <Input {...field} type="tel" placeholder="e.g. 9876543210" className="pl-10 text-lg py-6" />
+                              <Input 
+                                {...field} 
+                                type="tel" 
+                                autoComplete="tel"
+                                placeholder="e.g. 9876543210" 
+                                className="pl-10 text-lg py-6" 
+                              />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -193,7 +199,9 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} placeholder="First Name" /></FormControl>
+                          <FormControl>
+                            <Input {...field} placeholder="First Name" autoComplete="given-name" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -204,7 +212,9 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} placeholder="Last Name" /></FormControl>
+                          <FormControl>
+                            <Input {...field} placeholder="Last Name" autoComplete="family-name" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -216,7 +226,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Initiated Name (Optional)</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
+                          <FormControl><Input {...field} autoComplete="off" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -228,7 +238,9 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} type="tel" placeholder="Phone Number" /></FormControl>
+                          <FormControl>
+                            <Input {...field} type="tel" placeholder="Phone Number" autoComplete="tel" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -306,7 +318,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Workplace / Institution</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
+                          <FormControl><Input {...field} autoComplete="organization" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -318,7 +330,9 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Residential Address <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
+                          <FormControl>
+                            <Input {...field} autoComplete="street-address" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -342,7 +356,9 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} type="email" /></FormControl>
+                          <FormControl>
+                            <Input {...field} type="email" autoComplete="email" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}

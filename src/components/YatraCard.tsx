@@ -47,29 +47,32 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
           <h4 className="font-medium flex items-center gap-1 text-base">
             <IndianRupee className="h-4 w-4" /> Registration Fees:
           </h4>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-3">
             {yatra.registration_fees.map((fee) => (
-              <TooltipProvider key={fee.option_name}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge variant="secondary" className="text-sm px-3 py-1 cursor-default">
-                      {fee.option_name}: ₹{fee.amount}
-                      {fee.child_amount !== null && fee.child_amount !== undefined && (
-                        <span className="ml-1 text-[10px] opacity-70">(C: ₹{fee.child_amount})</span>
-                      )}
+              <Card key={fee.option_name} className="p-4 border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
+                      {fee.option_name}
                     </Badge>
-                  </TooltipTrigger>
+                    <div className="text-lg font-bold">
+                      ₹{fee.amount}
+                    </div>
+                  </div>
                   {fee.child_amount !== undefined && (
-                    <TooltipContent>
-                      <p className="flex items-center gap-1">
-                        <Baby className="h-3 w-3" /> 
-                        Child Price: ₹{fee.child_amount} 
-                        {fee.child_condition_by_age && ` (Free if ≤ ${fee.child_condition_by_age} years)`}
-                      </p>
-                    </TooltipContent>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                        Child: ₹{fee.child_amount}
+                      </div>
+                      {fee.child_condition_by_age && (
+                        <div className="text-xs text-muted-foreground">
+                          Free if ≤ {fee.child_condition_by_age} years
+                        </div>
+                      )}
+                    </div>
                   )}
-                </Tooltip>
-              </TooltipProvider>
+                </div>
+              </Card>
             ))}
           </div>
         </div>

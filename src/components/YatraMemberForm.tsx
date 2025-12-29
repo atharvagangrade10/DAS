@@ -202,7 +202,8 @@ const YatraMemberForm: React.FC<YatraMemberFormProps> = ({
               <FormMessage />
             </FormItem>
           )}
-        )}
+        />
+      )}
 
       <FormField
         control={form.control}
@@ -227,7 +228,7 @@ const YatraMemberForm: React.FC<YatraMemberFormProps> = ({
           </FormItem>
         )}
       />
-      
+
       <FormField
         control={form.control}
         name="email"

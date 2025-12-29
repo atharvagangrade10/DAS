@@ -61,6 +61,7 @@ export type FamilyMemberData = z.infer<typeof familyMemberSchema> & {
   calculated_age: number;
   full_name: string;
   participant_id?: string;
+  selected_fee_option?: string; // New field for individual plan selection
 };
 
 interface AddFamilyMemberDialogProps {
@@ -68,6 +69,7 @@ interface AddFamilyMemberDialogProps {
   onOpenChange: (open: boolean) => void;
   onAdd: (member: FamilyMemberData) => void;
   defaultAddress?: string;
+  availableFeeOptions?: { option_name: string; amount: number; child_amount?: number | null; child_condition_by_age?: number | null }[]; // New prop
 }
 
 const getInverseRelation = (relation: string, currentUserGender: string): string => {
@@ -87,6 +89,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   onOpenChange,
   onAdd,
   defaultAddress = "",
+  availableFeeOptions = [],
 }) => {
   const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
@@ -263,6 +266,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       calculated_age,
       full_name: p.full_name,
       participant_id: p.id,
+      selected_fee_option: availableFeeOptions[0]?.option_name, // Default to first option
     };
 
     onAdd(memberData);
@@ -324,6 +328,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               form={form as any}
               professionType={professionType}
               PROFESSIONS={PROFESSIONS}
+              availableFeeOptions={availableFeeOptions} // Pass fee options to form
             />
 
             <DialogFooter>

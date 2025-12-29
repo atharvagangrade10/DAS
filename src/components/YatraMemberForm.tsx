@@ -46,12 +46,14 @@ interface YatraMemberFormProps {
   form: UseFormReturn<FamilyMemberFormValues>;
   professionType: string | undefined;
   PROFESSIONS: string[];
+  availableFeeOptions?: { option_name: string; amount: number; child_amount?: number | null; child_condition_by_age?: number | null }[]; // New prop
 }
 
 const YatraMemberForm: React.FC<YatraMemberFormProps> = ({
   form,
   professionType,
   PROFESSIONS,
+  availableFeeOptions = [],
 }) => {
   return (
     <div className="space-y-4">
@@ -240,6 +242,32 @@ const YatraMemberForm: React.FC<YatraMemberFormProps> = ({
           </FormItem>
         )}
       />
+
+      {/* Individual Plan Selection */}
+      {availableFeeOptions.length > 0 && (
+        <FormField
+          control={form.control}
+          name="selected_fee_option"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Registration Plan</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger><SelectValue placeholder="Select plan" /></SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableFeeOptions.map(option => (
+                    <SelectItem key={option.option_name} value={option.option_name}>
+                      {option.option_name} - ₹{option.amount}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
     </div>
   );
 };

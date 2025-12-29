@@ -52,17 +52,24 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
   }, [yatra.registration_fees, selectedOptionName]);
 
   const calculateMemberPrice = (member: FamilyMemberData) => {
+    // Use the member's selected fee option if available, otherwise fall back to the main selected option
+    const feeOption = member.selected_fee_option 
+      ? yatra.registration_fees.find(f => f.option_name === member.selected_fee_option)
+      : selectedOption;
+
+    if (!feeOption) return selectedOption.amount;
+
     if (member.relation === "Child") {
       const age = member.calculated_age;
-      const ageLimit = selectedOption.child_condition_by_age;
-      const childPrice = selectedOption.child_amount ?? selectedOption.amount;
+      const ageLimit = feeOption.child_condition_by_age;
+      const childPrice = feeOption.child_amount ?? feeOption.amount;
 
       if (ageLimit !== undefined && ageLimit !== null) {
         return age > ageLimit ? childPrice : 0;
       }
       return childPrice;
     }
-    return selectedOption.amount;
+    return feeOption.amount;
   };
 
   const baseFee = selectedOption.amount;
@@ -179,6 +186,11 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                           <div className="text-xs text-muted-foreground">
                             {m.relation} • {m.calculated_age} yrs • {m.phone}
                           </div>
+                          {m.selected_fee_option && (
+                            <div className="text-xs text-primary font-medium">
+                              Plan: {m.selected_fee_option}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-4">
                           <span className={`text-sm font-bold ${calculateMemberPrice(m) === 0 ? "text-green-600" : ""}`}>
@@ -225,6 +237,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
           onOpenChange={setIsAddMemberDialogOpen}
           onAdd={(member) => setMembers([...members, member])}
           defaultAddress={user?.address}
+          availableFeeOptions={yatra.registration_fees} // Pass fee options to AddFamilyMemberDialog
         />
       </Dialog>
       

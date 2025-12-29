@@ -59,7 +59,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                       ₹{fee.amount}
                     </div>
                   </div>
-                  {fee.child_amount !== undefined && (
+                  {yatra.can_add_members && fee.child_amount !== undefined && (
                     <div className="flex flex-col gap-1">
                       <div className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
                         <Baby className="h-4 w-4" />

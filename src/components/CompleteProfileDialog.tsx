@@ -4,7 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ interface CompleteProfileDialogProps {
 
 const CompleteProfileDialog: React.FC<CompleteProfileDialogProps> = ({ isOpen, onOpenChange }) => {
   const { user, token, updateUser } = useAuth();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof mandatorySchema>>({
     resolver: zodResolver(mandatorySchema),
@@ -103,6 +104,10 @@ const CompleteProfileDialog: React.FC<CompleteProfileDialogProps> = ({ isOpen, o
     onSuccess: (data) => {
       updateUser({ ...user!, ...data });
       toast.success("Profile completed successfully!");
+      
+      // Invalidate the query used by Index.tsx to check profile completeness
+      queryClient.invalidateQueries({ queryKey: ["latestParticipantDetails", user?.user_id] });
+      
       onOpenChange(false);
     },
     onError: (error: Error) => {

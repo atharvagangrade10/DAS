@@ -228,7 +228,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} type="tel" readOnly className="bg-muted cursor-not-allowed" /></FormControl>
+                          <FormControl><Input {...field} type="tel" placeholder="Phone Number" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}

@@ -261,6 +261,26 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
     );
   }, [participants, searchQuery]);
 
+  const statusCounts = React.useMemo(() => {
+    const counts = {
+      completed: 0,
+      pending: 0,
+      failed: 0,
+    };
+
+    participants.forEach(p => {
+      const status = p.payment_status.toLowerCase();
+      if (status === 'success' || status === 'paid' || status === 'completed') {
+        counts.completed++;
+      } else if (status === 'pending') {
+        counts.pending++;
+      } else {
+        counts.failed++;
+      }
+    });
+    return counts;
+  }, [participants]);
+
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
     if (s === "success" || s === "paid" || s === "completed") {
@@ -285,6 +305,21 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
           </DialogDescription>
         </DialogHeader>
 
+        <div className="px-6 pb-4 grid grid-cols-3 gap-3 text-center border-b">
+          <Card className="p-2 shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground">Completed</p>
+            <p className="text-xl font-bold text-green-600">{statusCounts.completed}</p>
+          </Card>
+          <Card className="p-2 shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground">Pending</p>
+            <p className="text-xl font-bold text-amber-600">{statusCounts.pending}</p>
+          </Card>
+          <Card className="p-2 shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground">Failed</p>
+            <p className="text-xl font-bold text-red-600">{statusCounts.failed}</p>
+          </Card>
+        </div>
+
         <div className="px-6 py-2">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -297,7 +332,7 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-3">
+        <div className="flex-1 overflow-y-auto px-6 pt-2 space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />

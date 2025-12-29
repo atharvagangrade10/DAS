@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, Check, Baby, ThumbsUp } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, Check, Baby, ThumbsUp, Users, Eye } from "lucide-react";
 import { Yatra } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,8 @@ import YatraRegistrationDialog from "./YatraRegistrationDialog";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPaymentHistory } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface YatraCardProps {
   yatra: Yatra;
@@ -22,8 +24,10 @@ interface YatraCardProps {
 
 const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
+  const [isRegisteredParticipantsDialogOpen, setIsRegisteredParticipantsDialogOpen] = React.useState(false);
 
   // Fetch payment history to check registration status
   const { data: paymentHistory, isLoading: isLoadingHistory } = useQuery<PaymentRecord[], Error>({
@@ -40,6 +44,20 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       (p.status.toLowerCase() === 'completed' || p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
     );
   }, [paymentHistory, yatra.id]);
+
+  // Mock registered participants data (in a real app, this would come from an API)
+  const registeredParticipants = React.useMemo(() => {
+    // This is mock data - in a real implementation, you would fetch this from your backend
+    return [
+      { id: '1', name: 'John Doe', phone: '9876543210' },
+      { id: '2', name: 'Jane Smith', phone: '9876543211' },
+      { id: '3', name: 'Bob Johnson', phone: '9876543212' },
+    ];
+  }, [yatra.id]);
+
+  const handleViewProfile = (participantId: string) => {
+    navigate(`/participants/${participantId}`);
+  };
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow overflow-hidden">
@@ -99,7 +117,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         </div>
 
         {!showAdminControls && (
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
             {isRegisteredForYatra ? (
               <TooltipProvider>
                 <Tooltip>
@@ -124,13 +142,94 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                 Register
               </Button>
             )}
+            
+            {/* Registered Participants Button */}
+            <Button 
+              className="w-full flex items-center gap-2" 
+              variant="outline"
+              onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
+            >
+              <Users className="h-4 w-4" />
+              Registered Participants
+            </Button>
           </div>
         )}
       </CardContent>
 
       <EditYatraDialog yatra={yatra} isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />
       <YatraRegistrationDialog yatra={yatra} isOpen={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen} />
+      
+      {/* Registered Participants Dialog */}
+      <RegisteredParticipantsDialog
+        isOpen={isRegisteredParticipantsDialogOpen}
+        onOpenChange={setIsRegisteredParticipantsDialogOpen}
+        participants={registeredParticipants}
+        onViewProfile={handleViewProfile}
+      />
     </Card>
+  );
+};
+
+// Registered Participants Dialog Component
+interface RegisteredParticipantsDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  participants: Array<{ id: string; name: string; phone: string }>;
+  onViewProfile: (participantId: string) => void;
+}
+
+const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> = ({
+  isOpen,
+  onOpenChange,
+  participants,
+  onViewProfile,
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-6 w-6 text-primary" />
+            Registered Participants
+          </DialogTitle>
+          <DialogDescription>
+            List of participants who have registered for this yatra.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-3 py-4">
+          {participants.length > 0 ? (
+            participants.map((participant) => (
+              <Card key={participant.id} className="p-4 border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold">{participant.name}</h4>
+                    <p className="text-sm text-muted-foreground">{participant.phone}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onViewProfile(participant.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View Profile
+                  </Button>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No participants registered yet.
+            </div>
+          )}
+        </div>
+        
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

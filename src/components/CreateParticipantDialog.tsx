@@ -227,8 +227,8 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-            <div className="mb-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <div className="flex flex-col items-center">
               <FormField
                 control={form.control}
                 name="profile_photo_url"
@@ -243,30 +243,28 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="first_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="last_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="initiated_name"
@@ -294,46 +292,44 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
               )}
             />
             
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="dob"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <DOBInput value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Age (Calculated)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value ?? ""}
-                        readOnly
-                        className="bg-muted"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="dob"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <DOBInput value={field.value} onChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="age"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Age (Calculated)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value ?? ""}
+                      readOnly
+                      className="bg-muted"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
               name="gender"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Gender</FormLabel>
+                  <FormLabel>Gender <span className="text-red-500">*</span></FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -354,64 +350,61 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
               )}
             />
             
-            <div className="space-y-4 border p-3 rounded-md bg-muted/20">
-              <h3 className="text-sm font-semibold text-muted-foreground px-1">Professional Details</h3>
-              <FormField
-                control={form.control}
-                name="profession_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Profession</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select profession" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {PROFESSIONS.map((p) => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {professionType === "Other" && (
-                <FormField
-                  control={form.control}
-                  name="profession_other"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Specify Profession</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter your profession" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={form.control}
-                name="place_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workplace / Institution</FormLabel>
+            <FormField
+              control={form.control}
+              name="profession_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Profession</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
-                      <Input {...field} placeholder="Where do you work/study?" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select profession" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {PROFESSIONS.map((p) => (
+                        <SelectItem key={p} value={p}>{p}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {professionType === "Other" && (
+              <FormField
+                control={form.control}
+                name="profession_other"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Specify Profession</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter your profession" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
+            )}
+
+            <FormField
+              control={form.control}
+              name="place_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Workplace / Institution</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Where do you work/study?" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -483,7 +476,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
               )}
             />
             <DialogFooter>
-              <Button type="submit" disabled={mutation.isPending}>
+              <Button type="submit" className="w-full" disabled={mutation.isPending}>
                 {mutation.isPending ? "Adding..." : "Add Participant"}
               </Button>
             </DialogFooter>

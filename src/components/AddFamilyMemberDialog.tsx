@@ -105,7 +105,6 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
   const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
   
-  // State to hold the relationship data from the main profile
   const [profileRelationships, setProfileRelationships] = React.useState<RelatedParticipant[]>([]);
 
   const { data: relatedParticipants, isLoading: isLoadingRelated } = useQuery<Participant[]>({
@@ -159,7 +158,6 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       
       let memberId: string | undefined;
 
-      // 1. Find or Create the Member
       const existing = await searchParticipantPublic(values.phone);
       if (existing && existing.length > 0) {
         memberId = existing[0].id || (existing[0] as any).participant_id || (existing[0] as any).user_id;
@@ -187,7 +185,6 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
 
       if (!memberId) throw new Error("Could not determine participant ID.");
 
-      // 2. Establish Links (Sequential calls)
       const currentUserProfile = await fetchParticipantById(user.user_id);
       const currentUserLinks = currentUserProfile.related_participant_ids || [];
       
@@ -235,7 +232,6 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     const dobDate = p.dob ? parseISO(p.dob) : null;
     const calculated_age = dobDate && isValid(dobDate) ? differenceInYears(new Date(), dobDate) : (p.age || 0);
     
-    // Map backend role/relation to frontend expected enum
     const validRelations = ["Husband", "Wife", "Child", "Father", "Mother"];
     const relation = validRelations.includes(relInfo?.relation || "") 
       ? (relInfo!.relation as any) 
@@ -271,7 +267,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Family Member</DialogTitle>
           <DialogDescription>
@@ -289,16 +285,16 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               <Zap className="h-4 w-4 fill-primary" />
               Quick Add Linked Member
             </Label>
-            <div className="grid gap-2">
+            <div className="space-y-2">
               {relatedParticipants.map((p) => {
                 const rel = profileRelationships.find(r => r.participant_id === p.id)?.relation || "Relative";
                 return (
-                  <div key={p.id} className="flex items-center justify-between p-2 rounded bg-background border text-sm">
+                  <div key={p.id} className="flex flex-col p-3 rounded bg-background border text-sm gap-2">
                     <div>
                       <span className="font-semibold">{p.full_name}</span>
                       <span className="ml-2 text-xs text-muted-foreground">({rel})</span>
                     </div>
-                    <Button size="sm" variant="secondary" onClick={() => handleQuickAdd(p)}>
+                    <Button size="sm" variant="secondary" className="w-full" onClick={() => handleQuickAdd(p)}>
                       Add to Trip
                     </Button>
                   </div>
@@ -307,7 +303,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
             </div>
             <div className="flex items-center gap-2 pt-2">
               <Separator className="flex-1" />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">OR REGISTER NEW</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest text-center">OR REGISTER NEW</span>
               <Separator className="flex-1" />
             </div>
           </div>
@@ -320,12 +316,12 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               name="relation"
               render={({ field }) => (
                 <FormItem className="space-y-3">
-                  <FormLabel>Relation</FormLabel>
+                  <FormLabel>Relation <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
                       value={field.value}
-                      className="flex flex-wrap gap-4"
+                      className="flex flex-col gap-2"
                     >
                       {["Husband", "Wife", "Child", "Father", "Mother"].map((r) => (
                         <div key={r} className="flex items-center space-x-2">
@@ -340,30 +336,28 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="first_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="last_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -382,7 +376,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
                   <FormControl><Input {...field} type="tel" /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -395,46 +389,44 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <DOBInput value={field.value} onChange={field.onChange} />
+                    <DOBInput value={field.value} onChange={field.onChange} label={<>Date of Birth <span className="text-red-500">*</span></> as any} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="chanting_rounds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Chanting Rounds</FormLabel>
-                    <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender <span className="text-red-500">*</span></FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="chanting_rounds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Chanting Rounds</FormLabel>
+                  <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -486,7 +478,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>Address <span className="text-red-500">*</span></FormLabel>
                   <FormControl><Input {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>

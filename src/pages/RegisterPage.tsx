@@ -140,7 +140,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center py-12 px-4">
-      <div className="max-w-2xl w-full space-y-8">
+      <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">New Account Registration</h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">Create your participant profile to access DAS features.</p>
@@ -165,7 +165,7 @@ const RegisterPage = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Smartphone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
@@ -182,8 +182,8 @@ const RegisterPage = () => {
                     </Button>
                   </div>
                 ) : (
-                  <>
-                    <div className="flex flex-col items-center mb-6">
+                  <div className="space-y-6">
+                    <div className="flex flex-col items-center">
                       <FormField
                         control={form.control}
                         name="profile_photo_url"
@@ -198,30 +198,28 @@ const RegisterPage = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="first_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>First Name</FormLabel>
-                            <FormControl><Input {...field} placeholder="First Name" autoComplete="given-name" /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="last_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Last Name</FormLabel>
-                            <FormControl><Input {...field} placeholder="Last Name" autoComplete="family-name" /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="first_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
+                          <FormControl><Input {...field} placeholder="First Name" autoComplete="given-name" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="last_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
+                          <FormControl><Input {...field} placeholder="Last Name" autoComplete="family-name" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
@@ -240,60 +238,45 @@ const RegisterPage = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
                           <FormControl><Input {...field} type="tel" disabled className="bg-muted" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <div className="space-y-4 pt-4 border-t">
-                      <FormField
-                        control={form.control}
-                        name="dob"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <DOBInput value={field.value} onChange={field.onChange} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="dob"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <DOBInput value={field.value} onChange={field.onChange} label={<>Date of Birth <span className="text-red-500">*</span></> as any} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="gender"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Gender</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Male">Male</SelectItem>
-                                <SelectItem value="Female">Female</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="chanting_rounds"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Chanting Rounds</FormLabel>
-                            <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gender <span className="text-red-500">*</span></FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Male">Male</SelectItem>
+                              <SelectItem value="Female">Female</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
@@ -345,8 +328,20 @@ const RegisterPage = () => {
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Residential Address</FormLabel>
+                          <FormLabel>Residential Address <span className="text-red-500">*</span></FormLabel>
                           <FormControl><Input {...field} autoComplete="street-address" /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="chanting_rounds"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chanting Rounds</FormLabel>
+                          <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -368,7 +363,7 @@ const RegisterPage = () => {
                       {accountMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Register and Set Password"}
                       {!accountMutation.isPending && <ArrowRight className="ml-2 h-5 w-5" />}
                     </Button>
-                  </>
+                  </div>
                 )}
               </form>
             </Form>

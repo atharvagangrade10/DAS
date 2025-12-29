@@ -87,7 +87,7 @@ const ResetPasswordPage = () => {
                 name="new_password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New Password</FormLabel>
+                    <FormLabel>New Password <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input 
@@ -114,7 +114,7 @@ const ResetPasswordPage = () => {
                 name="confirm_password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormLabel>Confirm New Password <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input 

@@ -74,7 +74,7 @@ const ForgotPasswordPage = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., 9876543210" type="tel" {...field} />
                     </FormControl>

@@ -38,7 +38,7 @@ interface CreateProgramDialogProps {
 }
 
 const formSchema = z.object({
-  program_name: z.string().min(1, "Program name is required"), // Changed to program_name
+  program_name: z.string().min(1, "Program name is required"),
   description: z.string().optional(),
   start_date: z.date({ required_error: "Start date is required" }),
   end_date: z.date({ required_error: "End date is required" }),
@@ -84,7 +84,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      program_name: "", // Changed to program_name
+      program_name: "",
       description: "",
       start_date: undefined,
       end_date: undefined,
@@ -109,7 +109,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const programData: ProgramCreate = {
-      program_name: values.program_name, // Changed to program_name
+      program_name: values.program_name,
       description: values.description || "",
       start_date: format(values.start_date, "yyyy-MM-dd"),
       end_date: format(values.end_date, "yyyy-MM-dd"),
@@ -128,13 +128,13 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
             <FormField
               control={form.control}
-              name="program_name" // Changed to program_name
+              name="program_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Program Name</FormLabel>
+                  <FormLabel>Program Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -160,7 +160,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
               name="start_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Start Date</FormLabel>
+                  <FormLabel>Start Date <span className="text-red-500">*</span></FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -198,7 +198,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
               name="end_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>End Date</FormLabel>
+                  <FormLabel>End Date <span className="text-red-500">*</span></FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -236,7 +236,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
               name="num_sessions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Number of Sessions</FormLabel>
+                  <FormLabel>Number of Sessions <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -250,7 +250,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
               )}
             />
             <DialogFooter>
-              <Button type="submit" disabled={mutation.isPending}>
+              <Button type="submit" className="w-full" disabled={mutation.isPending}>
                 {mutation.isPending ? "Creating..." : "Create Program"}
               </Button>
             </DialogFooter>

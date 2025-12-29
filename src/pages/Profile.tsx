@@ -213,7 +213,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 sm:p-8 max-w-4xl">
+    <div className="container mx-auto p-6 sm:p-8 max-w-2xl">
       <div className="flex items-center gap-4 mb-8">
         <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
           <UserIcon className="h-8 w-8 text-primary" />
@@ -232,7 +232,7 @@ const ProfilePage = () => {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="flex flex-col items-center mb-6">
+              <div className="flex flex-col items-center">
                 <FormField
                   control={form.control}
                   name="profile_photo_url"
@@ -251,60 +251,58 @@ const ProfilePage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="full_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Full Name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="initiated_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Initiated Name (Optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="e.g., Arjuna Dasa" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="tel" placeholder="10 digit number" readOnly className="bg-muted cursor-not-allowed" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="email" placeholder="email@example.com" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Full Name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="initiated_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Initiated Name (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., Arjuna Dasa" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input {...field} type="tel" placeholder="10 digit number" readOnly className="bg-muted cursor-not-allowed" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" placeholder="email@example.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="space-y-4 pt-4 border-t">
                 <FormField
@@ -313,145 +311,141 @@ const ProfilePage = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <DOBInput value={field.value} onChange={field.onChange} />
+                        <DOBInput value={field.value} onChange={field.onChange} label={<>Date of Birth <span className="text-red-500">*</span></> as any} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="age"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Age (Calculated)</FormLabel>
+                <FormField
+                  control={form.control}
+                  name="age"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Age (Calculated)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          readOnly
+                          className="bg-muted cursor-not-allowed"
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender <span className="text-red-500">*</span></FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            readOnly
-                            className="bg-muted cursor-not-allowed"
-                            value={field.value || ""}
-                          />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gender</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="space-y-6 pt-4 border-t">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Professional Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="profession_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Profession</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select profession" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {PROFESSIONS.map((p) => (
-                              <SelectItem key={p} value={p}>{p}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {professionType === "Other" && (
-                    <FormField
-                      control={form.control}
-                      name="profession_other"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Specify Profession</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter your profession" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="profession_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Profession</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select profession" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PROFESSIONS.map((p) => (
+                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
 
+                {professionType === "Other" && (
                   <FormField
                     control={form.control}
-                    name="place_name"
+                    name="profession_other"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Workplace / Institution</FormLabel>
+                        <FormLabel>Specify Profession</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Where do you work/study?" />
+                          <Input {...field} placeholder="Enter your profession" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="chanting_rounds"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Chanting Rounds</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            value={field.value || ""}
-                            onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
-                            min="0"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="place_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Workplace / Institution</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Where do you work/study?" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="chanting_rounds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Chanting Rounds</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                          min="0"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Address <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Residential address" />
                       </FormControl>
@@ -462,7 +456,7 @@ const ProfilePage = () => {
               </div>
 
               <div className="pt-6 border-t flex justify-end">
-                <Button type="submit" disabled={mutation.isPending} className="w-full md:w-auto px-8">
+                <Button type="submit" disabled={mutation.isPending} className="w-full">
                   {mutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}

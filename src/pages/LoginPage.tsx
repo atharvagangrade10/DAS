@@ -66,7 +66,7 @@ const LoginPage = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number (10 digits)</FormLabel>
+                    <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., 9090511756" type="tel" {...field} />
                     </FormControl>
@@ -79,7 +79,7 @@ const LoginPage = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input 

@@ -41,7 +41,7 @@ const PublicSetPassword = () => {
     React.useEffect(() => {
         if (!participantId) {
             toast.error("Invalid session. Please register again.");
-            navigate("/yatra/maheswar-yatra-new-year");
+            navigate("/register");
         }
     }, [participantId, navigate]);
 
@@ -93,7 +93,7 @@ const PublicSetPassword = () => {
                                     name="sec_p"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>New Password</FormLabel>
+                                            <FormLabel>New Password <span className="text-red-500">*</span></FormLabel>
                                             <FormControl>
                                                 <div className="relative">
                                                     <Input
@@ -120,7 +120,7 @@ const PublicSetPassword = () => {
                                     name="sec_v"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Confirm Password</FormLabel>
+                                            <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
                                             <FormControl>
                                                 <div className="relative">
                                                     <Input

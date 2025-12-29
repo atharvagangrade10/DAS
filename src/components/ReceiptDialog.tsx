@@ -101,28 +101,6 @@ const ReceiptDialog: React.FC<ReceiptDialogProps> = ({ isOpen, onOpenChange, rec
     }
   };
 
-  const handleDownloadImage = async () => {
-    if (!receiptData || !receiptRef.current) return;
-
-    try {
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff'
-      });
-      
-      const link = document.createElement('a');
-      link.download = `receipt_${receiptData.yatra_name.replace(/\s+/g, '_')}_${receiptData.participant_id}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch (error) {
-      console.error("Error generating image:", error);
-      toast.error("Failed to generate receipt image", {
-        description: "Please try again or contact support.",
-      });
-    }
-  };
-
   if (!receiptData) return null;
 
   return (
@@ -223,14 +201,10 @@ const ReceiptDialog: React.FC<ReceiptDialogProps> = ({ isOpen, onOpenChange, rec
           </div>
         </div>
 
-        <DialogFooter className="space-y-2">
+        <DialogFooter>
           <Button onClick={handleDownloadPDF} className="w-full">
             <Download className="mr-2 h-4 w-4" />
-            Download as HTML
-          </Button>
-          <Button variant="outline" onClick={handleDownloadImage} className="w-full">
-            <Download className="mr-2 h-4 w-4" />
-            Download as Image
+            Download Receipt (PDF)
           </Button>
         </DialogFooter>
       </DialogContent>

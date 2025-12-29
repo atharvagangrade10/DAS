@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { LoginRequest } from '@/types/auth';
 
 const loginSchema = z.object({
@@ -21,7 +21,6 @@ const loginSchema = z.object({
 const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = React.useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -55,6 +54,9 @@ const LoginPage = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <img src="/Logo.png" alt="Logo" className="h-16 w-16" />
+          </div>
           <CardTitle className="text-3xl font-bold">Login to DAS</CardTitle>
           <CardDescription>Enter your phone number and password to access the system.</CardDescription>
         </CardHeader>
@@ -83,16 +85,15 @@ const LoginPage = () => {
                     <FormControl>
                       <div className="relative">
                         <Input 
-                          type={showPassword ? "text" : "password"} 
+                          type="password" 
                           placeholder="••••••••" 
                           {...field} 
                         />
                         <button
                           type="button"
-                          onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          <EyeOff className="h-4 w-4" />
                         </button>
                       </div>
                     </FormControl>
@@ -112,16 +113,16 @@ const LoginPage = () => {
           </Form>
           
           <div className="mt-4 text-center text-sm">
-            <Link to="/forgot-password" className="text-primary hover:underline">
+            <a href="/forgot-password" className="text-primary hover:underline">
               Forgot Password?
-            </Link>
+            </a>
           </div>
         </CardContent>
         <div className="p-4 border-t text-center text-sm bg-gray-50 dark:bg-gray-800 rounded-b-xl">
           Don't have an account?{" "}
-          <Link to="/register" className="text-primary hover:underline font-medium">
+          <a href="/register" className="text-primary hover:underline font-medium">
             Register here
-          </Link>
+          </a>
         </div>
       </Card>
     </div>

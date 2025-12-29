@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -30,7 +30,7 @@ import { Loader2, ArrowRight, Smartphone } from "lucide-react";
 import { createAccountCheck, createParticipantPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 import PhotoUpload from "@/components/PhotoUpload";
-import { Participant } from "@/types/participant"; // Import Participant type
+import { Participant } from "@/types/participant";
 
 const PROFESSIONS = ["Student", "Employee", "Teacher", "Doctor", "Business", "Housewife", "Retired", "Other"];
 
@@ -47,8 +47,7 @@ const registrationSchema = z.object({
   profession_type: z.string().optional(),
   profession_other: z.string().optional(),
   chanting_rounds: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().int().min(0).nullable()),
-  email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
-  profile_photo_url: z.string().nullable().optional(),
+  email: z.string().email("Invalid email address").min(1, "Email is required"),
 });
 
 const RegisterPage = () => {
@@ -72,7 +71,6 @@ const RegisterPage = () => {
       profession_other: "",
       chanting_rounds: 0,
       email: "",
-      profile_photo_url: null,
     },
   });
 
@@ -104,7 +102,6 @@ const RegisterPage = () => {
       }
 
       if (response.status === "SetPassword") {
-        // Pass participantId via query parameter
         navigate(`/public/set-password?participantId=${response.participant_id}`);
         return;
       }
@@ -133,16 +130,7 @@ const RegisterPage = () => {
         devotee_friend_name: "None",
       };
       const newParticipant = await createParticipantPublic(participantData);
-      
-      // Extract ID, checking for both 'id' and 'participant_id' keys
-      const participantId = newParticipant.id || (newParticipant as any).participant_id;
-
-      if (!participantId) {
-        throw new Error("Registration succeeded but participant ID was not returned.");
-      }
-
-      // Pass participantId via query parameter
-      navigate(`/public/set-password?participantId=${participantId}`);
+      navigate(`/public/set-password?participantId=${newParticipant.id}`);
     },
     onError: (error: Error) => {
       toast.error("Registration failed", { description: error.message });
@@ -153,6 +141,9 @@ const RegisterPage = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center py-12 px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <img src="/Logo.png" alt="Logo" className="h-16 w-16" />
+          </div>
           <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">New Account Registration</h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">Create your participant profile to access DAS features.</p>
         </div>
@@ -180,7 +171,7 @@ const RegisterPage = () => {
                           <FormControl>
                             <div className="relative">
                               <Smartphone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                              <Input {...field} type="tel" placeholder="e.g. 9876543210" className="pl-10 text-lg py-6" autoComplete="tel" />
+                              <Input {...field} type="tel" placeholder="e.g. 9876543210" className="pl-10 text-lg py-6" />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -194,28 +185,13 @@ const RegisterPage = () => {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <div className="flex flex-col items-center">
-                      <FormField
-                        control={form.control}
-                        name="profile_photo_url"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <PhotoUpload value={field.value} onChange={field.onChange} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
                     <FormField
                       control={form.control}
                       name="first_name"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} placeholder="First Name" autoComplete="given-name" /></FormControl>
+                          <FormControl><Input {...field} placeholder="First Name" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -226,7 +202,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} placeholder="Last Name" autoComplete="family-name" /></FormControl>
+                          <FormControl><Input {...field} placeholder="Last Name" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -238,7 +214,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Initiated Name (Optional)</FormLabel>
-                          <FormControl><Input {...field} autoComplete="additional-name" /></FormControl>
+                          <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -328,7 +304,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Workplace / Institution</FormLabel>
-                          <FormControl><Input {...field} autoComplete="organization" /></FormControl>
+                          <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -340,7 +316,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Residential Address <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} autoComplete="street-address" /></FormControl>
+                          <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -364,7 +340,7 @@ const RegisterPage = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
-                          <FormControl><Input {...field} type="email" autoComplete="email" /></FormControl>
+                          <FormControl><Input {...field} type="email" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -383,9 +359,9 @@ const RegisterPage = () => {
         
         <div className="text-center text-sm text-gray-600 dark:text-gray-400">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline font-medium">
+          <a href="/login" className="text-primary hover:underline font-medium">
             Log In
-          </Link>
+          </a>
         </div>
       </div>
     </div>

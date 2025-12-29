@@ -52,7 +52,6 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
   }, [yatra.registration_fees, selectedOptionName]);
 
   const calculateMemberPrice = (member: FamilyMemberData) => {
-    // Use the member's selected fee option if available, otherwise fall back to the main selected option
     const feeOption = member.selected_fee_option 
       ? yatra.registration_fees.find(f => f.option_name === member.selected_fee_option)
       : selectedOption;
@@ -80,7 +79,6 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
     mutationFn: async () => {
       if (!user?.user_id) throw new Error("User ID is missing.");
       
-      // Build related_participant_ids array with registration_fee
       const related_participant_ids = members.map(m => {
         const feeOption = m.selected_fee_option 
           ? yatra.registration_fees.find(f => f.option_name === m.selected_fee_option)
@@ -113,12 +111,14 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
       });
     },
     onSuccess: (invoice) => {
+      // Close the dialog immediately after the invoice is created and before the Razorpay overlay appears
+      onOpenChange(false);
+      
       displayRazorpay({
         yatraId: yatra.id,
         invoice,
         onSuccess: () => {
           toast.success("Registration successful!");
-          onOpenChange(false);
           setMembers([]);
         },
         onFailure: (error) => {
@@ -259,7 +259,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
           onOpenChange={setIsAddMemberDialogOpen}
           onAdd={(member) => setMembers([...members, member])}
           defaultAddress={user?.address}
-          availableFeeOptions={yatra.registration_fees} // Pass fee options to AddFamilyMemberDialog
+          availableFeeOptions={yatra.registration_fees}
         />
       </Dialog>
       

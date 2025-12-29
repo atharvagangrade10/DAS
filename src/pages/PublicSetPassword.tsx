@@ -32,14 +32,14 @@ const passwordSchema = z.object({
 const PublicSetPassword = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    
+
     // Look for participant_id with detailed logging
     const rawId = searchParams.get('participant_id');
     const legacyId = searchParams.get('participantId');
-    
-    console.log("Parsing PublicSetPassword query params:", { 
-      participant_id: rawId, 
-      participantId: legacyId 
+
+    console.log("Parsing PublicSetPassword query params:", {
+        participant_id: rawId,
+        participantId: legacyId
     });
 
     const participantId = rawId || legacyId;
@@ -51,7 +51,7 @@ const PublicSetPassword = () => {
         if (!participantId || participantId === 'undefined' || participantId === 'null') {
             console.error("Invalid participantId detected:", participantId);
             toast.error("Invalid session. Please register again.");
-            navigate("/register", { replace: true });
+            navigate("/register/full", { replace: true });
         }
     }, [participantId, navigate]);
 

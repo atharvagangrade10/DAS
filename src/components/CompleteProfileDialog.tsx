@@ -36,6 +36,7 @@ import { useAuth } from "@/context/AuthContext";
 import { API_BASE_URL } from "@/config/api";
 import { Loader2, AlertTriangle } from "lucide-react";
 import DOBInput from "./DOBInput";
+import PhotoUpload from "./PhotoUpload";
 
 const mandatorySchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
@@ -44,6 +45,7 @@ const mandatorySchema = z.object({
   dob: z.date({ required_error: "Date of birth is required" }),
   gender: z.enum(["Male", "Female", "Other"], { required_error: "Gender is required" }),
   email: z.string().email("Invalid email address").min(1, "Email is required"),
+  profile_photo_url: z.string().min(1, "Profile photo is required"),
 });
 
 interface CompleteProfileDialogProps {
@@ -63,6 +65,7 @@ const CompleteProfileDialog: React.FC<CompleteProfileDialogProps> = ({ isOpen, o
       dob: user?.dob && isValid(parseISO(user.dob)) ? parseISO(user.dob) : undefined,
       gender: (user?.gender as any) || "Male",
       email: user?.email || "",
+      profile_photo_url: user?.profile_photo_url || "",
     },
   });
 
@@ -78,6 +81,7 @@ const CompleteProfileDialog: React.FC<CompleteProfileDialogProps> = ({ isOpen, o
         dob: format(values.dob, "yyyy-MM-dd"),
         gender: values.gender,
         email: values.email,
+        profile_photo_url: values.profile_photo_url,
         participant_id: user.user_id,
       };
       
@@ -108,7 +112,6 @@ const CompleteProfileDialog: React.FC<CompleteProfileDialogProps> = ({ isOpen, o
 
   return (
     <Dialog open={isOpen} onOpenChange={(val) => {
-        // Prevent closing the dialog if mandatory fields are still missing
         if (!val) {
             toast.warning("Please complete your profile details to continue.");
             return;
@@ -122,11 +125,31 @@ const CompleteProfileDialog: React.FC<CompleteProfileDialogProps> = ({ isOpen, o
             <DialogTitle>Complete Your Profile</DialogTitle>
           </div>
           <DialogDescription>
-            Some mandatory details are missing from your profile. Please provide them to continue using the application.
+            Mandatory details including your profile photo are missing. Please provide them to continue.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((v) => mutation.mutate(v))} className="space-y-4 py-4">
+            <div className="flex flex-col items-center mb-4">
+              <FormField
+                control={form.control}
+                name="profile_photo_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <PhotoUpload 
+                        value={field.value} 
+                        onChange={field.onChange} 
+                        label="Profile Photo *"
+                        participantId={user?.user_id}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="full_name"

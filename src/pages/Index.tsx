@@ -27,7 +27,8 @@ const Index = () => {
         !user.address || 
         !user.dob || 
         !user.gender || 
-        !user.email;
+        !user.email ||
+        !user.profile_photo_url;
       
       if (isIncomplete) {
         setIsProfileIncomplete(true);

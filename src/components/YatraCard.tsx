@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import EditYatraDialog from "./EditYatraDialog";
 import YatraRegistrationDialog from "./YatraRegistrationDialog";
+import ParticipantDetailsDialog from "./ParticipantDetailsDialog";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPaymentHistory } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { API_BASE_URL } from "@/config/api";
 
@@ -59,10 +59,11 @@ interface YatraParticipantResponse {
 
 const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
   const [isRegisteredParticipantsDialogOpen, setIsRegisteredParticipantsDialogOpen] = React.useState(false);
+  const [selectedParticipantId, setSelectedParticipantId] = React.useState<string | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = React.useState(false);
 
   // Fetch payment history to check registration status
   const { data: paymentHistory, isLoading: isLoadingHistory } = useQuery<PaymentRecord[], Error>({
@@ -85,7 +86,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   const { data: registeredParticipants, isLoading: isLoadingParticipants, refetch } = useQuery<YatraParticipantResponse[], Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
-      console.log(`Fetching participants for Yatra: ${yatra.id}`);
       const response = await fetch(`${API_BASE_URL}/yatra/yatra/${yatra.id}/participants`, {
         headers: getAuthHeaders(),
       });
@@ -106,7 +106,8 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   }, [isRegisteredParticipantsDialogOpen, refetch]);
 
   const handleViewProfile = (participantId: string) => {
-    navigate(`/participants/${participantId}`);
+    setSelectedParticipantId(participantId);
+    setIsDetailsDialogOpen(true);
   };
 
   return (
@@ -222,6 +223,12 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         participants={registeredParticipants || []}
         isLoading={isLoadingParticipants}
         onViewProfile={handleViewProfile}
+      />
+
+      <ParticipantDetailsDialog
+        participantId={selectedParticipantId}
+        isOpen={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
       />
     </Card>
   );

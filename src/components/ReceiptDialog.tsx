@@ -7,6 +7,7 @@ import { ReceiptText, Download, Calendar, User, CreditCard, IndianRupee } from "
 import { format } from "date-fns";
 import { ReceiptResponse } from "@/types/yatra";
 import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 interface ReceiptDialogProps {
   isOpen: boolean;

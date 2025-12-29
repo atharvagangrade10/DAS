@@ -66,7 +66,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                       </div>
                       {fee.child_condition_by_age && (
                         <div className="text-xs text-muted-foreground">
-                          Free if ≤ {fee.child_condition_by_age} years
+                          Free for children till {fee.child_condition_by_age} years
                         </div>
                       )}
                     </div>

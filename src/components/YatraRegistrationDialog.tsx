@@ -121,25 +121,34 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
           <div className="space-y-6 py-4">
             <div className="space-y-3">
               <Label className="text-base font-semibold">Select Your Plan</Label>
-              <RadioGroup value={selectedOptionName} onValueChange={setSelectedOptionName} className="grid gap-2">
+              <div className="grid gap-3">
                 {yatra.registration_fees.map((option) => (
-                  <div key={option.option_name} className="flex items-center space-x-3 rounded-md border p-3 hover:bg-muted/50">
+                  <div key={option.option_name} className="flex items-center space-x-3 rounded-md border p-4 hover:bg-muted/50">
                     <RadioGroupItem value={option.option_name} id={option.option_name} />
                     <Label htmlFor={option.option_name} className="flex flex-1 items-center justify-between">
                       <div>
-                        <span className="font-medium">{option.option_name}</span>
+                        <span className="font-medium text-lg">{option.option_name}</span>
                         {option.child_amount !== undefined && (
-                           <span className="text-[10px] ml-2 text-muted-foreground flex items-center gap-1">
-                             <Baby className="h-2 w-2" /> Child: ₹{option.child_amount} 
-                             {option.child_condition_by_age && ` (Free for children till ${option.child_condition_by_age} years)`}
-                           </span>
+                          <div className="mt-1 text-sm text-green-600 dark:text-green-400">
+                            <span className="flex items-center gap-2">
+                              <Baby className="h-4 w-4" />
+                              Child: ₹{option.child_amount}
+                            </span>
+                            {option.child_condition_by_age && (
+                              <span className="text-xs text-muted-foreground">
+                                Free for children till {option.child_condition_by_age} years
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
-                      <span className="font-bold">₹{option.amount}</span>
+                      <div className="text-right">
+                        <span className="font-bold text-xl">₹{option.amount}</span>
+                      </div>
                     </Label>
                   </div>
                 ))}
-              </RadioGroup>
+              </div>
             </div>
 
             {yatra.can_add_members && (

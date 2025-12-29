@@ -24,6 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/config/api";
+import ReceiptDialog from "@/components/ReceiptDialog";
 
 interface ReceiptResponse {
   yatra_id: string;
@@ -65,6 +66,8 @@ const fetchYatraReceipt = async (yatraId: string, participantId: string): Promis
 const PaymentHistory = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const [receiptData, setReceiptData] = React.useState<ReceiptResponse | null>(null);
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = React.useState(false);
 
   const { data: payments, isLoading, error } = useQuery<PaymentRecord[], Error>({
     queryKey: ["paymentHistory", user?.user_id],
@@ -100,11 +103,8 @@ const PaymentHistory = () => {
   const handleViewReceipt = async (yatraId: string, participantId: string) => {
     try {
       const receipt = await fetchYatraReceipt(yatraId, participantId);
-      if (receipt.receipt_url) {
-        window.open(receipt.receipt_url, '_blank');
-      } else {
-        toast.info("No receipt available for this transaction.");
-      }
+      setReceiptData(receipt);
+      setIsReceiptDialogOpen(true);
     } catch (error: any) {
       toast.error("Failed to fetch receipt", { description: error.message });
     }
@@ -248,6 +248,12 @@ const PaymentHistory = () => {
           )}
         </CardContent>
       </Card>
+
+      <ReceiptDialog
+        isOpen={isReceiptDialogOpen}
+        onOpenChange={setIsReceiptDialogOpen}
+        receiptData={receiptData}
+      />
     </div>
   );
 };

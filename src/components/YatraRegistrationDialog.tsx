@@ -131,7 +131,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                         {option.child_amount !== undefined && (
                            <span className="text-[10px] ml-2 text-muted-foreground flex items-center gap-1">
                              <Baby className="h-2 w-2" /> Child: ₹{option.child_amount} 
-                             {option.child_condition_by_age && ` (Free ≤ ${option.child_condition_by_age}y)`}
+                             {option.child_condition_by_age && ` (Free for children till ${option.child_condition_by_age} years)`}
                            </span>
                         )}
                       </div>

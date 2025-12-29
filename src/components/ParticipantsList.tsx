@@ -4,18 +4,13 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import ParticipantCard from "./ParticipantCard"; // Import the new ParticipantCard
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Eye, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ParticipantDetailsDialog from "./ParticipantDetailsDialog";
 import { API_BASE_URL } from "@/config/api";
-
-interface Participant {
-  id: string;
-  full_name: string;
-  phone: string;
-  address: string;
-  age: number | null;
-  gender: string;
-  devotee_friend_name: string;
-}
+import { Participant } from "@/types/participant";
 
 interface ParticipantsListProps {
   devoteeFriendName: string;
@@ -45,10 +40,13 @@ const fetchParticipantsByDevoteeFriend = async (devoteeFriendName: string): Prom
 };
 
 const ParticipantsList: React.FC<ParticipantsListProps> = ({ devoteeFriendName }) => {
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
   const { data, isLoading, error } = useQuery<Participant[], Error>({
     queryKey: ["participants", devoteeFriendName],
     queryFn: () => fetchParticipantsByDevoteeFriend(devoteeFriendName),
-    enabled: !!devoteeFriendName, // Only run query if devoteeFriendName is provided
+    enabled: !!devoteeFriendName,
   });
 
   React.useEffect(() => {
@@ -59,6 +57,11 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({ devoteeFriendName }
     }
   }, [error]);
 
+  const handleViewDetails = (id: string) => {
+    setSelectedId(id);
+    setIsDialogOpen(true);
+  };
+
   if (!devoteeFriendName) {
     return <p className="text-gray-500">Please select a devotee friend to see their participants.</p>;
   }
@@ -66,8 +69,9 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({ devoteeFriendName }
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
       </div>
     );
   }
@@ -81,13 +85,54 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({ devoteeFriendName }
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">Participants for {devoteeFriendName}</h2>
-      {data.map((participant) => (
-        <ParticipantCard key={participant.id} participant={participant} />
-      ))}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Participants for {devoteeFriendName}</h2>
+        <Badge variant="outline">{data.length} Total</Badge>
+      </div>
+      
+      <div className="grid gap-3">
+        {data.map((participant) => (
+          <Card key={participant.id} className="p-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-10 w-10 border">
+                {participant.profile_photo_url ? (
+                  <AvatarImage src={participant.profile_photo_url} alt={participant.full_name} className="object-cover" />
+                ) : null}
+                <AvatarFallback><User className="h-5 w-5 text-muted-foreground" /></AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="font-semibold truncate">{participant.full_name}</p>
+                <p className="text-xs text-muted-foreground">{participant.phone}</p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => handleViewDetails(participant.id)}
+            >
+              <Eye className="h-4 w-4" />
+              View Details
+            </Button>
+          </Card>
+        ))}
+      </div>
+
+      <ParticipantDetailsDialog 
+        participantId={selectedId} 
+        isOpen={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+      />
     </div>
   );
 };
+
+// Simple Badge component if not imported from shadcn
+const Badge = ({ children, variant = "default" }: { children: React.ReactNode, variant?: string }) => (
+  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${variant === "outline" ? "border border-gray-300" : "bg-primary text-primary-foreground"}`}>
+    {children}
+  </span>
+);
 
 export default ParticipantsList;

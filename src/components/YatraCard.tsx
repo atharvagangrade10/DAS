@@ -2,11 +2,12 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search } from "lucide-react";
 import { Yatra, PaymentRecord } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import EditYatraDialog from "./EditYatraDialog";
 import YatraRegistrationDialog from "./YatraRegistrationDialog";
@@ -249,6 +250,17 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
   isLoading,
   onViewProfile,
 }) => {
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const filteredParticipants = React.useMemo(() => {
+    if (!searchQuery) return participants;
+    const lowerQuery = searchQuery.toLowerCase();
+    return participants.filter(p => 
+      p.participant_info.full_name.toLowerCase().includes(lowerQuery) ||
+      p.participant_info.phone.includes(searchQuery)
+    );
+  }, [participants, searchQuery]);
+
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
     if (s === "success" || s === "paid" || s === "completed") {
@@ -262,8 +274,8 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
             Registered Participants
@@ -272,14 +284,26 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
             List of participants registered for this yatra.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="px-6 py-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search by name or phone..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </div>
         
-        <div className="space-y-3 py-4">
+        <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <Loader2 className="animate-spin h-8 w-8 text-primary" />
             </div>
-          ) : participants.length > 0 ? (
-            participants.map((participant) => (
+          ) : filteredParticipants.length > 0 ? (
+            filteredParticipants.map((participant) => (
               <Card key={participant.participant_id} className="p-4 border">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0 pr-2">
@@ -308,13 +332,13 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
             ))
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              No participants registered yet.
+              {searchQuery ? "No participants match your search." : "No participants registered yet."}
             </div>
           )}
         </div>
         
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        <DialogFooter className="p-6 pt-2 border-t bg-muted/20">
+          <Button onClick={() => onOpenChange(false)} className="w-full">Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

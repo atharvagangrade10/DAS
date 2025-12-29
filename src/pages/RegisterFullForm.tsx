@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { Loader2, ArrowRight } from "lucide-react";
 import { createParticipantPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
+import PhotoUpload from "@/components/PhotoUpload";
 
 const PROFESSIONS = ["Student", "Employee", "Teacher", "Doctor", "Business", "Housewife", "Retired", "Other"];
 
@@ -46,6 +47,7 @@ const registrationSchema = z.object({
   profession_other: z.string().optional(),
   chanting_rounds: z.preprocess((val) => (val === "" ? null : Number(val)), z.number().int().min(0).nullable()),
   email: z.string().email("Invalid email address").min(1, "Email is required"),
+  profile_photo_url: z.string().nullable().optional(),
 });
 
 const RegisterFullForm = () => {
@@ -76,6 +78,7 @@ const RegisterFullForm = () => {
       profession_other: "",
       chanting_rounds: 0,
       email: "",
+      profile_photo_url: null,
     },
   });
 
@@ -91,7 +94,6 @@ const RegisterFullForm = () => {
 
   const accountMutation = useMutation({
     mutationFn: async (values: z.infer<typeof registrationSchema>) => {
-      console.log("Submitting registration data:", values);
       const profession = values.profession_type === "Other" ? values.profession_other : values.profession_type;
       const participantData = {
         ...values,
@@ -105,19 +107,15 @@ const RegisterFullForm = () => {
       };
       
       const response = await createParticipantPublic(participantData);
-      console.log("Registration API response:", response);
       
-      // Capture the ID from any potential field the backend might use
       const pId = response?.id || 
                   (response as any)?.participant_id || 
                   (response as any)?.user_id;
       
       if (!pId) {
-        console.error("No ID found in registration response:", response);
         throw new Error("Registration succeeded but no ID was returned. Please try logging in.");
       }
       
-      console.log("Navigating to set-password with participant_id:", pId);
       navigate(`/public/set-password?participant_id=${pId}`);
     },
     onError: (error: Error) => {
@@ -146,6 +144,25 @@ const RegisterFullForm = () => {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit((v) => accountMutation.mutate(v))} className="space-y-6">
+                <div className="flex flex-col items-center mb-6">
+                  <FormField
+                    control={form.control}
+                    name="profile_photo_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <PhotoUpload 
+                            value={field.value} 
+                            onChange={field.onChange} 
+                            label="Profile Photo"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="space-y-6">
                   <FormField
                     control={form.control}

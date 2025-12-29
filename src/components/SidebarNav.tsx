@@ -108,7 +108,7 @@ const SidebarNav = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsProfileDialogOpen(true)}
-                className="relative group"
+                className="relative group transition-transform hover:scale-105"
                 aria-label="View profile photo"
               >
                 <Avatar className="h-10 w-10 border border-primary/20 cursor-pointer ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
@@ -177,17 +177,16 @@ const SidebarNav = () => {
 
       {/* Profile Photo Enlarged View Dialog */}
       <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
-        <DialogContent className="max-w-2xl p-0">
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="p-4 pb-0">
             <DialogTitle className="text-lg font-semibold">Profile Photo</DialogTitle>
           </DialogHeader>
-          <div className="p-4">
+          <div className="p-4 flex justify-center bg-black/5">
             {user?.profile_photo_url ? (
               <img 
                 src={user.profile_photo_url} 
                 alt={user.full_name}
-                className="w-full h-auto rounded-lg shadow-lg"
-                style={{ maxHeight: '70vh', objectFit: 'contain' }}
+                className="w-full h-auto rounded-lg shadow-lg max-h-[80vh] object-contain"
               />
             ) : (
               <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">

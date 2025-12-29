@@ -21,6 +21,7 @@ import useRazorpay from "@/hooks/use-razorpay";
 import { createRazorpayInvoice } from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
 import AddFamilyMemberDialog, { FamilyMemberData } from "./AddFamilyMemberDialog";
+import TermsAndConditionsDialog from "./TermsAndConditionsDialog";
 
 interface YatraRegistrationDialogProps {
   yatra: Yatra;
@@ -40,6 +41,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
   const [selectedOptionName, setSelectedOptionName] = React.useState<string>("");
   const [members, setMembers] = React.useState<FamilyMemberData[]>([]);
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = React.useState(false);
+  const [isTermsDialogOpen, setIsTermsDialogOpen] = React.useState(false);
 
   const selectedOption = yatra.registration_fees.find(f => f.option_name === selectedOptionName) || yatra.registration_fees[0];
 
@@ -105,112 +107,121 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-            Trip Registration: {yatra.name}
-          </DialogTitle>
-          <DialogDescription>Select your plan and add family members.</DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-6 w-6 text-primary" />
+              Trip Registration: {yatra.name}
+            </DialogTitle>
+            <DialogDescription>Select your plan and add family members.</DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Select Your Plan</Label>
-            <RadioGroup value={selectedOptionName} onValueChange={setSelectedOptionName} className="grid gap-2">
-              {yatra.registration_fees.map((option) => (
-                <div key={option.option_name} className="flex items-center space-x-3 rounded-md border p-3 hover:bg-muted/50">
-                  <RadioGroupItem value={option.option_name} id={option.option_name} />
-                  <Label htmlFor={option.option_name} className="flex flex-1 items-center justify-between">
-                    <div>
-                      <span className="font-medium">{option.option_name}</span>
-                      {option.child_amount !== undefined && (
-                         <span className="text-[10px] ml-2 text-muted-foreground flex items-center gap-1">
-                           <Baby className="h-2 w-2" /> Child: ₹{option.child_amount} 
-                           {option.child_condition_by_age && ` (Free ≤ ${option.child_condition_by_age}y)`}
-                         </span>
-                      )}
-                    </div>
-                    <span className="font-bold">₹{option.amount}</span>
-                  </Label>
+          <div className="space-y-6 py-4">
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Select Your Plan</Label>
+              <RadioGroup value={selectedOptionName} onValueChange={setSelectedOptionName} className="grid gap-2">
+                {yatra.registration_fees.map((option) => (
+                  <div key={option.option_name} className="flex items-center space-x-3 rounded-md border p-3 hover:bg-muted/50">
+                    <RadioGroupItem value={option.option_name} id={option.option_name} />
+                    <Label htmlFor={option.option_name} className="flex flex-1 items-center justify-between">
+                      <div>
+                        <span className="font-medium">{option.option_name}</span>
+                        {option.child_amount !== undefined && (
+                           <span className="text-[10px] ml-2 text-muted-foreground flex items-center gap-1">
+                             <Baby className="h-2 w-2" /> Child: ₹{option.child_amount} 
+                             {option.child_condition_by_age && ` (Free ≤ ${option.child_condition_by_age}y)`}
+                           </span>
+                        )}
+                      </div>
+                      <span className="font-bold">₹{option.amount}</span>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
+            {yatra.can_add_members && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Family Members</h4>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsAddMemberDialogOpen(true)}
+                    className="border-foreground text-foreground dark:border-foreground dark:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    Add Member
+                  </Button>
                 </div>
-              ))}
-            </RadioGroup>
-          </div>
 
-          {yatra.can_add_members && (
-            <div className="space-y-4 pt-4 border-t">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <UserPlus className="h-5 w-5 text-primary" />
-                  <h4 className="font-semibold">Family Members</h4>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setIsAddMemberDialogOpen(true)}
-                  className="border-foreground text-foreground dark:border-foreground dark:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800" // Black/White styling
-                >
-                  Add Member
-                </Button>
-              </div>
-
-              {members.length > 0 && (
-                <div className="space-y-2">
-                  {members.map((m, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-                      <div className="text-sm">
-                        <span className="font-bold">{m.full_name}</span>
-                        <div className="text-xs text-muted-foreground">
-                          {m.relation} • {m.calculated_age} yrs • {m.phone}
+                {members.length > 0 && (
+                  <div className="space-y-2">
+                    {members.map((m, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                        <div className="text-sm">
+                          <span className="font-bold">{m.full_name}</span>
+                          <div className="text-xs text-muted-foreground">
+                            {m.relation} • {m.calculated_age} yrs • {m.phone}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={`text-sm font-bold ${calculateMemberPrice(m) === 0 ? "text-green-600" : ""}`}>
+                            {calculateMemberPrice(m) === 0 ? "FREE" : `₹${calculateMemberPrice(m)}`}
+                          </span>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeMember(i)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`text-sm font-bold ${calculateMemberPrice(m) === 0 ? "text-green-600" : ""}`}>
-                          {calculateMemberPrice(m) === 0 ? "FREE" : `₹${calculateMemberPrice(m)}`}
-                        </span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeMember(i)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-          <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-            <div className="flex justify-between items-center text-lg font-bold">
-              <span>Total Payable</span>
-              <span>₹{totalAmount}</span>
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="flex justify-between items-center text-lg font-bold">
+                <span>Total Payable</span>
+                <span>₹{totalAmount}</span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-top space-x-2">
-            <Checkbox id="consent" checked={hasConsented} onCheckedChange={(c) => setHasConsented(c as boolean)} />
-            <div className="grid gap-1.5 leading-none">
-              <Label htmlFor="consent" className="text-sm font-medium">I agree to the terms and conditions</Label>
+            <div className="flex items-top space-x-2">
+              <Checkbox id="consent" checked={hasConsented} onCheckedChange={(c) => setHasConsented(c as boolean)} />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="consent" className="text-sm font-medium">
+                  I agree to the <Button variant="link" type="button" className="h-auto p-0 text-sm" onClick={() => setIsTermsDialogOpen(true)}>Terms and Conditions</Button>
+                </Label>
+              </div>
             </div>
           </div>
-        </div>
 
-        <DialogFooter>
-          <Button onClick={() => invoiceMutation.mutate()} disabled={!hasConsented || invoiceMutation.isPending || !isRazorpayReady} className="w-full">
-            {invoiceMutation.isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CreditCard className="mr-2 h-4 w-4" />}
-            Pay ₹{totalAmount}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+          <DialogFooter>
+            <Button onClick={() => invoiceMutation.mutate()} disabled={!hasConsented || invoiceMutation.isPending || !isRazorpayReady} className="w-full">
+              {invoiceMutation.isPending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <CreditCard className="mr-2 h-4 w-4" />}
+              Pay ₹{totalAmount}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
 
-      <AddFamilyMemberDialog
-        isOpen={isAddMemberDialogOpen}
-        onOpenChange={setIsAddMemberDialogOpen}
-        onAdd={(member) => setMembers([...members, member])}
-        defaultAddress={user?.address}
+        <AddFamilyMemberDialog
+          isOpen={isAddMemberDialogOpen}
+          onOpenChange={setIsAddMemberDialogOpen}
+          onAdd={(member) => setMembers([...members, member])}
+          defaultAddress={user?.address}
+        />
+      </Dialog>
+      
+      <TermsAndConditionsDialog
+        isOpen={isTermsDialogOpen}
+        onOpenChange={setIsTermsDialogOpen}
       />
-    </Dialog>
+    </>
   );
 };
 

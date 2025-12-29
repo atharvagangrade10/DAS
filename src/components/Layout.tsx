@@ -3,7 +3,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import SidebarNav from "./SidebarNav";
-import { MadeWithDyad } from "./made-with-dyad";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Layout = () => {
@@ -17,7 +17,7 @@ const Layout = () => {
           <div className="max-w-7xl mx-auto w-full">
             <Outlet />
           </div>
-          <MadeWithDyad />
+
         </main>
       </div>
     </div>

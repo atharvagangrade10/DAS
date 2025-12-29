@@ -261,7 +261,8 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
     );
   }, [participants, searchQuery]);
 
-  const statusCounts = React.useMemo(() => {
+  const { statusCounts, totalCompletedAmount } = React.useMemo(() => {
+    let totalCompletedAmount = 0;
     const counts = {
       completed: 0,
       pending: 0,
@@ -270,15 +271,18 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
 
     participants.forEach(p => {
       const status = p.payment_status.toLowerCase();
+      const amount = p.payment_amount || 0;
+
       if (status === 'success' || status === 'paid' || status === 'completed') {
         counts.completed++;
+        totalCompletedAmount += amount;
       } else if (status === 'pending') {
         counts.pending++;
       } else {
         counts.failed++;
       }
     });
-    return counts;
+    return { statusCounts: counts, totalCompletedAmount };
   }, [participants]);
 
   const getStatusBadge = (status: string) => {
@@ -353,15 +357,21 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
                       </p>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onViewProfile(participant.participant_id)}
-                    className="flex items-center gap-1 shrink-0"
-                  >
-                    <Eye className="h-4 w-4" />
-                    View
-                  </Button>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="text-lg font-bold flex items-center">
+                      <IndianRupee className="h-4 w-4 mr-1" />
+                      {participant.payment_amount || 0}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewProfile(participant.participant_id)}
+                      className="flex items-center gap-1 shrink-0 h-8 px-2 text-xs"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))
@@ -372,7 +382,14 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
           )}
         </div>
         
-        <DialogFooter className="p-6 pt-2 border-t bg-muted/20">
+        <DialogFooter className="p-6 pt-2 border-t bg-muted/20 flex flex-col items-stretch gap-2">
+          <div className="flex justify-between items-center text-lg font-bold text-green-700 dark:text-green-400">
+            <span>Total Received (Completed)</span>
+            <span className="flex items-center">
+              <IndianRupee className="h-5 w-5 mr-1" />
+              {totalCompletedAmount}
+            </span>
+          </div>
           <Button onClick={() => onOpenChange(false)} className="w-full">Close</Button>
         </DialogFooter>
       </DialogContent>

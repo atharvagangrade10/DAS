@@ -24,10 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { format, differenceInYears, parseISO, isValid } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { toast } from "sonner";
 import { Loader2, ArrowRight, Smartphone } from "lucide-react";
-import { createAccountCheck, createParticipantPublic, fetchParticipantByPhonePublic } from "@/utils/api";
+import { createAccountCheck, createParticipantPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 import PhotoUpload from "@/components/PhotoUpload";
 
@@ -49,12 +49,6 @@ const registrationSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   profile_photo_url: z.string().nullable().optional(),
 });
-
-const getProfessionInitialValues = (prof: string | null | undefined) => {
-  if (!prof) return { type: "Student", other: "" };
-  if (PROFESSIONS.includes(prof)) return { type: prof, other: "" };
-  return { type: "Other", other: prof };
-};
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -114,29 +108,6 @@ const RegisterPage = () => {
       }
 
       if (response.status === "Register") {
-        // Fetch existing participant details to pre-fill if available
-        const existingParticipant = await fetchParticipantByPhonePublic(phone);
-        if (existingParticipant) {
-          const profInit = getProfessionInitialValues(existingParticipant.profession);
-          const dobDate = existingParticipant.dob ? parseISO(existingParticipant.dob) : null;
-          
-          form.reset({
-            ...form.getValues(),
-            first_name: existingParticipant.first_name || existingParticipant.full_name.split(' ')[0],
-            last_name: existingParticipant.last_name || existingParticipant.full_name.split(' ').slice(1).join(' '),
-            initiated_name: existingParticipant.initiated_name || "",
-            address: existingParticipant.address || "",
-            place_name: existingParticipant.place_name || "",
-            gender: (existingParticipant.gender as any) || "Male",
-            dob: dobDate && isValid(dobDate) ? dobDate : undefined,
-            profession_type: profInit.type,
-            profession_other: profInit.other,
-            chanting_rounds: existingParticipant.chanting_rounds || 0,
-            email: existingParticipant.email || "",
-            profile_photo_url: existingParticipant.profile_photo_url || null,
-          });
-          toast.success("Details found! Please complete your profile.");
-        }
         setShowFullForm(true);
       }
     } catch (error: any) {

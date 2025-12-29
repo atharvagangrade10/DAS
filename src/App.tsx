@@ -13,10 +13,11 @@ import Stats from "./pages/Stats";
 import YatraPage from "./pages/Yatra";
 import ProfilePage from "./pages/Profile";
 import PaymentHistory from "./pages/PaymentHistory";
-import RegisterPage from "./pages/RegisterPage"; // Updated import
+import RegisterVerification from "./pages/RegisterVerification";
+import RegisterFullForm from "./pages/RegisterFullForm";
 import PublicSetPassword from "./pages/PublicSetPassword";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage"; // New import
-import ResetPasswordPage from "./pages/ResetPasswordPage"; // New import
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -78,9 +79,10 @@ const App = () => {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} /> {/* Updated route */}
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} /> {/* New route */}
-            <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* New route (uses query param) */}
+            <Route path="/register" element={<RegisterVerification />} />
+            <Route path="/register/full" element={<RegisterFullForm />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/public/set-password" element={<PublicSetPassword />} />
 
             {/* Protected Routes */}

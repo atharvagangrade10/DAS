@@ -235,6 +235,10 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   );
 };
 
+interface ProcessedYatraParticipantResponse extends YatraParticipantResponse {
+  isMainRegistrant: boolean;
+}
+
 interface RegisteredParticipantsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -252,14 +256,41 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
 }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const filteredParticipants = React.useMemo(() => {
-    if (!searchQuery) return participants;
+  const processedParticipants = React.useMemo(() => {
+    if (!participants || participants.length === 0) return [];
+
+    // 1. Sort by registration_date (ascending)
+    const sortedList = [...participants].sort((a, b) => {
+        const dateA = a.registration_date ? new Date(a.registration_date).getTime() : 0;
+        const dateB = b.registration_date ? new Date(b.registration_date).getTime() : 0;
+        return dateA - dateB;
+    });
+
+    // 2. Mark the main registrant for each unique transaction_id
+    const seenTransactionIds = new Set<string>();
+    
+    return sortedList.map(p => {
+        // Use transaction_id for grouping, falling back to participant_id if txId is missing
+        const txId = p.transaction_id || p.participant_id; 
+        const isMainRegistrant = !seenTransactionIds.has(txId);
+        if (isMainRegistrant) {
+            seenTransactionIds.add(txId);
+        }
+        return {
+            ...p,
+            isMainRegistrant: isMainRegistrant
+        } as ProcessedYatraParticipantResponse;
+    });
+  }, [participants]);
+
+  const filteredParticipantsWithMainTag = React.useMemo(() => {
+    if (!searchQuery) return processedParticipants;
     const lowerQuery = searchQuery.toLowerCase();
-    return participants.filter(p => 
+    return processedParticipants.filter(p => 
       p.participant_info.full_name.toLowerCase().includes(lowerQuery) ||
       p.participant_info.phone.includes(searchQuery)
     );
-  }, [participants, searchQuery]);
+  }, [processedParticipants, searchQuery]);
 
   const { statusCounts, totalCompletedAmount } = React.useMemo(() => {
     let totalCompletedAmount = 0;
@@ -341,13 +372,16 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
             <div className="flex items-center justify-center py-8">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
             </div>
-          ) : filteredParticipants.length > 0 ? (
-            filteredParticipants.map((participant) => (
+          ) : filteredParticipantsWithMainTag.length > 0 ? (
+            filteredParticipantsWithMainTag.map((participant) => (
               <Card key={participant.participant_id} className="p-4 border">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0 pr-2">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-semibold truncate">{participant.participant_info.full_name}</h4>
+                      {participant.isMainRegistrant && (
+                        <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5">Main</Badge>
+                      )}
                       {getStatusBadge(participant.payment_status)}
                     </div>
                     <p className="text-sm text-muted-foreground">{participant.participant_info.phone}</p>

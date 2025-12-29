@@ -30,6 +30,7 @@ import { Loader2, ArrowRight, Smartphone } from "lucide-react";
 import { createAccountCheck, createParticipantPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 import PhotoUpload from "@/components/PhotoUpload";
+import { Participant } from "@/types/participant"; // Import Participant type
 
 const PROFESSIONS = ["Student", "Employee", "Teacher", "Doctor", "Business", "Housewife", "Retired", "Other"];
 
@@ -132,8 +133,16 @@ const RegisterPage = () => {
         devotee_friend_name: "None",
       };
       const newParticipant = await createParticipantPublic(participantData);
+      
+      // Extract ID, checking for both 'id' and 'participant_id' keys
+      const participantId = newParticipant.id || (newParticipant as any).participant_id;
+
+      if (!participantId) {
+        throw new Error("Registration succeeded but participant ID was not returned.");
+      }
+
       // Pass participantId via query parameter
-      navigate(`/public/set-password?participantId=${newParticipant.id}`);
+      navigate(`/public/set-password?participantId=${participantId}`);
     },
     onError: (error: Error) => {
       toast.error("Registration failed", { description: error.message });

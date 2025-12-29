@@ -15,6 +15,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface NavLinkProps {
   to: string;
@@ -46,6 +52,7 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children, onClick }) => {
 const SidebarNav = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = React.useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -98,28 +105,33 @@ const SidebarNav = () => {
         {user && (
           <div className="mb-4 flex flex-col gap-3 px-2">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border border-primary/20">
-                {user.profile_photo_url ? (
-                  <AvatarImage 
-                    key={user.profile_photo_url}
-                    src={user.profile_photo_url} 
-                    alt={user.full_name} 
-                    className="object-cover h-full w-full" 
-                  />
-                ) : null}
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  <User className="h-5 w-5" />
-                </AvatarFallback>
-              </Avatar>
+              <button
+                onClick={() => setIsProfileDialogOpen(true)}
+                className="relative group"
+                aria-label="View profile photo"
+              >
+                <Avatar className="h-10 w-10 border border-primary/20 cursor-pointer ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
+                  {user.profile_photo_url ? (
+                    <AvatarImage 
+                      key={user.profile_photo_url}
+                      src={user.profile_photo_url} 
+                      alt={user.full_name} 
+                      className="object-cover h-full w-full" 
+                    />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    <User className="h-5 w-5" />
+                  </AvatarFallback>
+                </Avatar>
+              </button>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.phone}</p>
               </div>
             </div>
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full text-xs h-8"
+              variant="default" 
+              className="w-full text-xs h-8 bg-black text-white hover:bg-gray-800 hover:text-white font-medium transition-colors"
               onClick={() => {
                 navigate('/profile');
                 if (isMobile) setIsOpen(false);
@@ -161,6 +173,29 @@ const SidebarNav = () => {
           {sidebarContent}
         </div>
       )}
+
+      {/* Profile Photo Enlarged View Dialog */}
+      <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+        <DialogContent className="max-w-2xl p-0">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="text-lg font-semibold">Profile Photo</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            {user?.profile_photo_url ? (
+              <img 
+                src={user.profile_photo_url} 
+                alt={user.full_name}
+                className="w-full h-auto rounded-lg shadow-lg"
+                style={{ maxHeight: '70vh', objectFit: 'contain' }}
+              />
+            ) : (
+              <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
+                <User className="h-16 w-16 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

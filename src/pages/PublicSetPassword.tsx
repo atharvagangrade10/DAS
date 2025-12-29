@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     Form,
     FormControl,
@@ -31,17 +31,16 @@ const passwordSchema = z.object({
 
 const PublicSetPassword = () => {
     const navigate = useNavigate();
-    const location = useLocation();
+    const [searchParams] = useSearchParams();
+    const participantId = searchParams.get('participantId'); // Read from query parameter
+    
     const [showPassword, setShowPassword] = React.useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-
-    // Get participantId from navigation state
-    const participantId = location.state?.participantId;
 
     React.useEffect(() => {
         if (!participantId) {
             toast.error("Invalid session. Please register again.");
-            navigate("/register");
+            navigate("/register", { replace: true });
         }
     }, [participantId, navigate]);
 
@@ -67,7 +66,14 @@ const PublicSetPassword = () => {
         },
     });
 
-    if (!participantId) return null;
+    if (!participantId) {
+        // Render a loading state while redirecting if ID is missing
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">

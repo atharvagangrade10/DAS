@@ -103,7 +103,8 @@ const RegisterPage = () => {
       }
 
       if (response.status === "SetPassword") {
-        navigate("/public/set-password", { state: { participantId: response.participant_id } });
+        // Pass participantId via query parameter
+        navigate(`/public/set-password?participantId=${response.participant_id}`);
         return;
       }
 
@@ -131,7 +132,8 @@ const RegisterPage = () => {
         devotee_friend_name: "None",
       };
       const newParticipant = await createParticipantPublic(participantData);
-      navigate("/public/set-password", { state: { participantId: newParticipant.id } });
+      // Pass participantId via query parameter
+      navigate(`/public/set-password?participantId=${newParticipant.id}`);
     },
     onError: (error: Error) => {
       toast.error("Registration failed", { description: error.message });

@@ -12,9 +12,28 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, CheckCircle2, MapPin } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import CompleteProfileDialog from "@/components/CompleteProfileDialog";
 
 const Index = () => {
   const { user } = useAuth();
+  const [isProfileIncomplete, setIsProfileIncomplete] = React.useState(false);
+
+  // Check for mandatory fields on mount or when user changes
+  React.useEffect(() => {
+    if (user) {
+      const isIncomplete = 
+        !user.full_name || 
+        !user.phone || 
+        !user.address || 
+        !user.dob || 
+        !user.gender || 
+        !user.email;
+      
+      if (isIncomplete) {
+        setIsProfileIncomplete(true);
+      }
+    }
+  }, [user]);
 
   // Fetch Yatras
   const { data: yatras, isLoading: isLoadingYatras } = useQuery<Yatra[], Error>({
@@ -41,7 +60,7 @@ const Index = () => {
     if (!paymentHistory) return new Set<string>();
     return new Set(
       paymentHistory
-        .filter(p => p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
+        .filter(p => p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid' || p.status.toLowerCase() === 'completed')
         .map(p => p.yatra_id)
     );
   }, [paymentHistory]);
@@ -76,7 +95,7 @@ const Index = () => {
               <YatraCard 
                 key={yatra.id} 
                 yatra={yatra} 
-                isRegistered={registeredYatraIds.has(yatra.id)} // Pass registration status
+                isRegistered={registeredYatraIds.has(yatra.id)} 
               />
             ))}
           </div>
@@ -145,6 +164,12 @@ const Index = () => {
           </Card>
         )}
       </section>
+
+      {/* Profile Completion Dialog */}
+      <CompleteProfileDialog 
+        isOpen={isProfileIncomplete} 
+        onOpenChange={setIsProfileIncomplete} 
+      />
     </div>
   );
 };

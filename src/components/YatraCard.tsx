@@ -298,6 +298,7 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
       completed: 0,
       pending: 0,
       failed: 0,
+      mainCompletedCount: 0, // Added main completed count
     };
 
     // Iterate over processedParticipants which includes the isMainRegistrant flag
@@ -307,16 +308,17 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
       // 1. Count participants by status (all participants)
       if (status === 'success' || status === 'paid' || status === 'completed') {
         counts.completed++;
+        
+        // 2. Calculate total amount received, counting only the main registrant's payment amount
+        // And count main registrants
+        if (p.isMainRegistrant) {
+          totalCompletedAmount += p.payment_amount || 0;
+          counts.mainCompletedCount++;
+        }
       } else if (status === 'pending') {
         counts.pending++;
       } else {
         counts.failed++;
-      }
-      
-      // 2. Calculate total amount received, counting only the main registrant's payment amount
-      // This ensures we sum the transaction amount only once per group.
-      if (p.isMainRegistrant && (status === 'success' || status === 'paid' || status === 'completed')) {
-        totalCompletedAmount += p.payment_amount || 0;
       }
     });
     
@@ -347,10 +349,14 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 pb-4 grid grid-cols-3 gap-3 text-center border-b">
+        <div className="px-6 pb-4 grid grid-cols-4 gap-3 text-center border-b">
           <Card className="p-2 shadow-sm">
             <p className="text-xs font-medium text-muted-foreground">Completed</p>
             <p className="text-xl font-bold text-green-600">{statusCounts.completed}</p>
+          </Card>
+          <Card className="p-2 shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground">Main Registrants</p>
+            <p className="text-xl font-bold text-primary">{statusCounts.mainCompletedCount}</p>
           </Card>
           <Card className="p-2 shadow-sm">
             <p className="text-xs font-medium text-muted-foreground">Pending</p>

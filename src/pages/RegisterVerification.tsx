@@ -47,7 +47,7 @@ const RegisterVerification = () => {
       }
 
       if (response.status === "SetPassword") {
-        navigate(`/public/set-password?participantId=${response.participant_id}`);
+        navigate(`/public/set-password?participant_id=${response.participant_id}`);
         return;
       }
 

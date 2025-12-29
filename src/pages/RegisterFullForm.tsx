@@ -103,7 +103,11 @@ const RegisterFullForm = () => {
         devotee_friend_name: "None",
       };
       const newParticipant = await createParticipantPublic(participantData);
-      navigate(`/public/set-password?participantId=${newParticipant.id}`);
+      
+      // Determine the participant ID from the response (defensively checking both 'id' and 'participant_id')
+      const pId = newParticipant.id || (newParticipant as any).participant_id;
+      
+      navigate(`/public/set-password?participant_id=${pId}`);
     },
     onError: (error: Error) => {
       toast.error("Registration failed", { description: error.message });

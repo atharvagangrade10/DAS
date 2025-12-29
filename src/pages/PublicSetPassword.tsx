@@ -32,7 +32,9 @@ const passwordSchema = z.object({
 const PublicSetPassword = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const rawParticipantId = searchParams.get('participantId');
+    
+    // Look for participant_id in the query string
+    const rawParticipantId = searchParams.get('participant_id') || searchParams.get('participantId');
     
     // Treat null, empty string, or the string "undefined" as invalid
     const participantId = (rawParticipantId && rawParticipantId !== 'undefined') ? rawParticipantId : null;

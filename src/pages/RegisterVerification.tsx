@@ -46,8 +46,9 @@ const RegisterVerification = () => {
         return;
       }
 
+      // Both 'Register' and 'SetPassword' now go through the full form to ensure complete profile data
       if (response.status === "SetPassword") {
-        navigate(`/public/set-password?participant_id=${response.participant_id}`);
+        navigate(`/register/full?phone=${values.phone}&participant_id=${response.participant_id}`);
         return;
       }
 

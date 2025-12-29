@@ -102,10 +102,18 @@ const RegisterFullForm = () => {
         date_joined: format(new Date(), "yyyy-MM-dd"),
         devotee_friend_name: "None",
       };
+      
       const newParticipant = await createParticipantPublic(participantData);
       
-      // Determine the participant ID from the response (defensively checking both 'id' and 'participant_id')
-      const pId = newParticipant.id || (newParticipant as any).participant_id;
+      // Defensively capture the ID from various potential response fields
+      const pId = newParticipant?.id || 
+                  (newParticipant as any)?.participant_id || 
+                  (newParticipant as any)?.user_id;
+      
+      if (!pId) {
+        console.error("Registration response missing ID:", newParticipant);
+        throw new Error("Profile created but no ID was returned. Please try logging in or contact support.");
+      }
       
       navigate(`/public/set-password?participant_id=${pId}`);
     },

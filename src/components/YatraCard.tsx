@@ -86,7 +86,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
       console.log(`Fetching participants for Yatra: ${yatra.id}`);
-      const response = await fetch(`${API_BASE_URL}/yatra/${yatra.id}/participants`, {
+      const response = await fetch(`${API_BASE_URL}/yatra/yatra/${yatra.id}/participants`, {
         headers: getAuthHeaders(),
       });
       if (!response.ok) {
@@ -95,7 +95,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       return response.json();
     },
-    enabled: false, // We'll trigger this manually or via useEffect to ensure it hits every time
+    enabled: false, 
   });
 
   // Trigger refetch when dialog opens
@@ -242,6 +242,17 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
   isLoading,
   onViewProfile,
 }) => {
+  const getStatusBadge = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === "success" || s === "paid" || s === "completed") {
+      return <Badge className="bg-green-500 hover:bg-green-500 text-white text-[10px]">Success</Badge>;
+    }
+    if (s === "pending") {
+      return <Badge variant="secondary" className="text-[10px]">Pending</Badge>;
+    }
+    return <Badge variant="destructive" className="text-[10px]">Failed</Badge>;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
@@ -265,7 +276,10 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
               <Card key={participant.participant_id} className="p-4 border">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0 pr-2">
-                    <h4 className="font-semibold truncate">{participant.participant_info.full_name}</h4>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold truncate">{participant.participant_info.full_name}</h4>
+                      {getStatusBadge(participant.payment_status)}
+                    </div>
                     <p className="text-sm text-muted-foreground">{participant.participant_info.phone}</p>
                     {participant.registration_date && (
                       <p className="text-[10px] text-muted-foreground mt-1">

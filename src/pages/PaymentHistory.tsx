@@ -23,6 +23,44 @@ import { format, parseISO } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { API_BASE_URL } from "@/config/api";
+
+interface ReceiptResponse {
+  yatra_id: string;
+  yatra_name: string;
+  participant_id: string;
+  participant_name: string;
+  payment_amount: number;
+  payment_status: string;
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  receipt_url: string | null;
+  is_registered: boolean;
+  yatra_start_date: string;
+  yatra_end_date: string;
+}
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('das_auth_token');
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
+const fetchYatraReceipt = async (yatraId: string, participantId: string): Promise<ReceiptResponse> => {
+  const response = await fetch(`${API_BASE_URL}/yatra/${yatraId}/receipt/${participantId}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch receipt' }));
+    throw new Error(errorData.detail || "Failed to fetch receipt");
+  }
+  return response.json();
+};
 
 const PaymentHistory = () => {
   const { user } = useAuth();
@@ -59,6 +97,19 @@ const PaymentHistory = () => {
     }
   };
 
+  const handleViewReceipt = async (yatraId: string, participantId: string) => {
+    try {
+      const receipt = await fetchYatraReceipt(yatraId, participantId);
+      if (receipt.receipt_url) {
+        window.open(receipt.receipt_url, '_blank');
+      } else {
+        toast.info("No receipt available for this transaction.");
+      }
+    } catch (error: any) {
+      toast.error("Failed to fetch receipt", { description: error.message });
+    }
+  };
+
   const renderMobileView = (payments: PaymentRecord[]) => (
     <div className="space-y-4">
       {payments.map((payment) => (
@@ -79,18 +130,24 @@ const PaymentHistory = () => {
                 {payment.amount}
               </span>
             </div>
-            {payment.receipt_url && (
-              <div className="pt-2">
-                <Button variant="outline" size="sm" className="w-full text-xs" asChild>
-                  <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3 mr-2" />
-                    View Receipt
-                  </a>
-                </Button>
-              </div>
-            )}
-            <div className="text-xs text-muted-foreground break-all">
-              Txn ID: {payment.transaction_id || "N/A"}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Status:</span>
+              <span className="font-medium">{payment.status}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Transaction ID:</span>
+              <span className="font-medium">{payment.transaction_id || "N/A"}</span>
+            </div>
+            <div className="pt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full text-xs" 
+                onClick={() => handleViewReceipt(payment.yatra_id, user!.user_id)}
+              >
+                <ReceiptText className="h-3 w-3 mr-2" />
+                View Receipt
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -119,14 +176,15 @@ const PaymentHistory = () => {
               <TableCell className="text-right font-semibold">{payment.amount}</TableCell>
               <TableCell>{getStatusBadge(payment.status)}</TableCell>
               <TableCell>
-                {payment.receipt_url ? (
-                  <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" asChild>
-                    <a href={payment.receipt_url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3 w-3 mr-1" />
-                      Receipt
-                    </a>
-                  </Button>
-                ) : "-"}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 px-2 text-xs" 
+                  onClick={() => handleViewReceipt(payment.yatra_id, user!.user_id)}
+                >
+                  <ReceiptText className="h-3 w-3 mr-1" />
+                  View Receipt
+                </Button>
               </TableCell>
               <TableCell className="text-xs text-muted-foreground break-all">{payment.transaction_id || "N/A"}</TableCell>
             </TableRow>

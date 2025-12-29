@@ -22,6 +22,28 @@ interface YatraCardProps {
   isRegistered?: boolean;
 }
 
+interface YatraParticipantResponse {
+  participant_id: string;
+  yatra_id: string;
+  participant_info: {
+    id: string;
+    full_name: string;
+    phone: string;
+    email?: string;
+    age?: number;
+    gender?: string;
+    initiated_name?: string;
+    profession?: string;
+    address: string;
+    profile_photo_url?: string;
+  };
+  is_registered: boolean;
+  payment_status: string;
+  payment_amount?: number;
+  transaction_id?: string;
+  registration_date?: string;
+}
+
 const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -36,6 +58,22 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     enabled: !!user?.user_id,
   });
 
+  // Fetch registered participants for this yatra
+  const { data: registeredParticipants, isLoading: isLoadingParticipants } = useQuery<YatraParticipantResponse[], Error>({
+    queryKey: ["yatraParticipants", yatra.id],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE_URL}/yatra/${yatra.id}/participants`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch participants' }));
+        throw new Error(errorData.detail || "Failed to fetch participants");
+      }
+      return response.json();
+    },
+    enabled: showAdminControls,
+  });
+
   // Determine if the user is registered for this yatra
   const isRegisteredForYatra = React.useMemo(() => {
     if (!paymentHistory) return false;
@@ -44,16 +82,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       (p.status.toLowerCase() === 'completed' || p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
     );
   }, [paymentHistory, yatra.id]);
-
-  // Mock registered participants data (in a real app, this would come from an API)
-  const registeredParticipants = React.useMemo(() => {
-    // This is mock data - in a real implementation, you would fetch this from your backend
-    return [
-      { id: '1', name: 'John Doe', phone: '9876543210' },
-      { id: '2', name: 'Jane Smith', phone: '9876543211' },
-      { id: '3', name: 'Bob Johnson', phone: '9876543212' },
-    ];
-  }, [yatra.id]);
 
   const handleViewProfile = (participantId: string) => {
     navigate(`/participants/${participantId}`);
@@ -163,7 +191,8 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       <RegisteredParticipantsDialog
         isOpen={isRegisteredParticipantsDialogOpen}
         onOpenChange={setIsRegisteredParticipantsDialogOpen}
-        participants={registeredParticipants}
+        participants={registeredParticipants || []}
+        isLoading={isLoadingParticipants}
         onViewProfile={handleViewProfile}
       />
     </Card>
@@ -174,7 +203,8 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
 interface RegisteredParticipantsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  participants: Array<{ id: string; name: string; phone: string }>;
+  participants: YatraParticipantResponse[];
+  isLoading: boolean;
   onViewProfile: (participantId: string) => void;
 }
 
@@ -182,6 +212,7 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
   isOpen,
   onOpenChange,
   participants,
+  isLoading,
   onViewProfile,
 }) => {
   return (
@@ -198,18 +229,23 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
         </DialogHeader>
         
         <div className="space-y-3 py-4">
-          {participants.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : participants.length > 0 ? (
             participants.map((participant) => (
-              <Card key={participant.id} className="p-4 border">
+              <Card key={participant.participant_id} className="p-4 border">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold">{participant.name}</h4>
-                    <p className="text-sm text-muted-foreground">{participant.phone}</p>
+                    <h4 className="font-semibold">{participant.participant_info.full_name}</h4>
+                    <p className="text-sm text-muted-foreground">{participant.participant_info.phone}</p>
+                    <p className="text-xs text-muted-foreground">{participant.participant_info.email}</p>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onViewProfile(participant.id)}
+                    onClick={() => onViewProfile(participant.participant_id)}
                     className="flex items-center gap-2"
                   >
                     <Eye className="h-4 w-4" />

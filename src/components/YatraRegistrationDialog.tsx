@@ -195,7 +195,7 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
               <Checkbox id="consent" checked={hasConsented} onCheckedChange={(c) => setHasConsented(c as boolean)} />
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="consent" className="text-sm font-medium">
-                  I agree to the <Button variant="link" type="button" className="h-auto p-0 text-sm" onClick={() => setIsTermsDialogOpen(true)}>Terms and Conditions</Button>
+                  I agree to the <Button variant="link" type="button" className="h-auto p-0 text-sm underline" onClick={() => setIsTermsDialogOpen(true)}>Terms and Conditions</Button>
                 </Label>
               </div>
             </div>

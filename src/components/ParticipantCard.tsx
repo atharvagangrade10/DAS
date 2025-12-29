@@ -21,16 +21,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/config/api";
-
-interface DevoteeFriend {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-}
 
 interface ParticipantCardProps {
   participant: Participant;
@@ -62,6 +61,7 @@ const deleteParticipant = async (participantId: string): Promise<void> => {
 const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onParticipantUpdate }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = React.useState(false);
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -96,19 +96,26 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
     <Card className="hover:shadow-md transition-shadow overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b bg-muted/20">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
-            {participant.profile_photo_url ? (
-              <AvatarImage 
-                key={participant.profile_photo_url}
-                src={participant.profile_photo_url} 
-                alt={participant.full_name} 
-                className="object-cover h-full w-full" 
-              />
-            ) : null}
-            <AvatarFallback className="bg-primary/10 text-primary">
-              <User className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
+          <button 
+            type="button" 
+            onClick={() => setIsPhotoDialogOpen(true)}
+            className="relative group transition-transform hover:scale-105"
+            aria-label="Enlarge profile photo"
+          >
+            <Avatar className="h-16 w-16 border-2 border-background shadow-sm cursor-pointer">
+              {participant.profile_photo_url ? (
+                <AvatarImage 
+                  key={participant.profile_photo_url}
+                  src={participant.profile_photo_url} 
+                  alt={participant.full_name} 
+                  className="object-cover h-full w-full" 
+                />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary">
+                <User className="h-8 w-8" />
+              </AvatarFallback>
+            </Avatar>
+          </button>
           <div className="flex flex-col">
             <CardTitle className="text-xl font-bold">{participant.full_name}</CardTitle>
             {participant.initiated_name && (
@@ -195,6 +202,27 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, onPartic
         onOpenChange={setIsEditDialogOpen}
         onUpdateSuccess={onParticipantUpdate}
       />
+
+      <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="text-lg font-semibold">{participant.full_name}</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 flex justify-center bg-black/5">
+            {participant.profile_photo_url ? (
+              <img 
+                src={participant.profile_photo_url} 
+                alt={participant.full_name}
+                className="w-full h-auto rounded-lg shadow-lg max-h-[80vh] object-contain"
+              />
+            ) : (
+              <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
+                <User className="h-16 w-16 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

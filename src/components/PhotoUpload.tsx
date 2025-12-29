@@ -6,21 +6,28 @@ import { Camera, Upload, X, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
 import { uploadPhoto } from "@/utils/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PhotoUploadProps {
   value?: string | null;
   onChange: (url: string | null) => void;
   label?: string;
-  participantId?: string; // Required for upload API
+  participantId?: string; 
 }
 
 const PhotoUpload: React.FC<PhotoUploadProps> = ({ 
   value, 
   onChange, 
   label = "Profile Photo",
-  participantId = "new_participant" // Default for creation flows
+  participantId = "new_participant" 
 }) => {
   const [isUploading, setIsUploading] = React.useState(false);
+  const [isEnlargeOpen, setIsEnlargeOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,25 +60,33 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
     <div className="space-y-4 flex flex-col items-center">
       <label className="text-sm font-medium self-start">{label}</label>
       <div className="relative">
-        <Avatar className="h-32 w-32 border-2 border-muted shadow-sm">
-          {value ? (
-            <AvatarImage 
-              key={value} // Force re-render when the URL changes
-              src={value} 
-              alt="Profile preview" 
-              className="object-cover h-full w-full" 
-            />
-          ) : null}
-          <AvatarFallback className="bg-muted text-muted-foreground">
-            <User className="h-12 w-12" />
-          </AvatarFallback>
-        </Avatar>
+        <button
+          type="button"
+          onClick={() => value && setIsEnlargeOpen(true)}
+          className={`relative group transition-transform ${value ? 'hover:scale-105 cursor-pointer' : 'cursor-default'}`}
+          disabled={!value}
+          aria-label="Enlarge photo"
+        >
+          <Avatar className="h-32 w-32 border-2 border-muted shadow-sm">
+            {value ? (
+              <AvatarImage 
+                key={value} 
+                src={value} 
+                alt="Profile preview" 
+                className="object-cover h-full w-full" 
+              />
+            ) : null}
+            <AvatarFallback className="bg-muted text-muted-foreground">
+              <User className="h-12 w-12" />
+            </AvatarFallback>
+          </Avatar>
+        </button>
         
         {value && !isUploading && (
           <button
             onClick={clearPhoto}
             type="button"
-            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors"
+            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors z-20"
           >
             <X className="h-4 w-4" />
           </button>
@@ -121,6 +136,24 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max size 5MB.</p>
+
+      {/* Enlarged View Dialog */}
+      <Dialog open={isEnlargeOpen} onOpenChange={setIsEnlargeOpen}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="text-lg font-semibold">Photo Preview</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 flex justify-center bg-black/5">
+            {value && (
+              <img 
+                src={value} 
+                alt="Enlarged profile"
+                className="w-full h-auto rounded-lg shadow-lg max-h-[80vh] object-contain"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

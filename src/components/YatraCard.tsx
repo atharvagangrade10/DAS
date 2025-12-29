@@ -300,21 +300,28 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
       failed: 0,
     };
 
-    participants.forEach(p => {
+    // Iterate over processedParticipants which includes the isMainRegistrant flag
+    processedParticipants.forEach(p => {
       const status = p.payment_status.toLowerCase();
-      const amount = p.payment_amount || 0;
-
+      
+      // 1. Count participants by status (all participants)
       if (status === 'success' || status === 'paid' || status === 'completed') {
         counts.completed++;
-        totalCompletedAmount += amount;
       } else if (status === 'pending') {
         counts.pending++;
       } else {
         counts.failed++;
       }
+      
+      // 2. Calculate total amount received, counting only the main registrant's payment amount
+      // This ensures we sum the transaction amount only once per group.
+      if (p.isMainRegistrant && (status === 'success' || status === 'paid' || status === 'completed')) {
+        totalCompletedAmount += p.payment_amount || 0;
+      }
     });
+    
     return { statusCounts: counts, totalCompletedAmount };
-  }, [participants]);
+  }, [processedParticipants]);
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();

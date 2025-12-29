@@ -50,8 +50,8 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
           <div className="grid gap-3">
             {yatra.registration_fees.map((fee) => (
               <Card key={fee.option_name} className="p-4 border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-sm px-3 py-1">
                       {fee.option_name}
                     </Badge>
@@ -60,8 +60,9 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                     </div>
                   </div>
                   {fee.child_amount !== undefined && (
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                    <div className="flex flex-col gap-1">
+                      <div className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <Baby className="h-4 w-4" />
                         Child: ₹{fee.child_amount}
                       </div>
                       {fee.child_condition_by_age && (

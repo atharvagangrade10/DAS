@@ -170,8 +170,12 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                 Register
               </Button>
             )}
-            
-            {/* Registered Participants Button */}
+          </div>
+        )}
+
+        {/* Registered Participants Button - Only visible when showAdminControls is true */}
+        {showAdminControls && (
+          <div className="pt-4">
             <Button 
               className="w-full flex items-center gap-2" 
               variant="outline"

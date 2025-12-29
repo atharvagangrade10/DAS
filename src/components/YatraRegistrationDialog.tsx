@@ -80,14 +80,36 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
     mutationFn: async () => {
       if (!user?.user_id) throw new Error("User ID is missing.");
       
-      // Participant creation for family members is now handled in AddFamilyMemberDialog
-      // when they are first added to the local members list.
+      // Build related_participant_ids array with registration_fee
+      const related_participant_ids = members.map(m => {
+        const feeOption = m.selected_fee_option 
+          ? yatra.registration_fees.find(f => f.option_name === m.selected_fee_option)
+          : selectedOption;
+
+        return {
+          relation: m.relation,
+          participant_id: m.participant_id || "",
+          registration_fee: feeOption ? {
+            option_name: feeOption.option_name,
+            amount: feeOption.amount,
+            child_amount: feeOption.child_amount,
+            child_condition_by_age: feeOption.child_condition_by_age,
+          } : undefined,
+        };
+      });
 
       return createRazorpayInvoice({
         yatra_id: yatra.id,
         fee_category: selectedOption.option_name,
         amount: totalAmount,
         participant_id: user.user_id,
+        related_participant_ids,
+        registration_fee: {
+          option_name: selectedOption.option_name,
+          amount: selectedOption.amount,
+          child_amount: selectedOption.child_amount,
+          child_condition_by_age: selectedOption.child_condition_by_age,
+        },
       });
     },
     onSuccess: (invoice) => {

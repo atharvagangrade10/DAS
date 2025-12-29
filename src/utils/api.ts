@@ -135,6 +135,22 @@ export interface RazorpayInvoiceRequest {
   fee_category: string;
   amount: number;
   participant_id: string;
+  related_participant_ids?: Array<{
+    relation: string;
+    participant_id: string;
+    registration_fee?: {
+      option_name: string;
+      amount: number;
+      child_amount?: number | null;
+      child_condition_by_age?: number | null;
+    };
+  }>;
+  registration_fee?: {
+    option_name: string;
+    amount: number;
+    child_amount?: number | null;
+    child_condition_by_age?: number | null;
+  };
 }
 
 export interface RazorpayInvoiceResponse {
@@ -152,7 +168,10 @@ export const createRazorpayInvoice = async (data: RazorpayInvoiceRequest): Promi
   return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/order`, "POST", {
     participant_id: data.participant_id,
     amount: data.amount,
+    currency: data.currency || "INR",
     fee_category: data.fee_category,
+    related_participant_ids: data.related_participant_ids || [],
+    registration_fee: data.registration_fee,
   });
 };
 

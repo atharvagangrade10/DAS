@@ -94,7 +94,8 @@ const SidebarNav = () => {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar-background">
       <div className="flex h-16 items-center border-b px-6">
-        <Link to="/" className="flex items-center gap-2 font-bold text-2xl text-primary">
+        <Link to="/" className="flex items-center gap-3 font-bold text-2xl text-primary">
+          <img src="/Logo.png" alt="Logo" className="h-10 w-10" />
           DAS
         </Link>
       </div>

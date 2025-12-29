@@ -15,30 +15,17 @@ import {
 } from "@/components/ui/dialog";
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { format, differenceInYears, parseISO, isValid } from "date-fns";
-import { Loader2, Users, UserPlus, Zap } from "lucide-react";
+import { Loader2, Zap } from "lucide-react";
 import { toast } from "sonner";
-import DOBInput from "./DOBInput";
 import { createParticipantPublic, searchParticipantPublic, fetchParticipantById, updateParticipant } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { Participant, RelatedParticipant } from "@/types/participant";
+import FamilyMemberFormFields from "./FamilyMemberFormFields";
 
 const PROFESSIONS = [
   "Student",
@@ -139,7 +126,6 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     },
   });
 
-  const dobValue = form.watch("dob");
   const relationValue = form.watch("relation");
   const professionType = form.watch("profession_type");
 
@@ -147,6 +133,17 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
     if (relationValue === "Husband" || relationValue === "Father") form.setValue("gender", "Male");
     if (relationValue === "Wife" || relationValue === "Mother") form.setValue("gender", "Female");
   }, [relationValue, form]);
+
+  // Calculate age based on DOB watch value
+  const dobValue = form.watch("dob");
+  React.useEffect(() => {
+    if (dobValue) {
+      const age = differenceInYears(new Date(), dobValue);
+      // Note: We don't set 'age' in the form state as it's not part of the schema, 
+      // but we calculate it during mutation.
+    }
+  }, [dobValue]);
+
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof familyMemberSchema>) => {
@@ -323,188 +320,10 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-            <FormField
-              control={form.control}
-              name="relation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Relation <span className="text-red-500">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select relation" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {["Husband", "Wife", "Child", "Father", "Mother"].map((r) => (
-                        <SelectItem key={r} value={r}>{r}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="first_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="last_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="initiated_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Initiated Name (Optional)</FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
-                  <FormControl><Input {...field} type="tel" /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dob"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <DOBInput value={field.value} onChange={field.onChange} label={<>Date of Birth <span className="text-red-500">*</span></> as any} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="gender"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Gender <span className="text-red-500">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="chanting_rounds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chanting Rounds</FormLabel>
-                  <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="profession_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Profession</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger><SelectValue placeholder="Profession" /></SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {PROFESSIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {professionType === "Other" && (
-              <FormField
-                control={form.control}
-                name="profession_other"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Specify Profession</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <FormField
-              control={form.control}
-              name="place_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Workplace / Institution</FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address <span className="text-red-500">*</span></FormLabel>
-                  <FormControl><Input {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
-                  <FormControl><Input {...field} type="email" /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <FamilyMemberFormFields 
+              form={form as any}
+              professionType={professionType}
+              PROFESSIONS={PROFESSIONS}
             />
 
             <DialogFooter>

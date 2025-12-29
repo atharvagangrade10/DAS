@@ -146,7 +146,12 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                   <UserPlus className="h-5 w-5 text-primary" />
                   <h4 className="font-semibold">Family Members</h4>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setIsAddMemberDialogOpen(true)}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsAddMemberDialogOpen(true)}
+                  className="border-foreground text-foreground dark:border-foreground dark:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800" // Black/White styling
+                >
                   Add Member
                 </Button>
               </div>

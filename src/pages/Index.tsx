@@ -13,9 +13,30 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, CheckCircle2, MapPin, Loader2 } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import CompleteProfileDialog from "@/components/CompleteProfileDialog";
+import { AuthUser } from "@/types/auth";
+
+// Helper function to map Participant to AuthUser structure
+const participantToAuthUser = (p: Participant, currentRole: AuthUser['role']): AuthUser => ({
+    user_id: p.id,
+    full_name: p.full_name,
+    initiated_name: p.initiated_name,
+    phone: p.phone,
+    address: p.address,
+    place_name: p.place_name,
+    age: p.age,
+    dob: p.dob,
+    gender: p.gender,
+    email: p.email,
+    profession: p.profession,
+    devotee_friend_name: p.devotee_friend_name,
+    chanting_rounds: p.chanting_rounds,
+    role: currentRole,
+    related_participant_ids: p.related_participant_ids,
+    profile_photo_url: p.profile_photo_url,
+});
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isProfileIncomplete, setIsProfileIncomplete] = React.useState(false);
 
   // Fetch latest participant details
@@ -25,6 +46,23 @@ const Index = () => {
     enabled: !!user?.user_id,
     staleTime: 60 * 1000, // Cache for 1 minute
   });
+
+  // Sync AuthContext user with latest fetched data if available
+  React.useEffect(() => {
+    if (latestParticipantData && user) {
+      // Check if any mandatory field is different/updated in the fetched data
+      // This ensures the AuthContext user object is up-to-date for dialog initialization
+      const dobChanged = latestParticipantData.dob !== user.dob;
+      const addressChanged = latestParticipantData.address !== user.address;
+      const emailChanged = latestParticipantData.email !== user.email;
+      const photoChanged = latestParticipantData.profile_photo_url !== user.profile_photo_url;
+      
+      if (dobChanged || addressChanged || emailChanged || photoChanged) {
+        const updatedUser = participantToAuthUser(latestParticipantData, user.role);
+        updateUser(updatedUser);
+      }
+    }
+  }, [latestParticipantData, user, updateUser]);
 
   // Check for mandatory fields based on fetched data
   React.useEffect(() => {

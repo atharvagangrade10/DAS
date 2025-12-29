@@ -4,7 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Form,
@@ -24,10 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { format, differenceInYears, parseISO, isValid } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 import { toast } from "sonner";
 import { Loader2, ArrowRight } from "lucide-react";
-import { upsertParticipantPublic, fetchParticipantByPhonePublic } from "@/utils/api";
+import { createParticipantPublic } from "@/utils/api";
 import DOBInput from "@/components/DOBInput";
 import PhotoUpload from "@/components/PhotoUpload";
 
@@ -54,7 +54,13 @@ const RegisterFullForm = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const phoneParam = searchParams.get("phone") || "";
-  const participantIdParam = searchParams.get("participant_id") || "";
+
+  React.useEffect(() => {
+    if (!phoneParam) {
+      toast.error("Please verify your phone number first.");
+      navigate("/register", { replace: true });
+    }
+  }, [phoneParam, navigate]);
 
   const form = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
@@ -74,40 +80,6 @@ const RegisterFullForm = () => {
       email: "",
       profile_photo_url: null,
     },
-  });
-
-  // Fetch existing participant data if they are in 'SetPassword' or re-registering
-  const { isLoading: isFetchingExisting } = useQuery({
-    queryKey: ["existingParticipant", phoneParam],
-    queryFn: async () => {
-      if (!phoneParam) return null;
-      const data = await fetchParticipantByPhonePublic(phoneParam);
-      if (data) {
-        const profession = data.profession || "Student";
-        const profType = PROFESSIONS.includes(profession) ? profession : "Other";
-        const profOther = profType === "Other" ? profession : "";
-        
-        form.reset({
-          first_name: data.first_name || data.full_name?.split(' ')[0] || "",
-          last_name: data.last_name || data.full_name?.split(' ').slice(1).join(' ') || "",
-          initiated_name: data.initiated_name || "",
-          phone: data.phone || phoneParam,
-          address: data.address || "",
-          place_name: data.place_name || "",
-          age: data.age || undefined,
-          dob: data.dob && isValid(parseISO(data.dob)) ? parseISO(data.dob) : undefined,
-          gender: (data.gender as any) || "Male",
-          profession_type: profType,
-          profession_other: profOther,
-          chanting_rounds: data.chanting_rounds || 0,
-          email: data.email || "",
-          profile_photo_url: data.profile_photo_url || null,
-        });
-      }
-      return data;
-    },
-    enabled: !!phoneParam,
-    retry: false,
   });
 
   const dobValue = form.watch("dob");
@@ -134,7 +106,7 @@ const RegisterFullForm = () => {
         devotee_friend_name: "None",
       };
       
-      const response = await upsertParticipantPublic(participantData, participantIdParam || undefined);
+      const response = await createParticipantPublic(participantData);
       
       const pId = response?.id || 
                   (response as any)?.participant_id || 
@@ -150,15 +122,6 @@ const RegisterFullForm = () => {
       toast.error("Registration failed", { description: error.message });
     },
   });
-
-  if (!phoneParam) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <p className="mb-4">Verification required.</p>
-        <Button onClick={() => navigate("/register")}>Go to Verification</Button>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center py-12 px-4">
@@ -179,212 +142,206 @@ const RegisterFullForm = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isFetchingExisting ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="animate-spin h-8 w-8 text-primary" />
-              </div>
-            ) : (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((v) => accountMutation.mutate(v))} className="space-y-6">
-                  <div className="flex flex-col items-center mb-6">
-                    <FormField
-                      control={form.control}
-                      name="profile_photo_url"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <PhotoUpload 
-                              value={field.value} 
-                              onChange={field.onChange} 
-                              label="Profile Photo"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="first_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="First Name" autoComplete="given-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="last_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Last Name" autoComplete="family-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="initiated_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Initiated Name (Optional)</FormLabel>
-                          <FormControl><Input {...field} autoComplete="off" /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
-                          <FormControl>
-                            <Input {...field} type="tel" placeholder="Phone Number" autoComplete="tel" readOnly className="bg-muted" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="dob"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <DOBInput value={field.value} onChange={field.onChange} label={<>Date of Birth <span className="text-red-500">*</span></> as any} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gender <span className="text-red-500">*</span></FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Male">Male</SelectItem>
-                              <SelectItem value="Female">Female</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="profession_type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Profession</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger><SelectValue placeholder="Profession" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {PROFESSIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {professionType === "Other" && (
-                      <FormField
-                        control={form.control}
-                        name="profession_other"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Specify Profession</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit((v) => accountMutation.mutate(v))} className="space-y-6">
+                <div className="flex flex-col items-center mb-6">
+                  <FormField
+                    control={form.control}
+                    name="profile_photo_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <PhotoUpload 
+                            value={field.value} 
+                            onChange={field.onChange} 
+                            label="Profile Photo"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
+                  />
+                </div>
 
-                    <FormField
-                      control={form.control}
-                      name="place_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Workplace / Institution</FormLabel>
-                          <FormControl><Input {...field} autoComplete="organization" /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="first_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="First Name" autoComplete="given-name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="last_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Last Name" autoComplete="family-name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Residential Address <span className="text-red-500">*</span></FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="initiated_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Initiated Name (Optional)</FormLabel>
+                        <FormControl><Input {...field} autoComplete="off" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input {...field} type="tel" placeholder="Phone Number" autoComplete="tel" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dob"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <DOBInput value={field.value} onChange={field.onChange} label={<>Date of Birth <span className="text-red-500">*</span></> as any} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender <span className="text-red-500">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <Input {...field} autoComplete="street-address" />
+                            <SelectTrigger><SelectValue placeholder="Gender" /></SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name="chanting_rounds"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Chanting Rounds</FormLabel>
-                          <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="profession_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Profession</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <Input {...field} type="email" autoComplete="email" />
+                            <SelectTrigger><SelectValue placeholder="Profession" /></SelectTrigger>
                           </FormControl>
+                          <SelectContent>
+                            {PROFESSIONS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {professionType === "Other" && (
+                    <FormField
+                      control={form.control}
+                      name="profession_other"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specify Profession</FormLabel>
+                          <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  )}
 
-                    <Button type="submit" className="w-full text-lg py-6" disabled={accountMutation.isPending}>
-                      {accountMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Register and Set Password"}
-                      {!accountMutation.isPending && <ArrowRight className="ml-2 h-5 w-5" />}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            )}
+                  <FormField
+                    control={form.control}
+                    name="place_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Workplace / Institution</FormLabel>
+                        <FormControl><Input {...field} autoComplete="organization" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Residential Address <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input {...field} autoComplete="street-address" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="chanting_rounds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Chanting Rounds</FormLabel>
+                        <FormControl><Input type="number" {...field} value={field.value || ""} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" autoComplete="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" className="w-full text-lg py-6" disabled={accountMutation.isPending}>
+                    {accountMutation.isPending ? <Loader2 className="animate-spin mr-2" /> : "Register and Set Password"}
+                    {!accountMutation.isPending && <ArrowRight className="ml-2 h-5 w-5" />}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

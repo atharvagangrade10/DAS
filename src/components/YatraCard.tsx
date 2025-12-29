@@ -57,7 +57,7 @@ interface YatraParticipantResponse {
   created_at?: string;
 }
 
-const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false }) => {
+const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
@@ -73,15 +73,16 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false 
 
   // Determine if the user is registered for this yatra
   const isRegisteredForYatra = React.useMemo(() => {
+    if (isRegistered) return true; // Use prop if provided
     if (!paymentHistory) return false;
     return paymentHistory.some(p => 
       p.yatra_id === yatra.id && 
       (p.status.toLowerCase() === 'completed' || p.status.toLowerCase() === 'success' || p.status.toLowerCase() === 'paid')
     );
-  }, [paymentHistory, yatra.id]);
+  }, [paymentHistory, yatra.id, isRegistered]);
 
   // Fetch registered participants for this yatra
-  // Enabled for admins OR if the user is registered
+  // Enabled specifically when the dialog is open and the user has permission (Admin OR Registered)
   const { data: registeredParticipants, isLoading: isLoadingParticipants } = useQuery<YatraParticipantResponse[], Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
@@ -94,7 +95,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false 
       }
       return response.json();
     },
-    enabled: showAdminControls || isRegisteredForYatra,
+    enabled: isRegisteredParticipantsDialogOpen && (showAdminControls || isRegisteredForYatra),
   });
 
   const handleViewProfile = (participantId: string) => {

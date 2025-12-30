@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Yatra } from "@/types/yatra";
 import { toast } from "sonner";
-import { ShieldCheck, CreditCard, Loader2, UserPlus, Trash2, Baby } from "lucide-react";
+import { ShieldCheck, CreditCard, Loader2, UserPlus, Trash2, Baby, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import useRazorpay from "@/hooks/use-razorpay";
 import { createRazorpayInvoice } from "@/utils/api";
@@ -228,6 +228,23 @@ const YatraRegistrationDialog: React.FC<YatraRegistrationDialogProps> = ({
                 )}
               </div>
             )}
+
+            {/* Current Participant Cost */}
+            <div className="p-4 rounded-lg border border-muted space-y-2">
+              <div className="flex justify-between items-center text-sm font-medium">
+                <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <User className="h-4 w-4" />
+                  {user?.full_name || "You"} ({selectedOption.option_name})
+                </span>
+                <span className="font-semibold">₹{baseFee}</span>
+              </div>
+              {members.length > 0 && (
+                <div className="flex justify-between items-center text-sm font-medium text-muted-foreground border-t pt-2 mt-2">
+                  <span>+ Family Members ({members.length})</span>
+                  <span>₹{membersTotal}</span>
+                </div>
+              )}
+            </div>
 
             <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
               <div className="flex justify-between items-center text-lg font-bold">

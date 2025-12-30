@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthUser, AuthTokenResponse, LoginRequest, RegisterRequest } from '@/types/auth';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/config/api';
+import { fetchParticipantById } from '@/utils/api';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -58,21 +59,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem(STORAGE_KEY);
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedToken && storedUser) {
-      try {
-        const parsedUser: AuthUser = JSON.parse(storedUser);
-        setToken(storedToken);
-        setUser(parsedUser);
-      } catch (e) {
-        console.error("Failed to parse stored user data:", e);
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(USER_STORAGE_KEY);
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem(STORAGE_KEY);
+      const storedUserJson = localStorage.getItem(USER_STORAGE_KEY);
+      
+      if (storedToken && storedUserJson) {
+        try {
+          const parsedUser: AuthUser = JSON.parse(storedUserJson);
+          
+          // 1. Set initial state immediately from storage
+          setToken(storedToken);
+          setUser(parsedUser);
+
+          // 2. Refresh user data from API on every load/refresh
+          if (parsedUser.user_id) {
+            console.log("Refreshing user data from API...");
+            
+            const freshParticipantData = await fetchParticipantById(parsedUser.user_id);
+            
+            // Map fresh Participant data back to AuthUser structure
+            const freshUser: AuthUser = {
+                ...parsedUser, // Preserve existing fields like related_participant_ids if not fully returned by participant endpoint
+                ...freshParticipantData, // Overwrite with fresh data from Participant
+                user_id: freshParticipantData.id, // Ensure user_id is correct (mapping from participant.id)
+                role: freshParticipantData.role, // Ensure role is fresh
+            };
+            
+            setUser(freshUser);
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(freshUser));
+            console.log("User data refreshed successfully.");
+          }
+        } catch (e) {
+          console.error("Failed to refresh stored user data or token expired:", e);
+          // If refresh fails, assume token/data is stale/invalid and log out
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(USER_STORAGE_KEY);
+          setToken(null);
+          setUser(null);
+        }
       }
-    }
-    setIsLoading(false);
-  }, []);
+      setIsLoading(false);
+    };
+    
+    initializeAuth();
+  }, []); // Runs only once on mount/reload
 
   const handleAuthSuccess = (response: AuthTokenResponse) => {
     const { access_token, token_type, ...userData } = response;

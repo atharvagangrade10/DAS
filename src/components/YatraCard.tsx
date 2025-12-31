@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle, User, CreditCard, Lock } from "lucide-react";
-import { Yatra, PaymentRecord } from "@/types/yatra";
+import { Yatra, PaymentRecord, ReceiptResponse } from "@/types/yatra";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,14 @@ import EditYatraDialog from "./EditYatraDialog";
 import YatraRegistrationDialog from "./YatraRegistrationDialog";
 import ParticipantDetailsDialog from "./ParticipantDetailsDialog";
 import YatraStatsDialog, { StatusStats } from "./YatraStatsDialog";
+import ReceiptDialog from "./ReceiptDialog";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPaymentHistory } from "@/utils/api";
+import { fetchPaymentHistory, fetchYatraReceipt } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { API_BASE_URL } from "@/config/api";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 interface YatraCardProps {
   yatra: Yatra;
@@ -89,6 +91,10 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   const [isStatsDialogOpen, setIsStatsDialogOpen] = React.useState(false);
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<string | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = React.useState(false);
+  
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = React.useState(false);
+  const [receiptData, setReceiptData] = React.useState<ReceiptResponse | null>(null);
+  const [isFetchingReceipt, setIsFetchingReceipt] = React.useState(false);
 
   // Fetch payment history to check registration status
   const { data: paymentHistory, isLoading: isLoadingHistory } = useQuery<PaymentRecord[], Error>({
@@ -126,6 +132,25 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   const handleViewProfile = (participantId: string) => {
     setSelectedParticipantId(participantId);
     setIsDetailsDialogOpen(true);
+  };
+
+  const handleRegisteredButtonClick = async () => {
+    if (showAdminControls) {
+      setIsRegisteredParticipantsDialogOpen(true);
+      return;
+    }
+
+    // For attendees, fetch and open receipt
+    try {
+      setIsFetchingReceipt(true);
+      const data = await fetchYatraReceipt(yatra.id, user!.user_id);
+      setReceiptData(data);
+      setIsReceiptDialogOpen(true);
+    } catch (error: any) {
+      toast.error("Failed to load receipt", { description: error.message });
+    } finally {
+      setIsFetchingReceipt(false);
+    }
   };
 
   const isClosed = yatra.status === "Closed";
@@ -205,10 +230,15 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
               <Button 
                 className="w-full flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" 
                 variant="outline"
-                onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
+                onClick={handleRegisteredButtonClick}
+                disabled={isFetchingReceipt}
               >
-                <ThumbsUp className="h-4 w-4 text-green-500" />
-                <span className="font-medium">Registered (View Details)</span>
+                {isFetchingReceipt ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ThumbsUp className="h-4 w-4 text-green-500" />
+                )}
+                <span className="font-medium">{isFetchingReceipt ? "Loading Receipt..." : "Registered (View Details)"}</span>
               </Button>
             ) : (
               <Button 
@@ -237,7 +267,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
             <Button 
               className="w-full flex items-center justify-center gap-2" 
               variant="outline"
-              onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
+              onClick={handleRegisteredButtonClick}
             >
               <Users className="h-4 w-4" />
               Manage Participants
@@ -276,6 +306,12 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         participantId={selectedParticipantId}
         isOpen={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
+      />
+
+      <ReceiptDialog
+        isOpen={isReceiptDialogOpen}
+        onOpenChange={setIsReceiptDialogOpen}
+        receiptData={receiptData}
       />
     </Card>
   );

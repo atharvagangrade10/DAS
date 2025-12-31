@@ -1,6 +1,6 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
-import { Yatra, YatraCreate, YatraUpdate, PaymentRecord } from "@/types/yatra";
+import { Yatra, YatraCreate, YatraUpdate, PaymentRecord, ReceiptResponse } from "@/types/yatra";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -188,6 +188,10 @@ export const verifyPayment = async (yatraId: string, data: RazorpayVerificationR
 
 export const fetchPaymentHistory = async (participantId: string): Promise<PaymentRecord[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/yatra/payment-history/${participantId}`);
+};
+
+export const fetchYatraReceipt = async (yatraId: string, participantId: string): Promise<ReceiptResponse> => {
+  return fetchAuthenticated(`${API_BASE_URL}/yatra/${yatraId}/receipt/${participantId}`);
 };
 
 export const uploadPhoto = async (file: File, participantId: string): Promise<string> => {

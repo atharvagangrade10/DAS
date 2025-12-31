@@ -14,7 +14,7 @@ import YatraRegistrationDialog from "./YatraRegistrationDialog";
 import ParticipantDetailsDialog from "./ParticipantDetailsDialog";
 import YatraStatsDialog, { StatusStats } from "./YatraStatsDialog";
 import ReceiptDialog from "./ReceiptDialog";
-import BoardingListOptionsDialog, { BoardingListColumn } from "./BoardingListOptionsDialog";
+import BoardingListOptionsDialog, { BoardingListColumn, HeaderField } from "./BoardingListOptionsDialog";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPaymentHistory, fetchYatraReceipt } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
@@ -151,7 +151,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     }
   };
 
-  const generatePDF = (columns: BoardingListColumn[], includeGrouping: boolean) => {
+  const generatePDF = (columns: BoardingListColumn[], headerFields: HeaderField[]) => {
     if (!apiResponse || !apiResponse.groups) return;
 
     try {
@@ -181,11 +181,20 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       apiResponse.groups.forEach(group => {
         const s = group.payment_status.toLowerCase();
         if (s === 'completed' || s === 'success' || s === 'paid') {
-          // Transaction group header row - conditionally added
-          if (includeGrouping) {
+          
+          // Construct the header string based on selected fields
+          const headerParts: string[] = [];
+          if (headerFields.includes("id")) headerParts.push(`Tx: ${group.transaction_id || group.order_id}`);
+          if (headerFields.includes("amount")) headerParts.push(`Amount: Rs. ${group.payment_amount}`);
+          if (headerFields.includes("date") && group.payment_date) {
+            headerParts.push(`Date: ${format(parseISO(group.payment_date), "MMM dd")}`);
+          }
+
+          // Only add header row if fields are selected
+          if (headerParts.length > 0) {
             tableData.push([
               { 
-                content: `Transaction: ${group.transaction_id || group.order_id} | Amount: Rs. ${group.payment_amount} | Date: ${group.payment_date ? format(parseISO(group.payment_date), "MMM dd") : 'N/A'}`, 
+                content: headerParts.join(" | "), 
                 colSpan: columns.length, 
                 styles: { fillColor: [240, 240, 240], fontStyle: 'bold', textColor: [50, 50, 50] } 
               }

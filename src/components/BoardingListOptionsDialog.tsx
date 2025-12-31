@@ -29,6 +29,8 @@ export type BoardingListColumn =
   | "profession" 
   | "verify";
 
+export type HeaderField = "id" | "amount" | "date";
+
 interface ColumnOption {
   id: BoardingListColumn;
   label: string;
@@ -52,7 +54,7 @@ const COLUMN_OPTIONS: ColumnOption[] = [
 interface BoardingListOptionsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onDownload: (selectedColumns: BoardingListColumn[], includeGrouping: boolean) => void;
+  onDownload: (selectedColumns: BoardingListColumn[], headerFields: HeaderField[]) => void;
   yatraName: string;
 }
 
@@ -65,7 +67,10 @@ const BoardingListOptionsDialog: React.FC<BoardingListOptionsDialogProps> = ({
   const [selectedColumns, setSelectedColumns] = React.useState<BoardingListColumn[]>([
     "index", "full_name", "phone", "type", "option", "verify"
   ]);
-  const [includeGrouping, setIncludeGrouping] = React.useState(true);
+  
+  const [selectedHeaderFields, setSelectedHeaderFields] = React.useState<HeaderField[]>([
+    "id", "amount", "date"
+  ]);
 
   const toggleColumn = (columnId: BoardingListColumn) => {
     setSelectedColumns((prev) =>
@@ -75,8 +80,16 @@ const BoardingListOptionsDialog: React.FC<BoardingListOptionsDialogProps> = ({
     );
   };
 
+  const toggleHeaderField = (field: HeaderField) => {
+    setSelectedHeaderFields((prev) =>
+      prev.includes(field)
+        ? prev.filter((id) => id !== field)
+        : [...prev, field]
+    );
+  };
+
   const handleDownload = () => {
-    onDownload(selectedColumns, includeGrouping);
+    onDownload(selectedColumns, selectedHeaderFields);
     onOpenChange(false);
   };
 
@@ -95,7 +108,7 @@ const BoardingListOptionsDialog: React.FC<BoardingListOptionsDialogProps> = ({
 
         <div className="space-y-4 py-4">
           <div className="space-y-3">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Columns</Label>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Table Columns</Label>
             <div className="grid grid-cols-2 gap-4">
               {COLUMN_OPTIONS.map((option) => (
                 <div key={option.id} className="flex items-center space-x-2">
@@ -118,26 +131,37 @@ const BoardingListOptionsDialog: React.FC<BoardingListOptionsDialogProps> = ({
           <Separator />
 
           <div className="space-y-3">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Grouping Options</Label>
-            <div className="flex items-center space-x-2 p-3 rounded-md border bg-muted/30">
-              <Checkbox
-                id="grouping-toggle"
-                checked={includeGrouping}
-                onCheckedChange={(checked) => setIncludeGrouping(checked as boolean)}
-              />
-              <div className="grid gap-1.5 leading-none">
-                <Label
-                  htmlFor="grouping-toggle"
-                  className="text-sm font-bold leading-none cursor-pointer flex items-center gap-2"
-                >
-                  <Layers className="h-3 w-3" />
-                  Show Transaction Headers
-                </Label>
-                <p className="text-[10px] text-muted-foreground">
-                  Include gray header rows showing Payment ID, Amount, and Date.
-                </p>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Transaction Header Info</Label>
+            <p className="text-[10px] text-muted-foreground mb-2">Select which info appears in the gray header row above groups.</p>
+            <div className="grid grid-cols-2 gap-4 border p-3 rounded-md bg-muted/30">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="h-id"
+                  checked={selectedHeaderFields.includes("id")}
+                  onCheckedChange={() => toggleHeaderField("id")}
+                />
+                <Label htmlFor="h-id" className="text-sm cursor-pointer">Transaction ID</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="h-amount"
+                  checked={selectedHeaderFields.includes("amount")}
+                  onCheckedChange={() => toggleHeaderField("amount")}
+                />
+                <Label htmlFor="h-amount" className="text-sm cursor-pointer">Total Amount</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="h-date"
+                  checked={selectedHeaderFields.includes("date")}
+                  onCheckedChange={() => toggleHeaderField("date")}
+                />
+                <Label htmlFor="h-date" className="text-sm cursor-pointer">Payment Date</Label>
               </div>
             </div>
+            <p className="text-[10px] italic text-muted-foreground mt-1 text-center">
+              (Uncheck all to hide the header rows completely)
+            </p>
           </div>
         </div>
 

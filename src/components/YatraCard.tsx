@@ -98,11 +98,14 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       const data = await response.json();
       // Ensure data is an array before returning
-      if (!Array.isArray(data)) {
-        console.warn(`API returned non-array data for yatra ${yatra.id} participants:`, data);
-        return [];
+      if (data && Array.isArray(data.participants)) {
+        return data.participants;
       }
-      return data;
+      if (Array.isArray(data)) {
+        return data;
+      }
+      console.warn(`API returned non-array data for yatra ${yatra.id} participants:`, data);
+      return [];
     },
     enabled: false, 
   });
@@ -278,9 +281,9 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
     const seenTransactionIds = new Set<string>();
     
     return sortedList.map(p => {
-        // Use transaction_id for grouping, falling back to participant_id if txId is missing
+        // Use transaction_id for grouping, falling back to participant_id if txId is missing or null
         const txId = p.transaction_id || p.participant_id; 
-        const isMainRegistrant = !seenTransactionIds.has(txId);
+        const isMainRegistrant = !!txId && !seenTransactionIds.has(txId);
         if (isMainRegistrant) {
             seenTransactionIds.add(txId);
         }
@@ -428,7 +431,7 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onViewProfile(participant.participant_id)}
+                      onClick={() => onViewProfile(participant.participant_info.id)}
                       className="flex items-center gap-1 shrink-0 h-8 px-2 text-xs"
                     >
                       <Eye className="h-4 w-4" />

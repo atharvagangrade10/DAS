@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle, User } from "lucide-react";
 import { Yatra, PaymentRecord } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -248,7 +248,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   );
 };
 
-// ... keep RegisteredParticipantsDialog components as they are ...
 interface ProcessedYatraParticipantResponse extends YatraParticipantResponse {
   isMainRegistrant: boolean;
 }
@@ -416,8 +415,20 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
                       {getStatusBadge(participant.payment_status)}
                     </div>
                     <p className="text-sm text-muted-foreground">{participant.participant_info.phone}</p>
+                    
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <div className="flex items-center gap-1 text-[11px] font-medium text-gray-600 dark:text-gray-400">
+                        <User className="h-3 w-3 text-blue-500" />
+                        <span>Adults: {participant.adult_count || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[11px] font-medium text-gray-600 dark:text-gray-400">
+                        <Baby className="h-3 w-3 text-pink-500" />
+                        <span>Child: {participant.child_count || 0}</span>
+                      </div>
+                    </div>
+
                     {participant.registration_option && (
-                      <p className="text-xs text-primary font-medium mt-1">
+                      <p className="text-[10px] text-primary font-bold mt-1.5 uppercase tracking-tight">
                         Plan: {participant.registration_option}
                       </p>
                     )}

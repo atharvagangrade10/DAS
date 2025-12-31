@@ -14,6 +14,7 @@ import YatraRegistrationDialog from "./YatraRegistrationDialog";
 import ParticipantDetailsDialog from "./ParticipantDetailsDialog";
 import YatraStatsDialog, { StatusStats } from "./YatraStatsDialog";
 import ReceiptDialog from "./ReceiptDialog";
+import BoardingListOptionsDialog, { BoardingListColumn } from "./BoardingListOptionsDialog";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPaymentHistory, fetchYatraReceipt } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
@@ -93,6 +94,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   const [isStatsDialogOpen, setIsStatsDialogOpen] = React.useState(false);
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<string | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = React.useState(false);
+  const [isOptionsDialogOpen, setIsOptionsDialogOpen] = React.useState(false);
   
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = React.useState(false);
   const [receiptData, setReceiptData] = React.useState<ReceiptResponse | null>(null);
@@ -149,53 +151,65 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     }
   };
 
-  const handleDownloadBoardingList = () => {
-    if (!apiResponse || !apiResponse.groups) {
-      toast.error("No participant data available to download.");
-      return;
-    }
+  const generatePDF = (columns: BoardingListColumn[]) => {
+    if (!apiResponse || !apiResponse.groups) return;
 
     try {
       const doc = new jsPDF();
       const title = `Boarding List: ${yatra.name}`;
       const dateStr = `Trip Dates: ${format(new Date(yatra.date_start), "PPP")} - ${format(new Date(yatra.date_end), "PPP")}`;
       
+      const columnLabels: Record<BoardingListColumn, string> = {
+        index: "#",
+        full_name: "Full Name",
+        initiated_name: "Initiated Name",
+        phone: "Phone Number",
+        gender: "Gender",
+        age: "Age",
+        type: "Type",
+        option: "Plan",
+        address: "Address",
+        profession: "Profession",
+        verify: "Verify"
+      };
+
+      const tableHeaders = columns.map(col => columnLabels[col]);
       const tableData: any[] = [];
       let globalIndex = 1;
 
       apiResponse.groups.forEach(group => {
         const s = group.payment_status.toLowerCase();
         if (s === 'completed' || s === 'success' || s === 'paid') {
+          // Transaction group header row
           tableData.push([
             { 
               content: `Transaction: ${group.transaction_id || group.order_id} | Amount: Rs. ${group.payment_amount} | Date: ${group.payment_date ? format(parseISO(group.payment_date), "MMM dd") : 'N/A'}`, 
-              colSpan: 6, 
-              styles: { 
-                fillColor: [240, 240, 240], 
-                fontStyle: 'bold', 
-                textColor: [50, 50, 50],
-                halign: 'left'
-              } 
+              colSpan: columns.length, 
+              styles: { fillColor: [240, 240, 240], fontStyle: 'bold', textColor: [50, 50, 50] } 
             }
           ]);
 
           group.participants.forEach(p => {
-            tableData.push([
-              globalIndex++,
-              p.participant_info.full_name,
-              p.participant_info.phone,
-              p.is_child ? "Child" : "Adult",
-              p.registration_option || "Standard",
-              "[ ]"
-            ]);
+            const row = columns.map(col => {
+              switch(col) {
+                case "index": return globalIndex++;
+                case "full_name": return p.participant_info.full_name;
+                case "initiated_name": return p.participant_info.initiated_name || "-";
+                case "phone": return p.participant_info.phone;
+                case "gender": return p.participant_info.gender || "-";
+                case "age": return p.participant_info.age || "-";
+                case "type": return p.is_child ? "Child" : "Adult";
+                case "option": return p.registration_option || "Standard";
+                case "address": return p.participant_info.address || "-";
+                case "profession": return p.participant_info.profession || "-";
+                case "verify": return "[ ]";
+                default: return "";
+              }
+            });
+            tableData.push(row);
           });
         }
       });
-
-      if (tableData.length === 0) {
-        toast.info("No confirmed participants found to export.");
-        return;
-      }
 
       doc.setFontSize(18);
       doc.text(title, 14, 20);
@@ -205,14 +219,10 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
 
       autoTable(doc, {
         startY: 40,
-        head: [['#', 'Full Name', 'Phone Number', 'Type', 'Plan', 'Verify']],
+        head: [tableHeaders],
         body: tableData,
         theme: 'grid',
         headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255] },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          5: { cellWidth: 20, halign: 'center' }
-        },
         margin: { top: 40 },
         didParseCell: function (data) {
            if (typeof data.cell.raw === 'object' && (data.cell.raw as any).colSpan) {
@@ -222,10 +232,10 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       });
 
       doc.save(`Boarding_List_${yatra.name.replace(/\s+/g, "_")}.pdf`);
-      toast.success("Boarding list downloaded successfully!");
+      toast.success("Boarding list downloaded!");
     } catch (error) {
       console.error("PDF Error:", error);
-      toast.error("Failed to generate boarding list PDF.");
+      toast.error("Failed to generate PDF.");
     }
   };
 
@@ -252,11 +262,11 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={handleDownloadBoardingList} disabled={isLoadingParticipants}>
+                    <Button variant="ghost" size="icon" onClick={() => setIsOptionsDialogOpen(true)} disabled={isLoadingParticipants}>
                       <FileText className="h-5 w-5 text-green-600 hover:text-green-700" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Download Boarding List (PDF)</TooltipContent>
+                  <TooltipContent>Download Boarding List (PDF Options)</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
@@ -312,7 +322,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         </div>
 
         <div className="pt-4 space-y-3">
-          {/* User registration status - Always show this */}
+          {/* User registration status */}
           {isRegisteredForYatra ? (
             <Button 
               className="w-full flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" 
@@ -347,7 +357,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
             </Button>
           )}
 
-          {/* Admin controls - Show in addition to registration button */}
+          {/* Admin controls */}
           {showAdminControls && (
             <Button 
               className="w-full flex items-center justify-center gap-2" 
@@ -363,6 +373,12 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
 
       <EditYatraDialog yatra={yatra} isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />
       <YatraRegistrationDialog yatra={yatra} isOpen={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen} />
+      <BoardingListOptionsDialog 
+        isOpen={isOptionsDialogOpen} 
+        onOpenChange={setIsOptionsDialogOpen} 
+        onDownload={generatePDF} 
+        yatraName={yatra.name} 
+      />
       
       <RegisteredParticipantsDialog
         isOpen={isRegisteredParticipantsDialogOpen}

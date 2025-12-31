@@ -22,14 +22,7 @@ import { API_BASE_URL } from "@/config/api";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
-
-// Extend jsPDF type to include autotable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+import autoTable from "jspdf-autotable";
 
 interface YatraCardProps {
   yatra: Yatra;
@@ -172,7 +165,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       const title = `Boarding List: ${yatra.name}`;
       const dateStr = `Trip Dates: ${format(new Date(yatra.date_start), "PPP")} - ${format(new Date(yatra.date_end), "PPP")}`;
       
-      // Filter for only completed registrations
       const allConfirmedParticipants: any[] = [];
       apiResponse.groups.forEach(group => {
         const s = group.payment_status.toLowerCase();
@@ -188,10 +180,8 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         }
       });
 
-      // Sort by name
       allConfirmedParticipants.sort((a, b) => a.name.localeCompare(b.name));
 
-      // Header
       doc.setFontSize(18);
       doc.text(title, 14, 20);
       doc.setFontSize(11);
@@ -204,15 +194,15 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         p.phone,
         p.type,
         p.option,
-        "[ ]" // Checkbox column
+        "[ ]"
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 40,
         head: [['#', 'Full Name', 'Phone Number', 'Type', 'Plan', 'Verify']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [59, 130, 246] }, // Primary blue color
+        headStyles: { fillColor: [59, 130, 246] },
         columnStyles: {
           0: { cellWidth: 10 },
           5: { cellWidth: 20, halign: 'center' }

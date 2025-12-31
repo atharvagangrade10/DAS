@@ -6,7 +6,6 @@ import { ReceiptText, Download, Calendar, User, CreditCard, IndianRupee } from "
 import { format } from "date-fns";
 import { ReceiptResponse } from "@/types/yatra";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 interface ReceiptDialogProps {
@@ -71,7 +70,10 @@ const ReceiptDialog: React.FC<ReceiptDialogProps> = ({ isOpen, onOpenChange, rec
               src="/Logo.png"
               alt="Logo"
               className="h-44"
-              onError={(e) => console.log("Logo failed to load")}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
             />
           </div>
 

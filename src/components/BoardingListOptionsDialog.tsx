@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { FileText, Download } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { FileText, Download, Layers } from "lucide-react";
 
 export type BoardingListColumn = 
   | "index" 
@@ -51,7 +52,7 @@ const COLUMN_OPTIONS: ColumnOption[] = [
 interface BoardingListOptionsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onDownload: (selectedColumns: BoardingListColumn[]) => void;
+  onDownload: (selectedColumns: BoardingListColumn[], includeGrouping: boolean) => void;
   yatraName: string;
 }
 
@@ -64,6 +65,7 @@ const BoardingListOptionsDialog: React.FC<BoardingListOptionsDialogProps> = ({
   const [selectedColumns, setSelectedColumns] = React.useState<BoardingListColumn[]>([
     "index", "full_name", "phone", "type", "option", "verify"
   ]);
+  const [includeGrouping, setIncludeGrouping] = React.useState(true);
 
   const toggleColumn = (columnId: BoardingListColumn) => {
     setSelectedColumns((prev) =>
@@ -74,7 +76,7 @@ const BoardingListOptionsDialog: React.FC<BoardingListOptionsDialogProps> = ({
   };
 
   const handleDownload = () => {
-    onDownload(selectedColumns);
+    onDownload(selectedColumns, includeGrouping);
     onOpenChange(false);
   };
 
@@ -87,26 +89,56 @@ const BoardingListOptionsDialog: React.FC<BoardingListOptionsDialogProps> = ({
             PDF Export Options
           </DialogTitle>
           <DialogDescription>
-            Select columns for {yatraName}'s boarding list.
+            Configure the boarding list for {yatraName}.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4 py-4">
-          {COLUMN_OPTIONS.map((option) => (
-            <div key={option.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={`col-${option.id}`}
-                checked={selectedColumns.includes(option.id)}
-                onCheckedChange={() => toggleColumn(option.id)}
-              />
-              <Label
-                htmlFor={`col-${option.id}`}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                {option.label}
-              </Label>
+        <div className="space-y-4 py-4">
+          <div className="space-y-3">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Columns</Label>
+            <div className="grid grid-cols-2 gap-4">
+              {COLUMN_OPTIONS.map((option) => (
+                <div key={option.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`col-${option.id}`}
+                    checked={selectedColumns.includes(option.id)}
+                    onCheckedChange={() => toggleColumn(option.id)}
+                  />
+                  <Label
+                    htmlFor={`col-${option.id}`}
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Grouping Options</Label>
+            <div className="flex items-center space-x-2 p-3 rounded-md border bg-muted/30">
+              <Checkbox
+                id="grouping-toggle"
+                checked={includeGrouping}
+                onCheckedChange={(checked) => setIncludeGrouping(checked as boolean)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="grouping-toggle"
+                  className="text-sm font-bold leading-none cursor-pointer flex items-center gap-2"
+                >
+                  <Layers className="h-3 w-3" />
+                  Show Transaction Headers
+                </Label>
+                <p className="text-[10px] text-muted-foreground">
+                  Include gray header rows showing Payment ID, Amount, and Date.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <DialogFooter>

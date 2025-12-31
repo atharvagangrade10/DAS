@@ -151,7 +151,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     }
   };
 
-  const generatePDF = (columns: BoardingListColumn[]) => {
+  const generatePDF = (columns: BoardingListColumn[], includeGrouping: boolean) => {
     if (!apiResponse || !apiResponse.groups) return;
 
     try {
@@ -181,14 +181,16 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       apiResponse.groups.forEach(group => {
         const s = group.payment_status.toLowerCase();
         if (s === 'completed' || s === 'success' || s === 'paid') {
-          // Transaction group header row
-          tableData.push([
-            { 
-              content: `Transaction: ${group.transaction_id || group.order_id} | Amount: Rs. ${group.payment_amount} | Date: ${group.payment_date ? format(parseISO(group.payment_date), "MMM dd") : 'N/A'}`, 
-              colSpan: columns.length, 
-              styles: { fillColor: [240, 240, 240], fontStyle: 'bold', textColor: [50, 50, 50] } 
-            }
-          ]);
+          // Transaction group header row - conditionally added
+          if (includeGrouping) {
+            tableData.push([
+              { 
+                content: `Transaction: ${group.transaction_id || group.order_id} | Amount: Rs. ${group.payment_amount} | Date: ${group.payment_date ? format(parseISO(group.payment_date), "MMM dd") : 'N/A'}`, 
+                colSpan: columns.length, 
+                styles: { fillColor: [240, 240, 240], fontStyle: 'bold', textColor: [50, 50, 50] } 
+              }
+            ]);
+          }
 
           group.participants.forEach(p => {
             const row = columns.map(col => {

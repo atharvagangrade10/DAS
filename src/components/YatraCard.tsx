@@ -128,7 +128,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       return response.json();
     },
-    enabled: showAdminControls || isRegisteredForYatra,
+    enabled: showAdminControls,
   });
 
   const handleViewProfile = (participantId: string) => {
@@ -136,12 +136,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     setIsDetailsDialogOpen(true);
   };
 
-  const handleRegisteredButtonClick = async () => {
-    if (showAdminControls) {
-      setIsRegisteredParticipantsDialogOpen(true);
-      return;
-    }
-
+  const handleViewMyReceipt = async () => {
     try {
       setIsFetchingReceipt(true);
       const data = await fetchYatraReceipt(yatra.id, user!.user_id);
@@ -168,12 +163,9 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       const tableData: any[] = [];
       let globalIndex = 1;
 
-      // Grouped logic - exactly like the UI ledger
       apiResponse.groups.forEach(group => {
         const s = group.payment_status.toLowerCase();
-        // Only include confirmed registrations
         if (s === 'completed' || s === 'success' || s === 'paid') {
-          // Add a visual separator row for the transaction group
           tableData.push([
             { 
               content: `Transaction: ${group.transaction_id || group.order_id} | Amount: Rs. ${group.payment_amount} | Date: ${group.payment_date ? format(parseISO(group.payment_date), "MMM dd") : 'N/A'}`, 
@@ -194,7 +186,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
               p.participant_info.phone,
               p.is_child ? "Child" : "Adult",
               p.registration_option || "Standard",
-              "[ ]" // Verification Checkbox
+              "[ ]"
             ]);
           });
         }
@@ -223,8 +215,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         },
         margin: { top: 40 },
         didParseCell: function (data) {
-           // If it's a group header row (the one with the Rs. text), it has no index in column 0
-           if (typeof data.cell.raw === 'object' && data.cell.raw.colSpan) {
+           if (typeof data.cell.raw === 'object' && (data.cell.raw as any).colSpan) {
               data.cell.styles.fillColor = [230, 235, 245];
            }
         }
@@ -320,56 +311,54 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
           </div>
         </div>
 
-        {!showAdminControls && (
-          <div className="pt-4 space-y-3">
-            {isRegisteredForYatra ? (
-              <Button 
-                className="w-full flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" 
-                variant="outline"
-                onClick={handleRegisteredButtonClick}
-                disabled={isFetchingReceipt}
-              >
-                {isFetchingReceipt ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ThumbsUp className="h-4 w-4 text-green-500" />
-                )}
-                <span className="font-medium">{isFetchingReceipt ? "Loading Receipt..." : "Registered (View Details)"}</span>
-              </Button>
-            ) : (
-              <Button 
-                className="w-full flex items-center gap-2" 
-                onClick={() => setIsRegisterDialogOpen(true)}
-                disabled={isLoadingHistory || isClosed}
-              >
-                {isClosed ? (
-                  <>
-                    <Lock className="h-4 w-4" />
-                    Registration Closed
-                  </>
-                ) : (
-                  <>
-                    <ClipboardCheck className="h-4 w-4" />
-                    Register Now
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="pt-4 space-y-3">
+          {/* User registration status - Always show this */}
+          {isRegisteredForYatra ? (
+            <Button 
+              className="w-full flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" 
+              variant="outline"
+              onClick={handleViewMyReceipt}
+              disabled={isFetchingReceipt}
+            >
+              {isFetchingReceipt ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ThumbsUp className="h-4 w-4 text-green-500" />
+              )}
+              <span className="font-medium">{isFetchingReceipt ? "Loading Receipt..." : "Registered (View My Receipt)"}</span>
+            </Button>
+          ) : (
+            <Button 
+              className="w-full flex items-center gap-2" 
+              onClick={() => setIsRegisterDialogOpen(true)}
+              disabled={isLoadingHistory || isClosed}
+            >
+              {isClosed ? (
+                <>
+                  <Lock className="h-4 w-4" />
+                  Registration Closed
+                </>
+              ) : (
+                <>
+                  <ClipboardCheck className="h-4 w-4" />
+                  Register Now
+                </>
+              )}
+            </Button>
+          )}
 
-        {showAdminControls && (
-          <div className="pt-4">
+          {/* Admin controls - Show in addition to registration button */}
+          {showAdminControls && (
             <Button 
               className="w-full flex items-center justify-center gap-2" 
-              variant="outline"
-              onClick={handleRegisteredButtonClick}
+              variant="secondary"
+              onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
             >
               <Users className="h-4 w-4" />
               Manage Participants
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
 
       <EditYatraDialog yatra={yatra} isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} />

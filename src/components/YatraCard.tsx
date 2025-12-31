@@ -94,7 +94,13 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch participants' }));
         throw new Error(errorData.detail || "Failed to fetch participants");
       }
-      return response.json();
+      const data = await response.json();
+      // Ensure data is an array before returning
+      if (!Array.isArray(data)) {
+        console.warn(`API returned non-array data for yatra ${yatra.id} participants:`, data);
+        return [];
+      }
+      return data;
     },
     enabled: false, 
   });

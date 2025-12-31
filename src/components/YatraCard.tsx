@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2 } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3 } from "lucide-react";
 import { Yatra, PaymentRecord } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import EditYatraDialog from "./EditYatraDialog";
 import YatraRegistrationDialog from "./YatraRegistrationDialog";
 import ParticipantDetailsDialog from "./ParticipantDetailsDialog";
+import YatraStatsDialog, { StatusStats } from "./YatraStatsDialog";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPaymentHistory } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
@@ -56,8 +57,18 @@ interface YatraParticipantResponse {
   transaction_id?: string;
   registration_date?: string;
   created_at?: string;
-  registration_option?: string; // Added new field
-  is_child?: boolean; // Added new field
+  registration_option?: string;
+  is_child?: boolean;
+  adult_count?: number;
+  child_count?: number;
+}
+
+interface YatraParticipantsApiResponse {
+  participants: YatraParticipantResponse[];
+  adult_count: number;
+  child_count: number;
+  total_count: number;
+  stats_by_status: StatusStats[];
 }
 
 const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
@@ -65,6 +76,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
   const [isRegisteredParticipantsDialogOpen, setIsRegisteredParticipantsDialogOpen] = React.useState(false);
+  const [isStatsDialogOpen, setIsStatsDialogOpen] = React.useState(false);
   const [selectedParticipantId, setSelectedParticipantId] = React.useState<string | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = React.useState(false);
 
@@ -85,8 +97,8 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     );
   }, [paymentHistory, yatra.id, isRegistered]);
 
-  // Fetch registered participants for this yatra
-  const { data: registeredParticipants, isLoading: isLoadingParticipants, refetch } = useQuery<YatraParticipantResponse[], Error>({
+  // Fetch registered participants for this yatra with new API response structure
+  const { data: apiResponse, isLoading: isLoadingParticipants, refetch } = useQuery<YatraParticipantsApiResponse, Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/yatra/yatra/${yatra.id}/participants`, {
@@ -96,26 +108,17 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch participants' }));
         throw new Error(errorData.detail || "Failed to fetch participants");
       }
-      const data = await response.json();
-      // Ensure data is an array before returning
-      if (data && Array.isArray(data.participants)) {
-        return data.participants;
-      }
-      if (Array.isArray(data)) {
-        return data;
-      }
-      console.warn(`API returned non-array data for yatra ${yatra.id} participants:`, data);
-      return [];
+      return response.json();
     },
     enabled: false, 
   });
 
   // Trigger refetch when dialog opens
   React.useEffect(() => {
-    if (isRegisteredParticipantsDialogOpen) {
+    if (isRegisteredParticipantsDialogOpen || isStatsDialogOpen) {
       refetch();
     }
-  }, [isRegisteredParticipantsDialogOpen, refetch]);
+  }, [isRegisteredParticipantsDialogOpen, isStatsDialogOpen, refetch]);
 
   const handleViewProfile = (participantId: string) => {
     setSelectedParticipantId(participantId);
@@ -213,14 +216,22 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         )}
 
         {showAdminControls && (
-          <div className="pt-4">
+          <div className="pt-4 flex gap-2">
             <Button 
-              className="w-full flex items-center gap-2" 
+              className="flex-1 flex items-center gap-2" 
               variant="outline"
               onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
             >
               <Users className="h-4 w-4" />
-              Registered Participants
+              Participants
+            </Button>
+            <Button 
+              className="flex-1 flex items-center gap-2" 
+              variant="secondary"
+              onClick={() => setIsStatsDialogOpen(true)}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Stats
             </Button>
           </div>
         )}
@@ -232,9 +243,20 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       <RegisteredParticipantsDialog
         isOpen={isRegisteredParticipantsDialogOpen}
         onOpenChange={setIsRegisteredParticipantsDialogOpen}
-        participants={registeredParticipants || []}
+        participants={apiResponse?.participants || []}
         isLoading={isLoadingParticipants}
         onViewProfile={handleViewProfile}
+        statsByStatus={apiResponse?.stats_by_status || []}
+      />
+
+      <YatraStatsDialog
+        isOpen={isStatsDialogOpen}
+        onOpenChange={setIsStatsDialogOpen}
+        yatraName={yatra.name}
+        totalAdults={apiResponse?.adult_count || 0}
+        totalChildren={apiResponse?.child_count || 0}
+        totalCount={apiResponse?.total_count || 0}
+        statsByStatus={apiResponse?.stats_by_status || []}
       />
 
       <ParticipantDetailsDialog
@@ -256,6 +278,7 @@ interface RegisteredParticipantsDialogProps {
   participants: YatraParticipantResponse[];
   isLoading: boolean;
   onViewProfile: (participantId: string) => void;
+  statsByStatus: StatusStats[];
 }
 
 const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> = ({
@@ -264,24 +287,22 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
   participants,
   isLoading,
   onViewProfile,
+  statsByStatus,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const processedParticipants = React.useMemo(() => {
     if (!participants || participants.length === 0) return [];
 
-    // 1. Sort by registration_date (ascending)
     const sortedList = [...participants].sort((a, b) => {
         const dateA = a.registration_date ? new Date(a.registration_date).getTime() : 0;
         const dateB = b.registration_date ? new Date(b.registration_date).getTime() : 0;
         return dateA - dateB;
     });
 
-    // 2. Mark the main registrant for each unique transaction_id
     const seenTransactionIds = new Set<string>();
     
     return sortedList.map(p => {
-        // Use transaction_id for grouping, falling back to participant_id if txId is missing or null
         const txId = p.transaction_id || p.participant_id; 
         const isMainRegistrant = !!txId && !seenTransactionIds.has(txId);
         if (isMainRegistrant) {
@@ -303,38 +324,43 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
     );
   }, [processedParticipants, searchQuery]);
 
+  // Extract counts and totals from the stats_by_status provided by backend
   const { statusCounts, totalCompletedAmount } = React.useMemo(() => {
     let totalCompletedAmount = 0;
     const counts = {
       completed: 0,
       pending: 0,
       failed: 0,
-      mainCompletedCount: 0, // Added main completed count
+      mainCompletedCount: 0,
     };
 
-    // Iterate over processedParticipants which includes the isMainRegistrant flag
+    // Use statsByStatus if available
+    if (statsByStatus && statsByStatus.length > 0) {
+      statsByStatus.forEach(stat => {
+        const s = stat.status.toLowerCase();
+        if (s === 'completed' || s === 'success' || s === 'paid') {
+          counts.completed = stat.total_count;
+        } else if (s === 'pending') {
+          counts.pending = stat.total_count;
+        } else if (s === 'failed') {
+          counts.failed = stat.total_count;
+        }
+      });
+    }
+
+    // Still use processedParticipants to calculate the total amount and main registrant count for UI consistency
     processedParticipants.forEach(p => {
       const status = p.payment_status.toLowerCase();
-      
-      // 1. Count participants by status (all participants)
       if (status === 'success' || status === 'paid' || status === 'completed') {
-        counts.completed++;
-        
-        // 2. Calculate total amount received, counting only the main registrant's payment amount
-        // And count main registrants
         if (p.isMainRegistrant) {
           totalCompletedAmount += p.payment_amount || 0;
           counts.mainCompletedCount++;
         }
-      } else if (status === 'pending') {
-        counts.pending++;
-      } else {
-        counts.failed++;
       }
     });
     
     return { statusCounts: counts, totalCompletedAmount };
-  }, [processedParticipants]);
+  }, [processedParticipants, statsByStatus]);
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
@@ -362,20 +388,20 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
 
         <div className="px-6 pb-4 grid grid-cols-4 gap-3 text-center border-b">
           <Card className="p-2 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">Completed</p>
-            <p className="text-xl font-bold text-green-600">{statusCounts.completed}</p>
+            <p className="text-[9px] font-medium text-muted-foreground">Total</p>
+            <p className="text-lg font-bold text-green-600">{statusCounts.completed}</p>
           </Card>
           <Card className="p-2 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">Main Registrants</p>
-            <p className="text-xl font-bold text-primary">{statusCounts.mainCompletedCount}</p>
+            <p className="text-[9px] font-medium text-muted-foreground">Main</p>
+            <p className="text-lg font-bold text-primary">{statusCounts.mainCompletedCount}</p>
           </Card>
           <Card className="p-2 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">Pending</p>
-            <p className="text-xl font-bold text-amber-600">{statusCounts.pending}</p>
+            <p className="text-[9px] font-medium text-muted-foreground">Wait</p>
+            <p className="text-lg font-bold text-amber-600">{statusCounts.pending}</p>
           </Card>
           <Card className="p-2 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">Failed</p>
-            <p className="text-xl font-bold text-red-600">{statusCounts.failed}</p>
+            <p className="text-[9px] font-medium text-muted-foreground">Fail</p>
+            <p className="text-lg font-bold text-red-600">{statusCounts.failed}</p>
           </Card>
         </div>
 

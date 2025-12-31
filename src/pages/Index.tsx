@@ -39,6 +39,8 @@ const Index = () => {
   const { user, updateUser } = useAuth();
   const [isProfileIncomplete, setIsProfileIncomplete] = React.useState(false);
 
+  const isManager = user?.role === 'Manager';
+
   // Fetch latest participant details
   const { data: latestParticipantData, isLoading: isLoadingParticipant } = useQuery<Participant, Error>({
     queryKey: ["latestParticipantDetails", user?.user_id],
@@ -50,8 +52,6 @@ const Index = () => {
   // Sync AuthContext user with latest fetched data if available
   React.useEffect(() => {
     if (latestParticipantData && user) {
-      // Check if any mandatory field is different/updated in the fetched data
-      // This ensures the AuthContext user object is up-to-date for dialog initialization
       const dobChanged = latestParticipantData.dob !== user.dob;
       const addressChanged = latestParticipantData.address !== user.address;
       const emailChanged = latestParticipantData.email !== user.email;
@@ -64,7 +64,7 @@ const Index = () => {
     }
   }, [latestParticipantData, user, updateUser]);
 
-  // Check for mandatory fields based on fetched data
+  // Check for mandatory fields
   React.useEffect(() => {
     if (latestParticipantData) {
       const p = latestParticipantData;
@@ -79,7 +79,6 @@ const Index = () => {
       
       setIsProfileIncomplete(isIncomplete);
     } else if (!isLoadingParticipant && user) {
-        // If fetching failed or returned null, assume incomplete if user exists but data is missing
         setIsProfileIncomplete(true);
     }
   }, [latestParticipantData, isLoadingParticipant, user]);
@@ -90,21 +89,21 @@ const Index = () => {
     queryFn: fetchYatras,
   });
 
-  // Fetch Attended Programs for the logged-in user
+  // Fetch Attended Programs
   const { data: attendedPrograms, isLoading: isLoadingAttendance } = useQuery<AttendedProgram[], Error>({
     queryKey: ["attendedPrograms", user?.user_id],
     queryFn: () => fetchAttendedPrograms(user!.user_id),
     enabled: !!user?.user_id,
   });
   
-  // Fetch Payment History for the logged-in user
+  // Fetch Payment History
   const { data: paymentHistory, isLoading: isLoadingPayments } = useQuery<PaymentRecord[], Error>({
     queryKey: ["paymentHistory", user?.user_id],
     queryFn: () => fetchPaymentHistory(user!.user_id),
     enabled: !!user?.user_id,
   });
 
-  // Determine which Yatras the user has successfully paid for
+  // Determine registered Yatras
   const registeredYatraIds = React.useMemo(() => {
     if (!paymentHistory) return new Set<string>();
     return new Set(
@@ -114,7 +113,6 @@ const Index = () => {
     );
   }, [paymentHistory]);
 
-  // Handle initial loading state for participant data
   if (isLoadingParticipant) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
@@ -155,6 +153,7 @@ const Index = () => {
                 key={yatra.id} 
                 yatra={yatra} 
                 isRegistered={registeredYatraIds.has(yatra.id)} 
+                showAdminControls={isManager} // Enable admin buttons for managers
               />
             ))}
           </div>
@@ -224,7 +223,6 @@ const Index = () => {
         )}
       </section>
 
-      {/* Profile Completion Dialog */}
       <CompleteProfileDialog 
         isOpen={isProfileIncomplete} 
         onOpenChange={setIsProfileIncomplete} 

@@ -110,21 +110,13 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       return response.json();
     },
-    enabled: showAdminControls, // Always fetch if user is an admin to show summary on card
+    enabled: showAdminControls,
   });
 
   const handleViewProfile = (participantId: string) => {
     setSelectedParticipantId(participantId);
     setIsDetailsDialogOpen(true);
   };
-
-  const completedCount = React.useMemo(() => {
-    if (!apiResponse?.stats_by_status) return 0;
-    const completedStat = apiResponse.stats_by_status.find(s => 
-      ['completed', 'success', 'paid'].includes(s.status.toLowerCase())
-    );
-    return completedStat?.total_count || 0;
-  }, [apiResponse]);
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow overflow-hidden">
@@ -169,25 +161,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
           </p>
         </div>
 
-        {showAdminControls && apiResponse && (
-          <div className="bg-muted/30 rounded-lg p-3 grid grid-cols-2 gap-2 border">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Total Reg.</span>
-              <span className="text-lg font-bold flex items-center gap-1">
-                <Users className="h-3 w-3 text-primary" />
-                {apiResponse.total_count}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Paid</span>
-              <span className="text-lg font-bold text-green-600 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                {completedCount}
-              </span>
-            </div>
-          </div>
-        )}
-        
         <div className="space-y-3 pt-2 border-t">
           <h4 className="font-medium flex items-center gap-1 text-base">
             <IndianRupee className="h-4 w-4" /> Registration Fees:

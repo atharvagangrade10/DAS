@@ -55,13 +55,13 @@ const familyMemberSchema = z.object({
     z.number().int().min(0).optional(),
   ),
   email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
+  selected_fee_option: z.string().optional(), // Added fee option to schema
 });
 
 export type FamilyMemberData = z.infer<typeof familyMemberSchema> & {
   calculated_age: number;
   full_name: string;
   participant_id?: string;
-  selected_fee_option?: string; // New field for individual plan selection
 };
 
 interface AddFamilyMemberDialogProps {
@@ -126,6 +126,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
       profession_other: "",
       chanting_rounds: 0,
       email: "",
+      selected_fee_option: availableFeeOptions[0]?.option_name, // Default fee option
     },
   });
 
@@ -229,6 +230,7 @@ const AddFamilyMemberDialog: React.FC<AddFamilyMemberDialogProps> = ({
         profession_other: "",
         chanting_rounds: 0,
         email: "",
+        selected_fee_option: availableFeeOptions[0]?.option_name, // Reset fee option
       });
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["relatedParticipants", user?.user_id] });

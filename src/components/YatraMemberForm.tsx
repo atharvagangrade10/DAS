@@ -38,6 +38,7 @@ const familyMemberSchema = z.object({
     z.number().int().min(0).optional(),
   ),
   email: z.string().email("Invalid email address").min(1, "Email is required"),
+  selected_fee_option: z.string().optional(), // Added fee option to schema
 });
 
 type FamilyMemberFormValues = z.infer<typeof familyMemberSchema>;

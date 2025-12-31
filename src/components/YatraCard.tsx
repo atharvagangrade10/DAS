@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, User } from "lucide-react";
 import { Yatra, PaymentRecord } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -143,7 +143,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                       <BarChart3 className="h-5 w-5 text-primary hover:text-primary/80" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>View Stats</TooltipContent>
+                  <TooltipContent>View Detailed Stats</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 
@@ -170,18 +170,32 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         </div>
 
         {showAdminControls && apiResponse && (
-          <div className="bg-muted/30 rounded-lg p-3 grid grid-cols-2 gap-2 border">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Total Reg.</span>
-              <span className="text-lg font-bold flex items-center gap-1">
-                <Users className="h-3 w-3 text-primary" />
+          <div className="bg-muted/30 rounded-lg p-2 grid grid-cols-4 gap-1 border">
+            <div className="flex flex-col items-center justify-center border-r px-1 text-center">
+              <span className="text-[9px] text-muted-foreground uppercase font-bold leading-tight">Total</span>
+              <span className="text-sm font-bold flex items-center gap-0.5">
+                <Users className="h-3 w-3 text-primary shrink-0" />
                 {apiResponse.total_count}
               </span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Paid</span>
-              <span className="text-lg font-bold text-green-600 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
+            <div className="flex flex-col items-center justify-center border-r px-1 text-center">
+              <span className="text-[9px] text-muted-foreground uppercase font-bold leading-tight">Adults</span>
+              <span className="text-sm font-bold flex items-center gap-0.5">
+                <User className="h-3 w-3 text-blue-500 shrink-0" />
+                {apiResponse.adult_count}
+              </span>
+            </div>
+            <div className="flex flex-col items-center justify-center border-r px-1 text-center">
+              <span className="text-[9px] text-muted-foreground uppercase font-bold leading-tight">Child</span>
+              <span className="text-sm font-bold flex items-center gap-0.5">
+                <Baby className="h-3 w-3 text-pink-500 shrink-0" />
+                {apiResponse.child_count}
+              </span>
+            </div>
+            <div className="flex flex-col items-center justify-center px-1 text-center">
+              <span className="text-[9px] text-muted-foreground uppercase font-bold leading-tight">Paid</span>
+              <span className="text-sm font-bold text-green-600 flex items-center gap-0.5">
+                <CheckCircle2 className="h-3 w-3 shrink-0" />
                 {completedCount}
               </span>
             </div>

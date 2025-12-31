@@ -165,49 +165,69 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       const title = `Boarding List: ${yatra.name}`;
       const dateStr = `Trip Dates: ${format(new Date(yatra.date_start), "PPP")} - ${format(new Date(yatra.date_end), "PPP")}`;
       
-      const allConfirmedParticipants: any[] = [];
+      const tableData: any[] = [];
+      let globalIndex = 1;
+
+      // Grouped logic - exactly like the UI ledger
       apiResponse.groups.forEach(group => {
         const s = group.payment_status.toLowerCase();
+        // Only include confirmed registrations
         if (s === 'completed' || s === 'success' || s === 'paid') {
+          // Add a visual separator row for the transaction group
+          tableData.push([
+            { 
+              content: `Transaction: ${group.transaction_id || group.order_id} | Amount: Rs. ${group.payment_amount} | Date: ${group.payment_date ? format(parseISO(group.payment_date), "MMM dd") : 'N/A'}`, 
+              colSpan: 6, 
+              styles: { 
+                fillColor: [240, 240, 240], 
+                fontStyle: 'bold', 
+                textColor: [50, 50, 50],
+                halign: 'left'
+              } 
+            }
+          ]);
+
           group.participants.forEach(p => {
-            allConfirmedParticipants.push({
-              name: p.participant_info.full_name,
-              phone: p.participant_info.phone,
-              type: p.is_child ? "Child" : "Adult",
-              option: p.registration_option || "Standard"
-            });
+            tableData.push([
+              globalIndex++,
+              p.participant_info.full_name,
+              p.participant_info.phone,
+              p.is_child ? "Child" : "Adult",
+              p.registration_option || "Standard",
+              "[ ]" // Verification Checkbox
+            ]);
           });
         }
       });
 
-      allConfirmedParticipants.sort((a, b) => a.name.localeCompare(b.name));
+      if (tableData.length === 0) {
+        toast.info("No confirmed participants found to export.");
+        return;
+      }
 
       doc.setFontSize(18);
       doc.text(title, 14, 20);
       doc.setFontSize(11);
       doc.text(dateStr, 14, 28);
-      doc.text(`Total Confirmed: ${allConfirmedParticipants.length}`, 14, 34);
-
-      const tableData = allConfirmedParticipants.map((p, index) => [
-        index + 1,
-        p.name,
-        p.phone,
-        p.type,
-        p.option,
-        "[ ]"
-      ]);
+      doc.text(`Generated on: ${format(new Date(), "PPP p")}`, 14, 34);
 
       autoTable(doc, {
         startY: 40,
         head: [['#', 'Full Name', 'Phone Number', 'Type', 'Plan', 'Verify']],
         body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [59, 130, 246] },
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255] },
         columnStyles: {
           0: { cellWidth: 10 },
           5: { cellWidth: 20, halign: 'center' }
         },
-        margin: { top: 40 }
+        margin: { top: 40 },
+        didParseCell: function (data) {
+           // If it's a group header row (the one with the Rs. text), it has no index in column 0
+           if (typeof data.cell.raw === 'object' && data.cell.raw.colSpan) {
+              data.cell.styles.fillColor = [230, 235, 245];
+           }
+        }
       });
 
       doc.save(`Boarding_List_${yatra.name.replace(/\s+/g, "_")}.pdf`);

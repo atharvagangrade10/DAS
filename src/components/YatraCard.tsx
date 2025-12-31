@@ -2,9 +2,9 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle, User } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle, User, CreditCard } from "lucide-react";
 import { Yatra, PaymentRecord } from "@/types/yatra";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { fetchPaymentHistory } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { API_BASE_URL } from "@/config/api";
+import { Separator } from "@/components/ui/separator";
 
 interface YatraCardProps {
   yatra: Yatra;
@@ -36,7 +37,7 @@ const getAuthHeaders = () => {
   return headers;
 };
 
-interface YatraParticipantResponse {
+interface YatraParticipant {
   participant_id: string;
   yatra_id: string;
   participant_info: {
@@ -56,15 +57,24 @@ interface YatraParticipantResponse {
   payment_amount?: number;
   transaction_id?: string;
   registration_date?: string;
-  created_at?: string;
   registration_option?: string;
   is_child?: boolean;
-  adult_count?: number;
-  child_count?: number;
+}
+
+interface YatraGroup {
+  order_id: string;
+  payment_status: string;
+  payment_amount: number;
+  transaction_id: string | null;
+  payment_date: string;
+  participants: YatraParticipant[];
+  adult_count: number;
+  child_count: number;
+  total_count: number;
 }
 
 interface YatraParticipantsApiResponse {
-  participants: YatraParticipantResponse[];
+  groups: YatraGroup[];
   adult_count: number;
   child_count: number;
   total_count: number;
@@ -98,7 +108,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   }, [paymentHistory, yatra.id, isRegistered]);
 
   // Fetch registered participants for statistics
-  const { data: apiResponse, isLoading: isLoadingParticipants, refetch } = useQuery<YatraParticipantsApiResponse, Error>({
+  const { data: apiResponse, isLoading: isLoadingParticipants } = useQuery<YatraParticipantsApiResponse, Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/yatra/yatra/${yatra.id}/participants`, {
@@ -110,7 +120,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       return response.json();
     },
-    enabled: showAdminControls,
+    enabled: showAdminControls || isRegisteredForYatra,
   });
 
   const handleViewProfile = (participantId: string) => {
@@ -188,7 +198,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                 onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
               >
                 <ThumbsUp className="h-4 w-4 text-green-500" />
-                <span className="font-medium">Registered (View List)</span>
+                <span className="font-medium">Registered (View Details)</span>
               </Button>
             ) : (
               <Button 
@@ -223,10 +233,14 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       <RegisteredParticipantsDialog
         isOpen={isRegisteredParticipantsDialogOpen}
         onOpenChange={setIsRegisteredParticipantsDialogOpen}
-        participants={apiResponse?.participants || []}
+        groups={apiResponse?.groups || []}
         isLoading={isLoadingParticipants}
         onViewProfile={handleViewProfile}
-        statsByStatus={apiResponse?.stats_by_status || []}
+        summaryStats={{
+            adults: apiResponse?.adult_count || 0,
+            children: apiResponse?.child_count || 0,
+            total: apiResponse?.total_count || 0
+        }}
       />
 
       <YatraStatsDialog
@@ -248,101 +262,56 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   );
 };
 
-interface ProcessedYatraParticipantResponse extends YatraParticipantResponse {
-  isMainRegistrant: boolean;
-}
-
 interface RegisteredParticipantsDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  participants: YatraParticipantResponse[];
+  groups: YatraGroup[];
   isLoading: boolean;
   onViewProfile: (participantId: string) => void;
-  statsByStatus: StatusStats[];
+  summaryStats: {
+      adults: number;
+      children: number;
+      total: number;
+  };
 }
 
 const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> = ({
   isOpen,
   onOpenChange,
-  participants,
+  groups,
   isLoading,
   onViewProfile,
-  statsByStatus,
+  summaryStats,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const processedParticipants = React.useMemo(() => {
-    if (!participants || participants.length === 0) return [];
-
-    const sortedList = [...participants].sort((a, b) => {
-        const dateA = a.registration_date ? new Date(a.registration_date).getTime() : 0;
-        const dateB = b.registration_date ? new Date(b.registration_date).getTime() : 0;
-        return dateA - dateB;
-    });
-
-    const seenTransactionIds = new Set<string>();
-    
-    return sortedList.map(p => {
-        const txId = p.transaction_id || p.participant_id; 
-        const isMainRegistrant = !!txId && !seenTransactionIds.has(txId);
-        if (isMainRegistrant) {
-            seenTransactionIds.add(txId);
-        }
-        return {
-            ...p,
-            isMainRegistrant: isMainRegistrant
-        } as ProcessedYatraParticipantResponse;
-    });
-  }, [participants]);
-
-  const filteredParticipantsWithMainTag = React.useMemo(() => {
-    if (!searchQuery) return processedParticipants;
+  const filteredGroups = React.useMemo(() => {
+    if (!searchQuery) return groups;
     const lowerQuery = searchQuery.toLowerCase();
-    return processedParticipants.filter(p => 
-      p.participant_info.full_name.toLowerCase().includes(lowerQuery) ||
-      p.participant_info.phone.includes(searchQuery)
-    );
-  }, [processedParticipants, searchQuery]);
-
-  const { statusCounts, totalCompletedAmount } = React.useMemo(() => {
-    let totalCompletedAmount = 0;
-    const counts = {
-      completed: 0,
-      pending: 0,
-      failed: 0,
-      mainCompletedCount: 0,
-    };
-
-    if (statsByStatus && statsByStatus.length > 0) {
-      statsByStatus.forEach(stat => {
-        const s = stat.status.toLowerCase();
-        if (s === 'completed' || s === 'success' || s === 'paid') {
-          counts.completed = stat.total_count;
-        } else if (s === 'pending') {
-          counts.pending = stat.total_count;
-        } else if (s === 'failed') {
-          counts.failed = stat.total_count;
-        }
-      });
-    }
-
-    processedParticipants.forEach(p => {
-      const status = p.payment_status.toLowerCase();
-      if (status === 'success' || status === 'paid' || status === 'completed') {
-        if (p.isMainRegistrant) {
-          totalCompletedAmount += p.payment_amount || 0;
-          counts.mainCompletedCount++;
-        }
-      }
-    });
     
-    return { statusCounts: counts, totalCompletedAmount };
-  }, [processedParticipants, statsByStatus]);
+    return groups.filter(group => 
+      group.participants.some(p => 
+        p.participant_info.full_name.toLowerCase().includes(lowerQuery) ||
+        p.participant_info.phone.includes(searchQuery)
+      ) ||
+      group.transaction_id?.toLowerCase().includes(lowerQuery)
+    );
+  }, [groups, searchQuery]);
+
+  const totalCompletedAmount = React.useMemo(() => {
+    return groups.reduce((acc, g) => {
+        const s = g.payment_status.toLowerCase();
+        if (s === 'completed' || s === 'success' || s === 'paid') {
+            return acc + g.payment_amount;
+        }
+        return acc;
+    }, 0);
+  }, [groups]);
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
     if (s === "success" || s === "paid" || s === "completed") {
-      return <Badge className="bg-green-500 hover:bg-green-500 text-white text-[10px]">Success</Badge>;
+      return <Badge className="bg-green-500 hover:bg-green-500 text-white text-[10px]">Paid</Badge>;
     }
     if (s === "pending") {
       return <Badge variant="secondary" className="text-[10px]">Pending</Badge>;
@@ -352,41 +321,37 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            Registered Participants
+            Registration Ledger
           </DialogTitle>
           <DialogDescription>
-            List of participants registered for this yatra.
+            Grouped by payment transactions.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 pb-4 grid grid-cols-4 gap-3 text-center border-b">
+        <div className="px-6 pb-4 grid grid-cols-3 gap-3 text-center border-b">
           <Card className="p-2 shadow-sm">
-            <p className="text-[9px] font-medium text-muted-foreground">Total</p>
-            <p className="text-lg font-bold text-green-600">{statusCounts.completed}</p>
+            <p className="text-[9px] font-medium text-muted-foreground uppercase">Total</p>
+            <p className="text-xl font-bold">{summaryStats.total}</p>
           </Card>
           <Card className="p-2 shadow-sm">
-            <p className="text-[9px] font-medium text-muted-foreground">Main</p>
-            <p className="text-lg font-bold text-primary">{statusCounts.mainCompletedCount}</p>
+            <p className="text-[9px] font-medium text-muted-foreground uppercase">Adults</p>
+            <p className="text-xl font-bold text-blue-600">{summaryStats.adults}</p>
           </Card>
           <Card className="p-2 shadow-sm">
-            <p className="text-[9px] font-medium text-muted-foreground">Wait</p>
-            <p className="text-lg font-bold text-amber-600">{statusCounts.pending}</p>
-          </Card>
-          <Card className="p-2 shadow-sm">
-            <p className="text-[9px] font-medium text-muted-foreground">Fail</p>
-            <p className="text-lg font-bold text-red-600">{statusCounts.failed}</p>
+            <p className="text-[9px] font-medium text-muted-foreground uppercase">Children</p>
+            <p className="text-xl font-bold text-pink-600">{summaryStats.children}</p>
           </Card>
         </div>
 
-        <div className="px-6 py-2">
+        <div className="px-6 py-3">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search by name or phone..." 
+              placeholder="Search participants or payment ID..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -394,79 +359,78 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto px-6 pt-2 space-y-3">
+        <div className="flex-1 overflow-y-auto px-6 pt-2 space-y-6 pb-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
+              <p className="text-sm text-muted-foreground">Loading groups...</p>
             </div>
-          ) : filteredParticipantsWithMainTag.length > 0 ? (
-            filteredParticipantsWithMainTag.map((participant) => (
-              <Card key={participant.participant_id} className="p-4 border">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold truncate">{participant.participant_info.full_name}</h4>
-                      {participant.isMainRegistrant && (
-                        <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5">Main</Badge>
-                      )}
-                      {participant.is_child && (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5">Child</Badge>
-                      )}
-                      {getStatusBadge(participant.payment_status)}
+          ) : filteredGroups.length > 0 ? (
+            filteredGroups.map((group) => (
+              <div key={group.order_id} className="space-y-2">
+                <div className="flex items-center justify-between bg-muted/50 p-2 px-3 rounded-md border border-dashed">
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Tx: {group.transaction_id || "N/A"}</span>
+                            {getStatusBadge(group.payment_status)}
+                        </div>
+                        <span className="text-[9px] text-muted-foreground">{group.payment_date ? format(parseISO(group.payment_date), "MMM dd, hh:mm a") : "Date Unknown"}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{participant.participant_info.phone}</p>
-                    
-                    <div className="flex items-center gap-3 mt-1.5">
-                      <div className="flex items-center gap-1 text-[11px] font-medium text-gray-600 dark:text-gray-400">
-                        <User className="h-3 w-3 text-blue-500" />
-                        <span>Adults: {participant.adult_count || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[11px] font-medium text-gray-600 dark:text-gray-400">
-                        <Baby className="h-3 w-3 text-pink-500" />
-                        <span>Child: {participant.child_count || 0}</span>
-                      </div>
+                    <div className="text-right">
+                        <p className="text-xs font-bold flex items-center justify-end text-primary">
+                            <IndianRupee className="h-3 w-3" /> {group.payment_amount}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground">{group.adult_count} Adults, {group.child_count} Kids</p>
                     </div>
-
-                    {participant.registration_option && (
-                      <p className="text-[10px] text-primary font-bold mt-1.5 uppercase tracking-tight">
-                        Plan: {participant.registration_option}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span className="text-lg font-bold flex items-center">
-                      <IndianRupee className="h-4 w-4 mr-1" />
-                      {participant.payment_amount || 0}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onViewProfile(participant.participant_info.id)}
-                      className="flex items-center gap-1 shrink-0 h-8 px-2 text-xs"
-                    >
-                      <Eye className="h-4 w-4" />
-                      View
-                    </Button>
-                  </div>
                 </div>
-              </Card>
+
+                <div className="grid gap-2 pl-4 border-l-2 border-primary/20 ml-2">
+                  {group.participants.map((participant) => (
+                    <div key={participant.participant_id} className="flex items-center justify-between p-3 rounded-lg border bg-background hover:shadow-sm transition-shadow">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-sm truncate">{participant.participant_info.full_name}</h4>
+                          {participant.is_child && (
+                            <Badge variant="secondary" className="bg-pink-100 text-pink-700 text-[9px] px-1.5 h-4">Kid</Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">{participant.participant_info.phone}</p>
+                        {participant.registration_option && (
+                            <p className="text-[9px] text-primary/80 font-medium mt-1 italic">
+                                {participant.registration_option}
+                            </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onViewProfile(participant.participant_info.id)}
+                        className="h-7 w-7 p-0 shrink-0"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              {searchQuery ? "No participants match your search." : "No participants registered yet."}
+            <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border-2 border-dashed">
+              <Users className="h-10 w-10 mx-auto mb-2 opacity-20" />
+              <p className="text-sm">No registrations found.</p>
             </div>
           )}
         </div>
         
-        <DialogFooter className="p-6 pt-2 border-t bg-muted/20 flex flex-col items-stretch gap-2">
+        <DialogFooter className="p-6 pt-3 border-t bg-muted/20 flex flex-col items-stretch gap-2">
           <div className="flex justify-between items-center text-lg font-bold text-green-700 dark:text-green-400">
-            <span>Total Received (Completed)</span>
+            <span>Collected Revenue</span>
             <span className="flex items-center">
               <IndianRupee className="h-5 w-5 mr-1" />
               {totalCompletedAmount}
             </span>
           </div>
-          <Button onClick={() => onOpenChange(false)} className="w-full">Close</Button>
+          <Button onClick={() => onOpenChange(false)} className="w-full">Close List</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

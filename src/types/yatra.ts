@@ -1,5 +1,7 @@
 "use client";
 
+export type YatraStatus = "Open" | "Closed";
+
 export interface RegistrationFee {
   option_name: string;
   amount: number;
@@ -14,6 +16,7 @@ export interface Yatra {
   date_end: string;
   registration_fees: RegistrationFee[];
   can_add_members: boolean;
+  status: YatraStatus;
 }
 
 export interface YatraCreate {
@@ -22,6 +25,7 @@ export interface YatraCreate {
   date_end: string;
   registration_fees: RegistrationFee[];
   can_add_members: boolean;
+  status?: YatraStatus;
 }
 
 export interface YatraUpdate {
@@ -30,6 +34,7 @@ export interface YatraUpdate {
   date_end?: string;
   registration_fees?: RegistrationFee[];
   can_add_members?: boolean;
+  status?: YatraStatus;
 }
 
 export interface PaymentRecord {
@@ -40,4 +45,19 @@ export interface PaymentRecord {
   transaction_id: string;
   date: string;
   receipt_url?: string | null;
+}
+
+export interface ReceiptResponse {
+  yatra_id: string;
+  yatra_name: string;
+  participant_id: string;
+  participant_name: string;
+  payment_amount: number;
+  payment_status: string;
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  receipt_url: string | null;
+  is_registered: boolean;
+  yatra_start_date: string;
+  yatra_end_date: string;
 }

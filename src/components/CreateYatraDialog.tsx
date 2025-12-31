@@ -25,6 +25,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { YatraCreate } from "@/types/yatra";
 import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
@@ -52,6 +59,7 @@ const formSchema = z.object({
   date_end: z.date({ required_error: "End date is required" }),
   registration_fees: z.array(RegistrationFeeSchema).min(1, "At least one registration fee is required"),
   can_add_members: z.boolean().default(false),
+  status: z.enum(["Open", "Closed"]).default("Open"),
 }).refine((data) => data.date_end >= data.date_start, {
   message: "End date cannot be before start date.",
   path: ["date_end"],
@@ -68,6 +76,7 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({ isOpen, onOpenCha
       date_end: undefined,
       registration_fees: [{ option_name: "Standard", amount: 0 }],
       can_add_members: false,
+      status: "Open",
     },
   });
 
@@ -118,6 +127,7 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({ isOpen, onOpenCha
                 </FormItem>
               )}
             />
+            
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -167,21 +177,44 @@ const CreateYatraDialog: React.FC<CreateYatraDialogProps> = ({ isOpen, onOpenCha
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="can_add_members"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Allow Family Members</FormLabel>
-                    <FormDescription>Enable participants to register family members.</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Registration Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Open">Open</SelectItem>
+                        <SelectItem value="Closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="can_add_members"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 pt-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm">Allow Family</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="space-y-4 pt-4 border-t">
               <div className="flex justify-between items-center">

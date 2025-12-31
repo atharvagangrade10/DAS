@@ -56,6 +56,8 @@ interface YatraParticipantResponse {
   transaction_id?: string;
   registration_date?: string;
   created_at?: string;
+  registration_option?: string; // Added new field
+  is_child?: boolean; // Added new field
 }
 
 const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false, isRegistered = false }) => {
@@ -401,9 +403,17 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
                       {participant.isMainRegistrant && (
                         <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5">Main</Badge>
                       )}
+                      {participant.is_child && (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5">Child</Badge>
+                      )}
                       {getStatusBadge(participant.payment_status)}
                     </div>
                     <p className="text-sm text-muted-foreground">{participant.participant_info.phone}</p>
+                    {participant.registration_option && (
+                      <p className="text-xs text-primary font-medium mt-1">
+                        Plan: {participant.registration_option}
+                      </p>
+                    )}
                     {participant.registration_date && (
                       <p className="text-[10px] text-muted-foreground mt-1">
                         Reg: {format(new Date(participant.registration_date), "MMM dd, yyyy")}

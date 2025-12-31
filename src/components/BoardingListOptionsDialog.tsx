@@ -23,6 +23,7 @@ export type BoardingListColumn =
   | "age" 
   | "type" 
   | "option" 
+  | "amount"
   | "address" 
   | "profession" 
   | "verify";
@@ -41,6 +42,7 @@ const COLUMN_OPTIONS: ColumnOption[] = [
   { id: "age", label: "Age" },
   { id: "type", label: "Type (Adult/Child)" },
   { id: "option", label: "Registration Plan" },
+  { id: "amount", label: "Amount Paid" },
   { id: "address", label: "Address" },
   { id: "profession", label: "Profession" },
   { id: "verify", label: "Verify (Checkbox)" },

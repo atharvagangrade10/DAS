@@ -168,6 +168,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         age: "Age",
         type: "Type",
         option: "Plan",
+        amount: "Amount Paid",
         address: "Address",
         profession: "Profession",
         verify: "Verify"
@@ -200,6 +201,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                 case "age": return p.participant_info.age || "-";
                 case "type": return p.is_child ? "Child" : "Adult";
                 case "option": return p.registration_option || "Standard";
+                case "amount": return p.payment_amount !== undefined ? `Rs. ${p.payment_amount}` : "-";
                 case "address": return p.participant_info.address || "-";
                 case "profession": return p.participant_info.profession || "-";
                 case "verify": return "[ ]";

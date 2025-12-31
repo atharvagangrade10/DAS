@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle, User, CreditCard, Lock } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle, User, CreditCard, Lock, FileText, Download } from "lucide-react";
 import { Yatra, PaymentRecord, ReceiptResponse } from "@/types/yatra";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { API_BASE_URL } from "@/config/api";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
+// Extend jsPDF type to include autotable
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 interface YatraCardProps {
   yatra: Yatra;
@@ -113,7 +122,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     );
   }, [paymentHistory, yatra.id, isRegistered]);
 
-  // Fetch registered participants for statistics
+  // Fetch registered participants for statistics and PDF
   const { data: apiResponse, isLoading: isLoadingParticipants } = useQuery<YatraParticipantsApiResponse, Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
@@ -140,7 +149,6 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       return;
     }
 
-    // For attendees, fetch and open receipt
     try {
       setIsFetchingReceipt(true);
       const data = await fetchYatraReceipt(yatra.id, user!.user_id);
@@ -150,6 +158,73 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       toast.error("Failed to load receipt", { description: error.message });
     } finally {
       setIsFetchingReceipt(false);
+    }
+  };
+
+  const handleDownloadBoardingList = () => {
+    if (!apiResponse || !apiResponse.groups) {
+      toast.error("No participant data available to download.");
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const title = `Boarding List: ${yatra.name}`;
+      const dateStr = `Trip Dates: ${format(new Date(yatra.date_start), "PPP")} - ${format(new Date(yatra.date_end), "PPP")}`;
+      
+      // Filter for only completed registrations
+      const allConfirmedParticipants: any[] = [];
+      apiResponse.groups.forEach(group => {
+        const s = group.payment_status.toLowerCase();
+        if (s === 'completed' || s === 'success' || s === 'paid') {
+          group.participants.forEach(p => {
+            allConfirmedParticipants.push({
+              name: p.participant_info.full_name,
+              phone: p.participant_info.phone,
+              type: p.is_child ? "Child" : "Adult",
+              option: p.registration_option || "Standard"
+            });
+          });
+        }
+      });
+
+      // Sort by name
+      allConfirmedParticipants.sort((a, b) => a.name.localeCompare(b.name));
+
+      // Header
+      doc.setFontSize(18);
+      doc.text(title, 14, 20);
+      doc.setFontSize(11);
+      doc.text(dateStr, 14, 28);
+      doc.text(`Total Confirmed: ${allConfirmedParticipants.length}`, 14, 34);
+
+      const tableData = allConfirmedParticipants.map((p, index) => [
+        index + 1,
+        p.name,
+        p.phone,
+        p.type,
+        p.option,
+        "[ ]" // Checkbox column
+      ]);
+
+      doc.autoTable({
+        startY: 40,
+        head: [['#', 'Full Name', 'Phone Number', 'Type', 'Plan', 'Verify']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [59, 130, 246] }, // Primary blue color
+        columnStyles: {
+          0: { cellWidth: 10 },
+          5: { cellWidth: 20, halign: 'center' }
+        },
+        margin: { top: 40 }
+      });
+
+      doc.save(`Boarding_List_${yatra.name.replace(/\s+/g, "_")}.pdf`);
+      toast.success("Boarding list downloaded successfully!");
+    } catch (error) {
+      console.error("PDF Error:", error);
+      toast.error("Failed to generate boarding list PDF.");
     }
   };
 
@@ -173,6 +248,17 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         <div className="flex gap-1">
           {showAdminControls && (
             <>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={handleDownloadBoardingList} disabled={isLoadingParticipants}>
+                      <FileText className="h-5 w-5 text-green-600 hover:text-green-700" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Download Boarding List (PDF)</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

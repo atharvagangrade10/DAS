@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3 } from "lucide-react";
+import { MapPin, Calendar, IndianRupee, Pencil, ClipboardCheck, ThumbsUp, Users, Eye, Baby, Search, Loader2, BarChart3, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { Yatra, PaymentRecord } from "@/types/yatra";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +89,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
 
   // Determine if the user is registered for this yatra
   const isRegisteredForYatra = React.useMemo(() => {
-    if (isRegistered) return true; // Use prop if provided
+    if (isRegistered) return true;
     if (!paymentHistory) return false;
     return paymentHistory.some(p => 
       p.yatra_id === yatra.id && 
@@ -97,7 +97,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
     );
   }, [paymentHistory, yatra.id, isRegistered]);
 
-  // Fetch registered participants for this yatra with new API response structure
+  // Fetch registered participants for statistics
   const { data: apiResponse, isLoading: isLoadingParticipants, refetch } = useQuery<YatraParticipantsApiResponse, Error>({
     queryKey: ["yatraParticipants", yatra.id],
     queryFn: async () => {
@@ -110,20 +110,21 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
       }
       return response.json();
     },
-    enabled: false, 
+    enabled: showAdminControls, // Always fetch if user is an admin to show summary on card
   });
-
-  // Trigger refetch when dialog opens
-  React.useEffect(() => {
-    if (isRegisteredParticipantsDialogOpen || isStatsDialogOpen) {
-      refetch();
-    }
-  }, [isRegisteredParticipantsDialogOpen, isStatsDialogOpen, refetch]);
 
   const handleViewProfile = (participantId: string) => {
     setSelectedParticipantId(participantId);
     setIsDetailsDialogOpen(true);
   };
+
+  const completedCount = React.useMemo(() => {
+    if (!apiResponse?.stats_by_status) return 0;
+    const completedStat = apiResponse.stats_by_status.find(s => 
+      ['completed', 'success', 'paid'].includes(s.status.toLowerCase())
+    );
+    return completedStat?.total_count || 0;
+  }, [apiResponse]);
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow overflow-hidden">
@@ -132,12 +133,33 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
           <MapPin className="h-6 w-6 text-primary" />
           {yatra.name}
         </CardTitle>
-        {showAdminControls && (
-          <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
-            <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
-            <span className="sr-only">Edit yatra</span>
-          </Button>
-        )}
+        <div className="flex gap-1">
+          {showAdminControls && (
+            <>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => setIsStatsDialogOpen(true)}>
+                      <BarChart3 className="h-5 w-5 text-primary hover:text-primary/80" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View Stats</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
+                      <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit Yatra</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex-1 grid gap-3 text-sm">
         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
@@ -146,38 +168,40 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
             {format(new Date(yatra.date_start), "PPP")} - {format(new Date(yatra.date_end), "PPP")}
           </p>
         </div>
+
+        {showAdminControls && apiResponse && (
+          <div className="bg-muted/30 rounded-lg p-3 grid grid-cols-2 gap-2 border">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Total Reg.</span>
+              <span className="text-lg font-bold flex items-center gap-1">
+                <Users className="h-3 w-3 text-primary" />
+                {apiResponse.total_count}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Paid</span>
+              <span className="text-lg font-bold text-green-600 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                {completedCount}
+              </span>
+            </div>
+          </div>
+        )}
         
         <div className="space-y-3 pt-2 border-t">
           <h4 className="font-medium flex items-center gap-1 text-base">
             <IndianRupee className="h-4 w-4" /> Registration Fees:
           </h4>
-          <div className="grid gap-3">
+          <div className="grid gap-2">
             {yatra.registration_fees.map((fee) => (
-              <Card key={fee.option_name} className="p-4 border">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-sm px-3 py-1">
-                      {fee.option_name}
-                    </Badge>
-                    <div className="text-lg font-bold">
-                      ₹{fee.amount}
-                    </div>
-                  </div>
-                  {yatra.can_add_members && fee.child_amount !== undefined && (
-                    <div className="flex flex-col gap-1">
-                      <div className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <Baby className="h-4 w-4" />
-                        Child: ₹{fee.child_amount}
-                      </div>
-                      {fee.child_condition_by_age && (
-                        <div className="text-xs text-muted-foreground">
-                          Free for children till {fee.child_condition_by_age} years
-                        </div>
-                      )}
-                    </div>
-                  )}
+              <div key={fee.option_name} className="flex items-center justify-between p-2 px-3 rounded-md border bg-background/50">
+                <Badge variant="secondary" className="text-[10px] uppercase font-bold">
+                  {fee.option_name}
+                </Badge>
+                <div className="font-bold text-base">
+                  ₹{fee.amount}
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         </div>
@@ -185,23 +209,14 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
         {!showAdminControls && (
           <div className="pt-4 space-y-3">
             {isRegisteredForYatra ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      className="w-full flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" 
-                      variant="outline"
-                      onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
-                    >
-                      <ThumbsUp className="h-4 w-4 text-green-500" />
-                      <span className="font-medium">Registered</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Click to view trip participants</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button 
+                className="w-full flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" 
+                variant="outline"
+                onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
+              >
+                <ThumbsUp className="h-4 w-4 text-green-500" />
+                <span className="font-medium">Registered (View List)</span>
+              </Button>
             ) : (
               <Button 
                 className="w-full flex items-center gap-2" 
@@ -209,29 +224,21 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
                 disabled={isLoadingHistory}
               >
                 <ClipboardCheck className="h-4 w-4" />
-                Register
+                Register Now
               </Button>
             )}
           </div>
         )}
 
         {showAdminControls && (
-          <div className="pt-4 flex gap-2">
+          <div className="pt-4">
             <Button 
-              className="flex-1 flex items-center gap-2" 
+              className="w-full flex items-center justify-center gap-2" 
               variant="outline"
               onClick={() => setIsRegisteredParticipantsDialogOpen(true)}
             >
               <Users className="h-4 w-4" />
-              Participants
-            </Button>
-            <Button 
-              className="flex-1 flex items-center gap-2" 
-              variant="secondary"
-              onClick={() => setIsStatsDialogOpen(true)}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Stats
+              Manage Participants
             </Button>
           </div>
         )}
@@ -268,6 +275,7 @@ const YatraCard: React.FC<YatraCardProps> = ({ yatra, showAdminControls = false,
   );
 };
 
+// ... keep RegisteredParticipantsDialog as it was ...
 interface ProcessedYatraParticipantResponse extends YatraParticipantResponse {
   isMainRegistrant: boolean;
 }
@@ -324,7 +332,6 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
     );
   }, [processedParticipants, searchQuery]);
 
-  // Extract counts and totals from the stats_by_status provided by backend
   const { statusCounts, totalCompletedAmount } = React.useMemo(() => {
     let totalCompletedAmount = 0;
     const counts = {
@@ -334,7 +341,6 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
       mainCompletedCount: 0,
     };
 
-    // Use statsByStatus if available
     if (statsByStatus && statsByStatus.length > 0) {
       statsByStatus.forEach(stat => {
         const s = stat.status.toLowerCase();
@@ -348,7 +354,6 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
       });
     }
 
-    // Still use processedParticipants to calculate the total amount and main registrant count for UI consistency
     processedParticipants.forEach(p => {
       const status = p.payment_status.toLowerCase();
       if (status === 'success' || status === 'paid' || status === 'completed') {
@@ -441,11 +446,6 @@ const RegisteredParticipantsDialog: React.FC<RegisteredParticipantsDialogProps> 
                     {participant.registration_option && (
                       <p className="text-xs text-primary font-medium mt-1">
                         Plan: {participant.registration_option}
-                      </p>
-                    )}
-                    {participant.registration_date && (
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        Reg: {format(new Date(participant.registration_date), "MMM dd, yyyy")}
                       </p>
                     )}
                   </div>

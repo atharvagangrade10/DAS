@@ -53,3 +53,19 @@ export interface BatchVolunteer {
     profile_photo_url?: string | null;
   };
 }
+
+// New interfaces for batch statistics
+export interface BatchStatsResponse {
+  batch_id: string;
+  batch_name: string;
+  stats: BatchParticipantStats[];
+}
+
+export interface BatchParticipantStats {
+  participant_id: string;
+  full_name: string;
+  attended_count: number;
+  total_sessions: number;
+  attendance_percentage: number;
+  attendance_ratio: string;  // e.g., "10/20"
+}

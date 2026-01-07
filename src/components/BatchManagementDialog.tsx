@@ -89,7 +89,8 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
             onValueChange={setActiveTab}
             className="flex-1 flex flex-col overflow-hidden"
           >
-            <div className="px-6 border-b bg-background z-10">
+            {/* Fixed Tab Bar */}
+            <div className="px-6 border-b bg-background z-10 flex-shrink-0">
               <TabsList className={cn(
                 "w-full justify-start h-auto p-0 bg-transparent gap-6 flex-wrap",
                 isMobile ? "grid grid-cols-2" : ""
@@ -120,6 +121,8 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                 </TabsTrigger>
               </TabsList>
             </div>
+
+            {/* Scrollable Content Area */}
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 <div className="p-6">

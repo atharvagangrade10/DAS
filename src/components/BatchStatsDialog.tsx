@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
-import { User, CalendarDays, CheckCircle2, XCircle, BarChart3, Percent, BookOpen } from "lucide-react";
+import { User, CalendarDays, CheckCircle2, XCircle, BarChart3, Percent, BookOpen, Users } from "lucide-react"; // Added Users import
 import { useQuery } from "@tanstack/react-query";
 import { fetchBatchAttendance, fetchParticipantById } from "@/utils/api";
 import { Participant } from "@/types/participant";

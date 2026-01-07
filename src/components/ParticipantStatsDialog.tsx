@@ -21,7 +21,7 @@ import { Participant } from "@/types/participant";
 import { Batch } from "@/types/batch";
 
 interface ParticipantStatsDialogProps {
-  participant: Participant;
+  participant: Participant | null;
   batches: Batch[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -42,27 +42,36 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
   isOpen,
   onOpenChange,
 }) => {
+  // Close dialog if participant is null
+  React.useEffect(() => {
+    if (!participant && isOpen) {
+      onOpenChange(false);
+    }
+  }, [participant, isOpen, onOpenChange]);
+
   // Fetch attendance data for all batches this participant is in
   const { data: attendanceData, isLoading } = useQuery({
-    queryKey: ["participantBatchAttendanceStats", participant.id],
+    queryKey: ["participantBatchAttendanceStats", participant?.id],
     queryFn: async () => {
+      if (!participant?.id) return [] as any[];
       // In a real implementation, we would fetch attendance data for this participant
       // across all batches they're enrolled in
       // For now, we'll return mock data
       return [] as any[];
     },
-    enabled: isOpen,
+    enabled: isOpen && !!participant?.id,
   });
 
   // Calculate statistics from attendance data
   const batchStats = React.useMemo(() => {
-    if (!attendanceData || !batches) return [] as BatchAttendanceSummary[];
+    if (!attendanceData || !batches || !participant) return [] as BatchAttendanceSummary[];
 
     // Group attendance by batch
     const statsByBatch: Record<string, BatchAttendanceSummary> = {};
 
     // Initialize all batches the participant is in
     batches.forEach(batch => {
+      if (!batch.id) return;
       statsByBatch[batch.id] = {
         batch_id: batch.id,
         batch_name: batch.name,
@@ -74,7 +83,7 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
 
     // Process attendance data
     attendanceData.forEach(record => {
-      if (!statsByBatch[record.batch_id]) return;
+      if (!record.batch_id || !statsByBatch[record.batch_id]) return;
 
       const stat = statsByBatch[record.batch_id];
       stat.total_sessions++;
@@ -97,7 +106,7 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
     });
 
     return Object.values(statsByBatch);
-  }, [attendanceData, batches]);
+  }, [attendanceData, batches, participant]);
 
   // Calculate overall statistics
   const overallStats = React.useMemo(() => {
@@ -124,6 +133,9 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
       overall_percentage,
     };
   }, [batchStats]);
+
+  // Don't render if participant is null
+  if (!participant) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

@@ -24,7 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfDay, endOfDay } from "date-fns";
 import {
   Users,
   CalendarDays,
@@ -149,16 +149,22 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
       .filter(([_, status]) => status === "Present")
       .map(([id]) => id);
 
-    if (presentIds.length === 0) {
-      toast.warning("No participants marked as Present.");
-    }
-
     saveAttendanceMutation.mutate({
       date: dateStr,
       participant_ids: presentIds,
       status: "Present",
       marked_by: "Admin",
     });
+  };
+
+  const handleMarkAllAbsent = () => {
+    if (!participants) return;
+    const absentStatuses = {};
+    participants.forEach(p => {
+      absentStatuses[p.id] = "Absent";
+    });
+    setAttendanceStatuses(absentStatuses);
+    toast.info("All participants marked as Absent.");
   };
 
   const toggleStatus = (pId: string) => {
@@ -343,7 +349,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                           >
                             <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                             {format(selectedDate, "PPP")}
-                          </Button>
+                          </DialogContent>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
@@ -359,13 +365,9 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => {
-                          const all: Record<string, string> = {};
-                          participants?.forEach((p) => (all[p.id] = "Present"));
-                          setAttendanceStatuses(all);
-                        }}
+                        onClick={handleMarkAllAbsent}
                       >
-                        Mark All Present
+                        Mark All Absent
                       </Button>
                       <Button
                         size="sm"

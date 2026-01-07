@@ -3,11 +3,12 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, CalendarDays, Trash2 } from "lucide-react";
+import { Pencil, CalendarDays, Trash2, Calendar } from "lucide-react";
 import { Program } from "@/types/program";
 import { format } from "date-fns";
 import EditProgramDialog from "./EditProgramDialog";
 import ProgramSessionsDialog from "./ProgramSessionsDialog";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,8 +61,8 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
     onSuccess: () => {
       toast.success("Program deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["programs"] });
-      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] }); // Invalidate attendance data
-      queryClient.invalidateQueries({ queryKey: ["allAttendedProgramsForStats"] }); // Invalidate stats data
+      queryClient.invalidateQueries({ queryKey: ["allAttendedPrograms"] });
+      queryClient.invalidateQueries({ queryKey: ["allAttendedProgramsForStats"] });
     },
     onError: (error: Error) => {
       toast.error("Failed to delete program", {
@@ -77,7 +78,10 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-2xl font-semibold">{program.program_name}</CardTitle>
+        <div className="flex flex-col gap-1">
+          <Badge variant="outline" className="w-fit text-blue-600 border-blue-200">Program</Badge>
+          <CardTitle className="text-2xl font-semibold mt-1">{program.program_name}</CardTitle>
+        </div>
         <div className="flex space-x-2">
           <Button variant="ghost" size="icon" onClick={() => setIsSessionsDialogOpen(true)}>
             <CalendarDays className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />

@@ -1,6 +1,7 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate, YatraUpdate, PaymentRecord, ReceiptResponse } from "@/types/yatra";
+import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord } from "@/types/batch";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -82,7 +83,6 @@ export const updateParticipant = async (
   participantId: string,
   data: any,
 ): Promise<Participant> => {
-  // Ensure participant_id is in the body as some backends require it for validation
   const payload = { ...data, participant_id: participantId };
   return mutateAuthenticated(`${API_BASE_URL}/participants/${participantId}`, "PUT", payload);
 };
@@ -108,15 +108,31 @@ export const fetchAttendedPrograms = async (
   );
 };
 
-export const fetchAttendedProgramsPublic = async (
-  participantId: string,
-): Promise<AttendedProgram[]> => {
-  const response = await fetch(`${API_BASE_URL}/participants/${participantId}/attended-programs`, {
-    headers: { "Content-Type": "application/json" }
-  });
-  if (!response.ok) return [];
-  return response.json();
+// --- Batch (Class) Endpoints ---
+
+export const fetchBatches = async (): Promise<Batch[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/`);
 };
+
+export const createBatch = async (data: BatchCreate): Promise<Batch> => {
+  return mutateAuthenticated(`${API_BASE_URL}/batches/`, "POST", data);
+};
+
+export const updateBatch = async (batchId: string, data: BatchUpdate): Promise<Batch> => {
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}`, "PUT", data);
+};
+
+export const deleteBatch = async (batchId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/batches/${batchId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to delete batch");
+  }
+};
+
+// --- Yatra Endpoints ---
 
 export const fetchYatras = async (): Promise<Yatra[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/yatra/`);
@@ -217,7 +233,6 @@ export const uploadPhoto = async (file: File, participantId: string): Promise<st
   }
 
   const data = await response.json();
-  // Using the 'link' property as specified in the backend response
   return data.link;
 };
 
@@ -304,6 +319,14 @@ export const searchParticipantPublic = async (phone: string): Promise<Participan
   return response.json();
 };
 
+export const fetchParticipantByIdPublic = async (id: string): Promise<Participant> => {
+  const response = await fetch(`${API_BASE_URL}/participants/${id}`, {
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!response.ok) throw new Error("Failed to fetch participant");
+  return response.json();
+};
+
 export const fetchParticipantByPhonePublic = async (phone: string): Promise<Participant | null> => {
   const response = await fetch(`${API_BASE_URL}/participants/phone/${phone}`, {
     headers: { "Content-Type": "application/json" }
@@ -333,3 +356,20 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
   }
   return response.json();
 };
+
+export const fetchParticipantByIdProtected = async (id: string): Promise<Participant> => {
+    return fetchAuthenticated(`${API_BASE_URL}/participants/${id}`);
+};
+
+export const fetchParticipantByIdAny = async (id: string): Promise<Participant> => {
+    const token = localStorage.getItem('das_auth_token');
+    if (token) return fetchParticipantByIdProtected(id);
+    return fetchParticipantByIdPublic(id);
+};
+
+// Map searchParticipant to fetchParticipants for clarity
+export const fetchParticipants = async (query: string): Promise<Participant[]> => {
+    return searchParticipantPublic(query);
+};
+
+export { fetchParticipantByIdAny as fetchParticipantById };

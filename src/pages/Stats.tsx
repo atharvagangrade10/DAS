@@ -44,7 +44,8 @@ import MobileProgramAttendance from "@/components/stats/MobileProgramAttendance"
 import MobileDevoteeFriendAttendance from "@/components/stats/MobileDevoteeFriendAttendance";
 import MobileSessionDistributionByProgram from "@/components/stats/MobileSessionDistributionByProgram";
 import MobileSessionDistributionByDevoteeFriend from "@/components/stats/MobileSessionDistributionByDevoteeFriend";
-import MobileDevoteeFriendSummary from "@/components/stats/MobileDevoteeFriendSummary"; // New import
+import MobileDevoteeFriendSummary from "@/components/stats/MobileDevoteeFriendSummary";
+import ParticipantAttendanceSummaryList from "@/components/stats/ParticipantAttendanceSummaryList"; // New import
 
 interface DevoteeFriend {
   id: string;
@@ -57,6 +58,13 @@ interface DevoteeFriend {
 interface DevoteeFriendAttendanceExportRow {
   "Program Name DYS": string; // Combines program name, session name, and date
   [devoteeFriendName: string]: string | number; // Dynamic keys for devotee friends
+}
+
+interface ParticipantAttendanceSummary {
+  participant: Participant;
+  attendedSessions: number;
+  possibleSessions: number;
+  attendancePercentage: number;
 }
 
 const Stats = () => {
@@ -385,6 +393,36 @@ const Stats = () => {
     return { globalByProgram: sortedGlobalDistributionByProgram, byDevoteeFriend: sortedDevoteeFriendDistribution };
   }, [allParticipants, allAttendedProgramsMap, programs, devoteeFriends]);
 
+  // Calculate Participant Attendance Summary
+  const participantAttendanceSummaryData: ParticipantAttendanceSummary[] = React.useMemo(() => {
+    if (!allParticipants || !allAttendedProgramsMap || !programs) return [];
+
+    const programsMap = new Map(programs.map(p => [p.id, p]));
+
+    return allParticipants.map(participant => {
+      let attendedCount = 0;
+      let possibleCount = 0;
+      const attendedProgramsForParticipant = allAttendedProgramsMap[participant.id] || [];
+
+      attendedProgramsForParticipant.forEach(attendedProgram => {
+        attendedCount += attendedProgram.sessions_attended.length;
+        const programDetails = programsMap.get(attendedProgram.program_id);
+        if (programDetails && programDetails.sessions) {
+          possibleCount += programDetails.sessions.length;
+        }
+      });
+
+      const attendancePercentage = possibleCount > 0 ? Math.round((attendedCount / possibleCount) * 100) : 0;
+
+      return {
+        participant,
+        attendedSessions: attendedCount,
+        possibleSessions: possibleCount,
+        attendancePercentage,
+      };
+    }).sort((a, b) => a.participant.full_name.localeCompare(b.participant.full_name));
+  }, [allParticipants, allAttendedProgramsMap, programs]);
+
 
   const isLoading = isLoadingParticipants || isLoadingFriends || isLoadingPrograms || isLoadingAllAttendedPrograms;
   const hasError = participantsError || friendsError || programsError || allAttendedProgramsError;
@@ -574,6 +612,20 @@ const Stats = () => {
                 <p className="text-sm text-muted-foreground">No program or session attendance data available yet.</p>
               )}
               <DownloadShareButton cardId="program-attendance-overview-card" cardTitle="Program and Session Attendance Overview" />
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-3 shadow-lg" id="participant-attendance-summary-card">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Participant Attendance Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ParticipantAttendanceSummaryList
+                data={participantAttendanceSummaryData}
+                isLoading={isLoading}
+                cardId="participant-attendance-summary-card"
+                cardTitle="Participant Attendance Summary"
+              />
             </CardContent>
           </Card>
 

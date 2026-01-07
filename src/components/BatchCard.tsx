@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, CalendarDays, Repeat, Settings2 } from "lucide-react";
+import { Pencil, Trash2, CalendarDays, Repeat, Settings2, Users } from "lucide-react";
 import { Batch, BatchRecursionEnum } from "@/types/batch";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import BatchManagementDialog from "./BatchManagementDialog";
 import EditBatchDialog from "./EditBatchDialog";
+import BatchVolunteerAssignmentDialog from "./BatchVolunteerAssignmentDialog"; // New import
 
 interface BatchCardProps {
   batch: Batch;
@@ -34,7 +35,8 @@ const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isManageDialogOpen, setIsManageDialogOpen] = React.useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false); // New state for edit dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isVolunteerAssignmentDialogOpen, setIsVolunteerAssignmentDialogOpen] = React.useState(false); // New state
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteBatch(batch.id),
@@ -66,6 +68,10 @@ const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
           <CardTitle className="text-2xl font-semibold mt-1">{batch.name}</CardTitle>
         </div>
         <div className="flex space-x-1">
+          <Button variant="ghost" size="icon" onClick={() => setIsVolunteerAssignmentDialogOpen(true)}>
+            <Users className="h-5 w-5 text-gray-500 hover:text-primary" />
+            <span className="sr-only">Assign volunteers</span>
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
             <Pencil className="h-5 w-5 text-gray-500 hover:text-primary" />
             <span className="sr-only">Edit class details</span>
@@ -140,6 +146,12 @@ const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
         batch={batch}
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+      />
+
+      <BatchVolunteerAssignmentDialog
+        batch={batch}
+        isOpen={isVolunteerAssignmentDialogOpen}
+        onOpenChange={setIsVolunteerAssignmentDialogOpen}
       />
     </Card>
   );

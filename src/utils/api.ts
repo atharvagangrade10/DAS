@@ -1,7 +1,7 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate, YatraUpdate, PaymentRecord, ReceiptResponse } from "@/types/yatra";
-import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord } from "@/types/batch";
+import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord, BatchVolunteer } from "@/types/batch";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -154,6 +154,26 @@ export const fetchBatchDay = async (batchId: string, date: string) => {
 
 export const updateBatchDay = async (batchId: string, date: string, data: { title?: string; is_skipped?: boolean }) => {
   return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/days/${date}`, "PUT", data);
+};
+
+// --- NEW Batch Volunteer Endpoints (Frontend Placeholders) ---
+
+export const fetchBatchVolunteers = async (batchId: string): Promise<BatchVolunteer[]> => {
+  // This is a placeholder. Replace with actual API call when backend is ready.
+  console.warn(`[API Placeholder] fetchBatchVolunteers for batch ${batchId}`);
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers`, "GET");
+};
+
+export const assignVolunteerToBatch = async (batchId: string, participantId: string): Promise<BatchVolunteer> => {
+  // This is a placeholder. Replace with actual API call when backend is ready.
+  console.warn(`[API Placeholder] assignVolunteerToBatch: batch ${batchId}, participant ${participantId}`);
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers`, "POST", { participant_id: participantId });
+};
+
+export const removeVolunteerFromBatch = async (batchId: string, participantId: string): Promise<void> => {
+  // This is a placeholder. Replace with actual API call when backend is ready.
+  console.warn(`[API Placeholder] removeVolunteerFromBatch: batch ${batchId}, participant ${participantId}`);
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers/${participantId}`, "DELETE");
 };
 
 // --- Yatra Endpoints ---

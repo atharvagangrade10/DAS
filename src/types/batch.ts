@@ -40,3 +40,16 @@ export interface BatchAttendanceRecord {
   status: string;
   marked_by?: string;
 }
+
+export interface BatchVolunteer {
+  batch_id: string;
+  participant_id: string;
+  assigned_at: string; // ISO datetime string
+  participant_info?: { // Optional, for displaying in frontend
+    id: string;
+    full_name: string;
+    phone: string;
+    email: string;
+    profile_photo_url?: string | null;
+  };
+}

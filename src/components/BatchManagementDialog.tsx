@@ -36,10 +36,11 @@ import {
   Calendar as CalendarIcon,
   ChevronRight,
   History,
-} from "lucide-react"; // Removed BarChart3
+  User, // Added User icon for volunteers tab
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Batch } from "@/types/batch";
+import { Batch, BatchVolunteer } from "@/types/batch";
 import { Participant } from "@/types/participant";
 import {
   fetchBatchParticipants,
@@ -48,10 +49,12 @@ import {
   markBatchAttendanceBulk,
   fetchParticipants,
   fetchParticipantById,
+  fetchBatchVolunteers, // New import
 } from "@/utils/api";
 import { cn } from "@/lib/utils";
 import BatchAttendanceHistoryDialog from "./BatchAttendanceHistoryDialog";
-// Removed import for ParticipantStatsDialog
+import BatchVolunteerAssignmentDialog from "./BatchVolunteerAssignmentDialog"; // New import
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // New import
 
 interface BatchManagementDialogProps {
   batch: Batch;
@@ -72,7 +75,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
     Record<string, string>
   >({});
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = React.useState(false);
-  // Removed selectedParticipant and isStatsDialogOpen states
+  const [isVolunteerAssignmentDialogOpen, setIsVolunteerAssignmentDialogOpen] = React.useState(false); // New state
 
   // 1. Fetch Current Participants
   const { data: currentMappings, isLoading: isLoadingMappings } = useQuery({
@@ -110,6 +113,25 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
     queryFn: () => fetchBatchAttendance(batch.id, dateStr),
     enabled: isOpen && activeTab === "attendance",
   });
+
+  // 5. Fetch Assigned Volunteers for this batch
+  const { data: assignedVolunteers = [], isLoading: isLoadingAssignedVolunteers } = useQuery<BatchVolunteer[]>({
+    queryKey: ["batchVolunteers", batch.id],
+    queryFn: () => fetchBatchVolunteers(batch.id),
+    enabled: isOpen && activeTab === "volunteers",
+  });
+
+  // 6. Fetch full participant details for assigned volunteers
+  const { data: assignedVolunteerDetails, isLoading: isLoadingAssignedVolunteerDetails } = useQuery<Participant[]>({
+    queryKey: ["assignedVolunteerDetails", batch.id, assignedVolunteers.map(v => v.participant_id).join('-')],
+    queryFn: async () => {
+      if (assignedVolunteers.length === 0) return [];
+      const promises = assignedVolunteers.map(v => fetchParticipantById(v.participant_id));
+      return Promise.all(promises);
+    },
+    enabled: !!assignedVolunteers && assignedVolunteers.length > 0 && activeTab === "volunteers",
+  });
+
 
   // Sync current attendance to state
   React.useEffect(() => {
@@ -172,8 +194,6 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
     }));
   };
 
-  // Removed handleViewStats function
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -205,6 +225,12 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent pb-3 pt-2"
                 >
                   <CalendarDays className="h-4 w-4 mr-2" /> Attendance
+                </TabsTrigger>
+                <TabsTrigger
+                  value="volunteers"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent pb-3 pt-2"
+                >
+                  <User className="h-4 w-4 mr-2" /> Volunteers
                 </TabsTrigger>
                 <TabsTrigger
                   value="history"
@@ -304,7 +330,6 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                                   </p>
                                 </div>
                               </div>
-                              {/* Removed the "View Stats" button */}
                               <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             </div>
                           ))
@@ -447,6 +472,70 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                       </div>
                     )}
                   </div>
+                  <p className="text-xs text-amber-600 mt-4">
+                    Note: The backend must verify that the user marking attendance is an assigned volunteer for this batch.
+                  </p>
+                </TabsContent>
+                <TabsContent value="volunteers" className="m-0 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                      <Users className="h-4 w-4" /> Assigned Volunteers
+                    </h4>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setIsVolunteerAssignmentDialogOpen(true)}
+                      className="gap-2"
+                    >
+                      <UserPlus className="h-4 w-4" /> Manage Volunteers
+                    </Button>
+                  </div>
+                  <ScrollArea className="h-[400px] border rounded-lg">
+                    <div className="grid gap-2 p-2">
+                      {isLoadingAssignedVolunteers || isLoadingAssignedVolunteerDetails ? (
+                        [...Array(3)].map((_, i) => (
+                          <div key={i} className="h-14 w-full bg-muted animate-pulse rounded-lg" />
+                        ))
+                      ) : assignedVolunteerDetails && assignedVolunteerDetails.length > 0 ? (
+                        assignedVolunteerDetails.map((p) => (
+                          <div
+                            key={p.id}
+                            className="p-3 flex items-center justify-between border rounded-lg bg-background"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8 border">
+                                {p.profile_photo_url ? (
+                                  <AvatarImage src={p.profile_photo_url} alt={p.full_name} className="object-cover" />
+                                ) : null}
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                  {p.full_name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-sm">{p.full_name}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                  {p.phone}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              <CheckCircle2 className="h-3 w-3 mr-1" /> Assigned
+                            </Badge>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                          <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                          <p className="text-sm">
+                            No volunteers assigned to this class yet.
+                          </p>
+                          <p className="text-xs mt-1">
+                            Click "Manage Volunteers" to assign them.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
                 </TabsContent>
                 <TabsContent value="history" className="m-0 space-y-6">
                   <div className="text-center py-12">
@@ -473,7 +562,11 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
         participants={participants || []}
       />
 
-      {/* Removed ParticipantStatsDialog */}
+      <BatchVolunteerAssignmentDialog
+        batch={batch}
+        isOpen={isVolunteerAssignmentDialogOpen}
+        onOpenChange={setIsVolunteerAssignmentDialogOpen}
+      />
     </>
   );
 };

@@ -22,11 +22,12 @@ import {
   fetchBatchVolunteers,
   assignVolunteerToBatch,
   removeVolunteerFromBatch,
-  fetchParticipants, // For searching potential volunteers
-  fetchParticipantById, // To get full participant info for assigned volunteers
+  fetchParticipants,
+  fetchParticipantById,
 } from "@/utils/api";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface BatchVolunteerAssignmentDialogProps {
   batch: Batch;
@@ -39,6 +40,7 @@ const BatchVolunteerAssignmentDialog: React.FC<BatchVolunteerAssignmentDialogPro
   isOpen,
   onOpenChange,
 }) => {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = React.useState("");
 
@@ -108,7 +110,7 @@ const BatchVolunteerAssignmentDialog: React.FC<BatchVolunteerAssignmentDialogPro
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="w-full sm:max-w-[600px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Users className="h-6 w-6 text-primary" />
             Assign Volunteers: {batch.name}
           </DialogTitle>

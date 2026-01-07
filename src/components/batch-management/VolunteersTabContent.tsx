@@ -10,6 +10,7 @@ import { Batch, BatchVolunteer } from "@/types/batch";
 import { Participant } from "@/types/participant";
 import { fetchBatchVolunteers, fetchParticipantById } from "@/utils/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface VolunteersTabContentProps {
   batch: Batch;
@@ -22,6 +23,8 @@ const VolunteersTabContent: React.FC<VolunteersTabContentProps> = ({
   isOpen,
   onOpenVolunteerAssignmentDialog,
 }) => {
+  const isMobile = useIsMobile();
+
   // 1. Fetch Assigned Volunteers for this batch
   const { data: assignedVolunteers = [], isLoading: isLoadingAssignedVolunteers } = useQuery<BatchVolunteer[]>({
     queryKey: ["batchVolunteers", batch.id],

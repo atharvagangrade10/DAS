@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchBatchAttendance } from "@/utils/api";
 import { Batch } from "@/types/batch";
 import { Participant } from "@/types/participant";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface BatchAttendanceHistoryDialogProps {
   batch: Batch;
@@ -48,6 +49,7 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
   onOpenChange,
   participants,
 }) => {
+  const isMobile = useIsMobile();
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
 
@@ -129,7 +131,7 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="w-full sm:max-w-[700px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <Calendar className="h-6 w-6 text-primary" />
             Attendance History: {batch.name}
           </DialogTitle>
@@ -142,9 +144,9 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
           {/* Calendar View */}
           <div className="w-full md:w-1/2 border-r p-4">
             <div className="flex items-center justify-between mb-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={goToPreviousMonth}
                 className="h-8 w-8 p-0"
               >
@@ -153,9 +155,9 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
               <h3 className="font-semibold">
                 {format(currentMonth, "MMMM yyyy")}
               </h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={goToNextMonth}
                 className="h-8 w-8 p-0"
               >
@@ -176,11 +178,10 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
                 const dateStr = format(day, "yyyy-MM-dd");
                 const dayAttendance = attendanceByDate[dateStr] || [];
                 const presentCount = dayAttendance.filter(a => a.status === "Present").length;
-                // const totalCount = dayAttendance.length; // Not currently used, but useful for future enhancements
-                
+
                 const isSelected = selectedDate && isSameDay(selectedDate, day);
                 const isCurrentMonthDay = isSameMonth(day, currentMonth);
-                
+
                 return (
                   <Button
                     key={index}
@@ -212,12 +213,12 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
           <div className="w-full md:w-1/2 flex flex-col">
             <div className="p-4 border-b">
               <h3 className="font-semibold">
-                {selectedDate 
-                  ? `Attendance for ${format(selectedDate, "PPP")}` 
+                {selectedDate
+                  ? `Attendance for ${format(selectedDate, "PPP")}`
                   : "Select a date to view attendance"}
               </h3>
             </div>
-            
+
             <ScrollArea className="flex-1 p-4">
               {selectedDate ? (
                 isLoading ? (
@@ -246,7 +247,7 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge 
+                              <Badge
                                 variant={record.status === "Present" ? "default" : "secondary"}
                                 className={cn(
                                   record.status === "Present" ? "bg-green-500" : "bg-red-500",

@@ -20,6 +20,8 @@ import { fetchBatchAttendance, fetchParticipantById } from "@/utils/api";
 import { Participant } from "@/types/participant";
 import { Batch } from "@/types/batch";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ParticipantStatsDialogProps {
   participant: Participant | null;
@@ -50,6 +52,8 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
   isOpen,
   onOpenChange,
 }) => {
+  const isMobile = useIsMobile();
+
   // Close dialog if participant is null
   React.useEffect(() => {
     if (!participant && isOpen) {
@@ -149,7 +153,7 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <User className="h-6 w-6 text-primary" />
             {participant.full_name}'s Attendance Stats
           </DialogTitle>

@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Batch } from "@/types/batch";
 import { Participant } from "@/types/participant";
 import { fetchBatchParticipants, fetchParticipantById } from "@/utils/api";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import new modular components
 import ParticipantsTabContent from "./batch-management/ParticipantsTabContent";
@@ -42,6 +43,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
   isOpen,
   onOpenChange,
 }) => {
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = React.useState("participants");
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = React.useState(false);
   const [isVolunteerAssignmentDialogOpen, setIsVolunteerAssignmentDialogOpen] = React.useState(false);
@@ -73,7 +75,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="w-full sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <Badge className="bg-primary text-white">Class</Badge>
               {batch.name}
             </DialogTitle>
@@ -87,7 +89,10 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
             className="flex-1 flex flex-col overflow-hidden"
           >
             <div className="px-6 border-b">
-              <TabsList className="w-full justify-start h-auto p-0 bg-transparent gap-6 flex-wrap">
+              <TabsList className={cn(
+                "w-full justify-start h-auto p-0 bg-transparent gap-6 flex-wrap",
+                isMobile ? "grid grid-cols-2" : ""
+              )}>
                 <TabsTrigger
                   value="participants"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent pb-3 pt-2"

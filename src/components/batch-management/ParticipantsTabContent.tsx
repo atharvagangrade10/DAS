@@ -22,6 +22,8 @@ import {
   fetchParticipants,
   fetchParticipantById,
 } from "@/utils/api";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ParticipantsTabContentProps {
   batch: Batch;
@@ -29,6 +31,7 @@ interface ParticipantsTabContentProps {
 }
 
 const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, isOpen }) => {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = React.useState("");
 
@@ -151,14 +154,17 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
                   className="p-3 flex items-center justify-between border rounded-lg hover:shadow-sm transition-shadow"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                      {p.full_name.charAt(0)}
-                    </div>
-                    <div>
+                    <Avatar className="h-8 w-8 border">
+                      {p.profile_photo_url ? (
+                        <AvatarImage src={p.profile_photo_url} alt={p.full_name} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {p.full_name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
                       <p className="font-medium text-sm">{p.full_name}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                        {p.phone}
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">{p.phone}</p>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />

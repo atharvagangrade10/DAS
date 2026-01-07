@@ -27,6 +27,8 @@ import {
   markBatchAttendanceBulk,
 } from "@/utils/api";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AttendanceTabContentProps {
   batch: Batch;
@@ -41,6 +43,7 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
   isLoadingParticipants,
   isOpen,
 }) => {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date());
   const [attendanceStatuses, setAttendanceStatuses] = React.useState<
@@ -117,7 +120,7 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="w-[240px] justify-start text-left font-normal border-primary/20"
+                className="w-full sm:w-[240px] justify-start text-left font-normal border-primary/20"
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                 {format(selectedDate, "PPP")}

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { API_BASE_URL } from "@/config/api";
+import { fetchDevoteeFriends } from "@/utils/api";
 
 interface DevoteeFriend {
   id: string;
@@ -23,28 +23,6 @@ interface DevoteeFriend {
 interface DevoteeFriendsDropdownProps {
   onSelectFriend: (friendName: string | null) => void;
 }
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('das_auth_token');
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-};
-
-const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`, {
-    headers: getAuthHeaders(),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch devotee friends' }));
-    throw new Error(errorData.detail || "Failed to fetch devotee friends");
-  }
-  return response.json();
-};
 
 const DevoteeFriendsDropdown: React.FC<DevoteeFriendsDropdownProps> = ({ onSelectFriend }) => {
   const { data, isLoading, error } = useQuery<DevoteeFriend[], Error>({

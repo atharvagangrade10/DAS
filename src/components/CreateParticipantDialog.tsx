@@ -34,6 +34,7 @@ import { format, differenceInYears } from "date-fns";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { API_BASE_URL } from "@/config/api";
+import { fetchDevoteeFriends } from "@/utils/api";
 import DOBInput from "./DOBInput";
 import PhotoUpload from "./PhotoUpload";
 
@@ -87,7 +88,7 @@ const formSchema = z.object({
     (val) => (val === "" ? null : Number(val)),
     z.number().int().min(0, "Chanting rounds cannot be negative").nullable().optional(),
   ),
-  email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
+  email: z.string().email("Invalid email address").min(1, "Email is required"),
   profile_photo_url: z.string().nullable().optional(),
 });
 
@@ -100,17 +101,6 @@ const getAuthHeaders = () => {
     headers["Authorization"] = `Bearer ${token}`;
   }
   return headers;
-};
-
-const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`, {
-    headers: getAuthHeaders(),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch devotee friends' }));
-    throw new Error(errorData.detail || "Failed to fetch devotee friends");
-  }
-  return response.json();
 };
 
 const createParticipant = async (
@@ -135,7 +125,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
 }) => {
   const queryClient = useQueryClient();
 
-  const { data: devoteeFriends } = useQuery<
+  const { data: devoteeFriends, isLoading: isLoadingFriends } = useQuery<
     DevoteeFriend[],
     Error
   >({
@@ -444,14 +434,20 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isLoadingFriends}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a devotee friend" />
+                        <SelectValue placeholder={isLoadingFriends ? "Loading..." : "Select a devotee friend"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="None">None</SelectItem>
+                      {devoteeFriends?.map((friend) => (
+                        <SelectItem key={friend.id} value={friend.name}>
+                          {friend.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

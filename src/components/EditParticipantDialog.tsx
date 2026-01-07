@@ -34,6 +34,7 @@ import { parseISO, isValid, differenceInYears, format } from "date-fns";
 import { toast } from "sonner";
 import { Participant } from "@/types/participant";
 import { API_BASE_URL } from "@/config/api";
+import { fetchDevoteeFriends, updateParticipant as updateParticipantApi } from "@/utils/api";
 import DOBInput from "./DOBInput";
 import PhotoUpload from "./PhotoUpload";
 
@@ -88,47 +89,6 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"), // Made mandatory
   profile_photo_url: z.string().nullable().optional(),
 });
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('das_auth_token');
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-};
-
-const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  const response = await fetch(`${API_BASE_URL}/register/devoteefriends`, {
-    headers: getAuthHeaders(),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch devotee friends' }));
-    throw new Error(errorData.detail || "Failed to fetch devotee friends");
-  }
-  return response.json();
-};
-
-const updateParticipant = async (
-  participantId: string,
-  data: any,
-): Promise<Participant> => {
-  const response = await fetch(
-    `${API_BASE_URL}/participants/${participantId}`,
-    {
-      method: "PUT",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    },
-  );
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to update participant' }));
-    throw new Error(errorData.detail || "Failed to update participant");
-  }
-  return response.json();
-};
 
 const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
   participant,
@@ -233,7 +193,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
         chanting_rounds: values.chanting_rounds,
         profile_photo_url: values.profile_photo_url || null,
       };
-      return updateParticipant(participant.id, payload);
+      return updateParticipantApi(participant.id, payload);
     },
     onSuccess: (data) => {
       toast.success("Participant updated successfully!");
@@ -486,7 +446,7 @@ const EditParticipantDialog: React.FC<EditParticipantDialogProps> = ({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a devotee friend" />
+                        <SelectValue placeholder={isLoadingFriends ? "Loading..." : "Select a devotee friend"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

@@ -268,43 +268,45 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                       <h4 className="text-sm font-semibold">Registered Participants</h4>
                       <Badge variant="secondary">{participants?.length || 0} Total</Badge>
                     </div>
-                    <div className="grid gap-2">
-                      {isLoadingParticipants ? (
-                        [...Array(3)].map((_, i) => (
-                          <div
-                            key={i}
-                            className="h-14 w-full bg-muted animate-pulse rounded-lg"
-                          />
-                        ))
-                      ) : participants && participants.length > 0 ? (
-                        participants.map((p) => (
-                          <div
-                            key={p.id}
-                            className="p-3 flex items-center justify-between border rounded-lg hover:shadow-sm transition-shadow"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                {p.full_name.charAt(0)}
+                    <ScrollArea className="h-[300px] border rounded-lg">
+                      <div className="grid gap-2 p-2">
+                        {isLoadingParticipants ? (
+                          [...Array(3)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="h-14 w-full bg-muted animate-pulse rounded-lg"
+                            />
+                          ))
+                        ) : participants && participants.length > 0 ? (
+                          participants.map((p) => (
+                            <div
+                              key={p.id}
+                              className="p-3 flex items-center justify-between border rounded-lg hover:shadow-sm transition-shadow"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                  {p.full_name.charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">{p.full_name}</p>
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                                    {p.phone}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-medium text-sm">{p.full_name}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                                  {p.phone}
-                                </p>
-                              </div>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             </div>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                            <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                            <p className="text-sm">
+                              No participants added to this class yet.
+                            </p>
                           </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                          <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                          <p className="text-sm">
-                            No participants added to this class yet.
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    </ScrollArea>
                   </div>
                 </TabsContent>
                 <TabsContent value="attendance" className="m-0 space-y-6">
@@ -379,54 +381,56 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                         </p>
                       </div>
                     ) : participants && participants.length > 0 ? (
-                      <div className="grid gap-2">
-                        {participants.map((p) => {
-                          const status = attendanceStatuses[p.id] || "Absent";
-                          const isPresent = status === "Present";
-                          return (
-                            <div
-                              key={p.id}
-                              className={cn(
-                                "p-3 flex items-center justify-between border rounded-lg transition-all cursor-pointer",
-                                isPresent
-                                  ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                                  : "bg-background"
-                              )}
-                              onClick={() => toggleStatus(p.id)}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
+                      <ScrollArea className="h-[300px] border rounded-lg">
+                        <div className="grid gap-2 p-2">
+                          {participants.map((p) => {
+                            const status = attendanceStatuses[p.id] || "Absent";
+                            const isPresent = status === "Present";
+                            return (
+                              <div
+                                key={p.id}
+                                className={cn(
+                                  "p-3 flex items-center justify-between border rounded-lg transition-all cursor-pointer",
+                                  isPresent
+                                    ? "border-green-500 bg-green-50 dark:bg-green-950/20"
+                                    : "bg-background"
+                                )}
+                                onClick={() => toggleStatus(p.id)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={cn(
+                                      "h-5 w-5 rounded-full flex items-center justify-center border-2 transition-colors",
+                                      isPresent
+                                        ? "bg-green-500 border-green-500"
+                                        : "border-muted-foreground/30"
+                                    )}
+                                  >
+                                    {isPresent && (
+                                      <CheckCircle2 className="h-3 w-3 text-white" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-sm">{p.full_name}</p>
+                                    <p className="text-[10px] text-muted-foreground">
+                                      {p.phone}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Badge
+                                  variant={isPresent ? "default" : "secondary"}
                                   className={cn(
-                                    "h-5 w-5 rounded-full flex items-center justify-center border-2 transition-colors",
-                                    isPresent
-                                      ? "bg-green-500 border-green-500"
-                                      : "border-muted-foreground/30"
+                                    "text-[10px] font-bold uppercase",
+                                    isPresent ? "bg-green-600 hover:bg-green-600" : ""
                                   )}
                                 >
-                                  {isPresent && (
-                                    <CheckCircle2 className="h-3 w-3 text-white" />
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="font-medium text-sm">{p.full_name}</p>
-                                  <p className="text-[10px] text-muted-foreground">
-                                    {p.phone}
-                                  </p>
-                                </div>
+                                  {isPresent ? "Present" : "Absent"}
+                                </Badge>
                               </div>
-                              <Badge
-                                variant={isPresent ? "default" : "secondary"}
-                                className={cn(
-                                  "text-[10px] font-bold uppercase",
-                                  isPresent ? "bg-green-600 hover:bg-green-600" : ""
-                                )}
-                              >
-                                {isPresent ? "Present" : "Absent"}
-                              </Badge>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
                     ) : (
                       <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border-2 border-dashed">
                         <Users className="h-10 w-10 mx-auto mb-2 opacity-20" />

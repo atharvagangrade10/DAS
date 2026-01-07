@@ -88,7 +88,7 @@ export const updateParticipant = async (
 };
 
 export const fetchDevoteeFriends = async (): Promise<DevoteeFriend[]> => {
-  return fetchAuthenticated(`${API_BASE_URL}/register/devoteefriend`);
+  return fetchAuthenticated(`${API_BASE_URL}/register/devoteefriends`);
 };
 
 export const fetchPrograms = async (): Promise<Program[]> => {

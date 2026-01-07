@@ -22,7 +22,7 @@ import { Batch } from "@/types/batch";
 import { Participant } from "@/types/participant";
 import { fetchBatchParticipants, fetchParticipantById } from "@/utils/api";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils"; // Added import for cn
+import { cn } from "@/lib/utils";
 
 // Import new modular components
 import ParticipantsTabContent from "./batch-management/ParticipantsTabContent";
@@ -89,7 +89,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
             onValueChange={setActiveTab}
             className="flex-1 flex flex-col overflow-hidden"
           >
-            <div className="px-6 border-b">
+            <div className="px-6 border-b bg-background z-10">
               <TabsList className={cn(
                 "w-full justify-start h-auto p-0 bg-transparent gap-6 flex-wrap",
                 isMobile ? "grid grid-cols-2" : ""
@@ -120,36 +120,38 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                 </TabsTrigger>
               </TabsList>
             </div>
-            <ScrollArea className="flex-1">
-              <div className="p-6">
-                <TabsContent value="participants" className="m-0">
-                  <ParticipantsTabContent
-                    batch={batch}
-                    isOpen={activeTab === "participants"}
-                  />
-                </TabsContent>
-                <TabsContent value="attendance" className="m-0">
-                  <AttendanceTabContent
-                    batch={batch}
-                    participants={participants || []}
-                    isLoadingParticipants={isLoadingParticipants}
-                    isOpen={activeTab === "attendance"}
-                  />
-                </TabsContent>
-                <TabsContent value="volunteers" className="m-0">
-                  <VolunteersTabContent
-                    batch={batch}
-                    isOpen={activeTab === "volunteers"}
-                    onOpenVolunteerAssignmentDialog={() => setIsVolunteerAssignmentDialogOpen(true)}
-                  />
-                </TabsContent>
-                <TabsContent value="history" className="m-0">
-                  <HistoryTabContent
-                    onOpenHistoryDialog={() => setIsHistoryDialogOpen(true)}
-                  />
-                </TabsContent>
-              </div>
-            </ScrollArea>
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-6">
+                  <TabsContent value="participants" className="m-0">
+                    <ParticipantsTabContent
+                      batch={batch}
+                      isOpen={activeTab === "participants"}
+                    />
+                  </TabsContent>
+                  <TabsContent value="attendance" className="m-0">
+                    <AttendanceTabContent
+                      batch={batch}
+                      participants={participants || []}
+                      isLoadingParticipants={isLoadingParticipants}
+                      isOpen={activeTab === "attendance"}
+                    />
+                  </TabsContent>
+                  <TabsContent value="volunteers" className="m-0">
+                    <VolunteersTabContent
+                      batch={batch}
+                      isOpen={activeTab === "volunteers"}
+                      onOpenVolunteerAssignmentDialog={() => setIsVolunteerAssignmentDialogOpen(true)}
+                    />
+                  </TabsContent>
+                  <TabsContent value="history" className="m-0">
+                    <HistoryTabContent
+                      onOpenHistoryDialog={() => setIsHistoryDialogOpen(true)}
+                    />
+                  </TabsContent>
+                </div>
+              </ScrollArea>
+            </div>
           </Tabs>
         </DialogContent>
       </Dialog>

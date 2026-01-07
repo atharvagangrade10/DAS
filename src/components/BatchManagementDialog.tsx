@@ -90,7 +90,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
             className="flex-1 flex flex-col overflow-hidden"
           >
             {/* Fixed Tab Bar */}
-            <div className="px-6 border-b bg-background z-10 flex-shrink-0">
+            <div className="px-6 border-b bg-background z-10 flex-shrink-0 sticky top-0">
               <TabsList className={cn(
                 "w-full justify-start h-auto p-0 bg-transparent gap-6 flex-wrap",
                 isMobile ? "grid grid-cols-2" : ""

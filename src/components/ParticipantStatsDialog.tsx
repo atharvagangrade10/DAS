@@ -28,6 +28,13 @@ interface ParticipantStatsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface AttendanceRecord {
+  batch_id: string;
+  date: string;
+  status: string;
+  marked_by?: string;
+}
+
 interface BatchAttendanceSummary {
   batch_id: string;
   batch_name: string;
@@ -51,10 +58,10 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
   }, [participant, isOpen, onOpenChange]);
 
   // Fetch attendance data for all batches this participant is in
-  const { data: attendanceData, isLoading } = useQuery({
+  const { data: attendanceData, isLoading } = useQuery<AttendanceRecord[]>({
     queryKey: ["participantBatchAttendanceStats", participant?.id],
     queryFn: async () => {
-      if (!participant?.id) return [] as any[];
+      if (!participant?.id) return [];
       // In a real implementation, we would fetch attendance data for this participant
       // across all batches they're enrolled in
       // For now, we'll return mock data
@@ -140,7 +147,7 @@ const ParticipantStatsDialog: React.FC<ParticipantStatsDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             <User className="h-6 w-6 text-primary" />

@@ -120,7 +120,7 @@ const CreateProgramDialog: React.FC<CreateProgramDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Program</DialogTitle>
           <DialogDescription>

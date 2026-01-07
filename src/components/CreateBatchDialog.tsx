@@ -110,7 +110,7 @@ const CreateBatchDialog: React.FC<CreateBatchDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Class</DialogTitle>
           <DialogDescription>
@@ -155,7 +155,7 @@ const CreateBatchDialog: React.FC<CreateBatchDialogProps> = ({
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
+                    </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value={BatchRecursionEnum.daily}>Daily</SelectItem>

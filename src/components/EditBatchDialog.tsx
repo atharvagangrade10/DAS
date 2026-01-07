@@ -127,7 +127,7 @@ const EditBatchDialog: React.FC<EditBatchDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Class: {batch.name}</DialogTitle>
           <DialogDescription>

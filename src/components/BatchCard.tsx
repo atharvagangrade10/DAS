@@ -3,7 +3,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, CalendarDays, Repeat } from "lucide-react";
+import { Pencil, Trash2, CalendarDays, Repeat, Settings2 } from "lucide-react";
 import { Batch, BatchRecursionEnum } from "@/types/batch";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import BatchManagementDialog from "./BatchManagementDialog";
 
 interface BatchCardProps {
   batch: Batch;
@@ -31,6 +32,7 @@ const DAYS_MAP = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [isManageDialogOpen, setIsManageDialogOpen] = React.useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteBatch(batch.id),
@@ -62,13 +64,15 @@ const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
           <CardTitle className="text-2xl font-semibold mt-1">{batch.name}</CardTitle>
         </div>
         <div className="flex space-x-1">
-          <Button variant="ghost" size="icon" disabled>
-            <Pencil className="h-5 w-5 text-gray-400" />
+          <Button variant="ghost" size="icon" onClick={() => setIsManageDialogOpen(true)}>
+            <Settings2 className="h-5 w-5 text-gray-500 hover:text-primary" />
+            <span className="sr-only">Manage class</span>
           </Button>
           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700">
                 <Trash2 className="h-5 w-5" />
+                <span className="sr-only">Delete class</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -110,7 +114,21 @@ const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
         {!batch.is_active && (
           <Badge variant="outline" className="w-fit text-red-500 border-red-200">Inactive</Badge>
         )}
+        
+        <Button 
+            className="w-full mt-2" 
+            variant="outline" 
+            onClick={() => setIsManageDialogOpen(true)}
+        >
+            Manage Class
+        </Button>
       </CardContent>
+
+      <BatchManagementDialog 
+        batch={batch}
+        isOpen={isManageDialogOpen}
+        onOpenChange={setIsManageDialogOpen}
+      />
     </Card>
   );
 };

@@ -132,6 +132,30 @@ export const deleteBatch = async (batchId: string): Promise<void> => {
   }
 };
 
+export const fetchBatchParticipants = async (batchId: string): Promise<any[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/participants`);
+};
+
+export const addParticipantToBatch = async (batchId: string, participantId: string) => {
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/participants`, "POST", { participant_id: participantId });
+};
+
+export const fetchBatchAttendance = async (batchId: string, date: string): Promise<any[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/attendance/${date}`);
+};
+
+export const markBatchAttendanceBulk = async (batchId: string, data: { date: string; participant_ids: string[]; status: string; marked_by?: string }) => {
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/attendance/bulk`, "POST", data);
+};
+
+export const fetchBatchDay = async (batchId: string, date: string) => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/days/${date}`);
+};
+
+export const updateBatchDay = async (batchId: string, date: string, data: { title?: string; is_skipped?: boolean }) => {
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/days/${date}`, "PUT", data);
+};
+
 // --- Yatra Endpoints ---
 
 export const fetchYatras = async (): Promise<Yatra[]> => {
@@ -357,7 +381,7 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
   return response.json();
 };
 
-export const fetchParticipantById = async (id: string): Promise<Participant> => {
+export const fetchParticipantByIdAny = async (id: string): Promise<Participant> => {
     const token = localStorage.getItem('das_auth_token');
     if (token) return fetchParticipantByIdProtected(id);
     return fetchParticipantByIdPublic(id);
@@ -367,3 +391,5 @@ export const fetchParticipantById = async (id: string): Promise<Participant> => 
 export const fetchParticipants = async (query: string): Promise<Participant[]> => {
     return searchParticipantPublic(query);
 };
+
+export { fetchParticipantByIdAny as fetchParticipantById };

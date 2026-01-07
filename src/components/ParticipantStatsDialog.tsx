@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchBatchAttendance, fetchParticipantById } from "@/utils/api";
 import { Participant } from "@/types/participant";
 import { Batch } from "@/types/batch";
+import { cn } from "@/lib/utils";
 
 interface ParticipantStatsDialogProps {
   participant: Participant | null;

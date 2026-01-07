@@ -414,5 +414,3 @@ export const fetchParticipantByIdAny = async (id: string): Promise<Participant> 
 export const fetchParticipants = async (query: string): Promise<Participant[]> => {
     return searchParticipantPublic(query);
 };
-
-export { fetchParticipantByIdAny as fetchParticipantById };

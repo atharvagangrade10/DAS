@@ -36,7 +36,7 @@ const fetchAuthenticated = async (url: string) => {
   const response = await fetch(url, {
     headers: getAuthHeaders(),
   });
-  
+
   if (response.status === 401) {
     handleUnauthorized();
     throw new Error("Unauthorized access. Logging out.");
@@ -238,7 +238,7 @@ export const uploadPhoto = async (file: File, participantId: string): Promise<st
   const formData = new FormData();
   formData.append("file", file);
   formData.append("participant_id", participantId);
-  
+
   const token = localStorage.getItem('das_auth_token');
   const headers: HeadersInit = {};
   if (token) {
@@ -335,9 +335,10 @@ export const resetPassword = async (token: string, new_password: string): Promis
   return response.json();
 };
 
+// Updated search function to use authenticated headers when available
 export const searchParticipantPublic = async (phone: string): Promise<Participant[]> => {
   const response = await fetch(`${API_BASE_URL}/participants/search?query=${encodeURIComponent(phone)}`, {
-    headers: { "Content-Type": "application/json" }
+    headers: getAuthHeaders()
   });
   if (!response.ok) return [];
   return response.json();
@@ -367,7 +368,7 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
   const url = id 
     ? `${API_BASE_URL}/participants/${id}` 
     : `${API_BASE_URL}/register/participant`;
-  
+
   const response = await fetch(url, {
     method: id ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },

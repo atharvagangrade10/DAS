@@ -77,8 +77,17 @@ export const fetchAllParticipants = async (): Promise<Participant[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/register/participants`);
 };
 
-export const fetchParticipantByIdProtected = async (id: string): Promise<Participant> => {
-  return fetchAuthenticated(`${API_BASE_URL}/participants/${id}`);
+export const fetchParticipantById = async (id: string): Promise<Participant> => {
+  const token = localStorage.getItem('das_auth_token');
+  if (token) {
+    return fetchAuthenticated(`${API_BASE_URL}/participants/${id}`);
+  } else {
+    const response = await fetch(`${API_BASE_URL}/participants/${id}`, {
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!response.ok) throw new Error("Failed to fetch participant");
+    return response.json();
+  }
 };
 
 export const updateParticipant = async (
@@ -402,12 +411,6 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
     throw new Error(errorData.detail || "Failed to process participant data");
   }
   return response.json();
-};
-
-export const fetchParticipantByIdAny = async (id: string): Promise<Participant> => {
-    const token = localStorage.getItem('das_auth_token');
-    if (token) return fetchParticipantByIdProtected(id);
-    return fetchParticipantByIdPublic(id);
 };
 
 // Map searchParticipant to fetchParticipants for clarity

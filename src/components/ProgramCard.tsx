@@ -23,6 +23,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/config/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface ProgramCardProps {
   program: Program;
@@ -51,6 +52,8 @@ const deleteProgram = async (programId: string): Promise<void> => {
 };
 
 const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
+  const { user } = useAuth();
+  const isManager = user?.role === 'Manager';
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isSessionsDialogOpen, setIsSessionsDialogOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
@@ -76,46 +79,49 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
   };
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+    <Card className="flex flex-col h-full text-left">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
         <div className="flex flex-col gap-1">
           <Badge variant="outline" className="w-fit text-blue-600 border-blue-200">Program</Badge>
           <CardTitle className="text-2xl font-semibold mt-1">{program.program_name}</CardTitle>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="icon" onClick={() => setIsSessionsDialogOpen(true)}>
-            <CalendarDays className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
-            <span className="sr-only">Manage sessions</span>
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
-            <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
-            <span className="sr-only">Edit program</span>
-          </Button>
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200">
-                <Trash2 className="h-5 w-5" />
-                <span className="sr-only">Delete program</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the program{" "}
-                  <span className="font-semibold">{program.program_name}</span> and all its associated sessions and attendance records.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} disabled={deleteMutation.isPending}>
-                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        {isManager && (
+          <div className="flex flex-wrap gap-1">
+            <Button variant="ghost" size="icon" onClick={() => setIsSessionsDialogOpen(true)}>
+              <CalendarDays className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+              <span className="sr-only">Manage sessions</span>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
+              <Pencil className="h-5 w-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+              <span className="sr-only">Edit program</span>
+            </Button>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200">
+                  <Trash2 className="h-5 w-5" />
+                  <span className="sr-only">Delete program</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the program{" "}
+                    <span className="font-semibold">{program.program_name}</span> and all its associated sessions and attendance records.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={deleteMutation.isPending}>
+                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
       </CardHeader>
+
       <CardContent className="flex-1 grid gap-2">
         <p className="text-sm text-gray-600 dark:text-gray-400">{program.description || "No description provided."}</p>
         <p className="text-sm">

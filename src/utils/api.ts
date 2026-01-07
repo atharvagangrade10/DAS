@@ -3,7 +3,7 @@
 import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate, YatraUpdate, PaymentRecord, ReceiptResponse } from "@/types/yatra";
-import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord, BatchVolunteer } from "@/types/batch";
+import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord, BatchVolunteer, BatchStatsResponse, BatchParticipantStats } from "@/types/batch";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -167,24 +167,36 @@ export const updateBatchDay = async (batchId: string, date: string, data: { titl
   return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/days/${date}`, "PUT", data);
 };
 
-// --- NEW Batch Volunteer Endpoints (Frontend Placeholders) ---
+export const fetchBatchStats = async (batchId: string): Promise<BatchStatsResponse> => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/stats`);
+};
+
+// --- NEW Batch Volunteer Endpoints (Verified Backend) ---
 
 export const fetchBatchVolunteers = async (batchId: string): Promise<BatchVolunteer[]> => {
-  // This is a placeholder. Replace with actual API call when backend is ready.
-  console.warn(`[API Placeholder] fetchBatchVolunteers for batch ${batchId}`);
-  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers`, "GET");
+  return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers`);
 };
 
 export const assignVolunteerToBatch = async (batchId: string, participantId: string): Promise<BatchVolunteer> => {
-  // This is a placeholder. Replace with actual API call when backend is ready.
-  console.warn(`[API Placeholder] assignVolunteerToBatch: batch ${batchId}, participant ${participantId}`);
   return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers`, "POST", { participant_id: participantId });
 };
 
 export const removeVolunteerFromBatch = async (batchId: string, participantId: string): Promise<void> => {
-  // This is a placeholder. Replace with actual API call when backend is ready.
-  console.warn(`[API Placeholder] removeVolunteerFromBatch: batch ${batchId}, participant ${participantId}`);
   return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers/${participantId}`, "DELETE");
+};
+
+// --- Batch Assignments & Enrollments ---
+
+export const fetchMyAssignedBatches = async (): Promise<Batch[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/assigned/me`);
+};
+
+export const fetchMyEnrolledBatches = async (): Promise<Batch[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/enrolled/me`);
+};
+
+export const fetchBatchParticipantStats = async (batchId: string, participantId: string): Promise<BatchParticipantStats> => {
+  return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/participants/${participantId}/stats`);
 };
 
 // --- Yatra Endpoints ---
@@ -396,8 +408,8 @@ export const fetchParticipantByPhonePublic = async (phone: string): Promise<Part
 };
 
 export const upsertParticipantPublic = async (data: any, id?: string): Promise<Participant> => {
-  const url = id 
-    ? `${API_BASE_URL}/participants/${id}` 
+  const url = id
+    ? `${API_BASE_URL}/participants/${id}`
     : `${API_BASE_URL}/register/participant`;
 
   const response = await fetch(url, {
@@ -415,5 +427,5 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
 
 // Map searchParticipant to fetchParticipants for clarity
 export const fetchParticipants = async (query: string): Promise<Participant[]> => {
-    return searchParticipantPublic(query);
+  return searchParticipantPublic(query);
 };

@@ -28,9 +28,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 interface ParticipantsTabContentProps {
   batch: Batch;
   isOpen: boolean;
+  readOnly?: boolean;
 }
 
-const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, isOpen }) => {
+const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, isOpen, readOnly = false }) => {
+
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -78,60 +80,63 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
   return (
     <div className="space-y-6">
       {/* Search & Add Section */}
-      <div className="space-y-3">
-        <h4 className="text-sm font-semibold flex items-center gap-2">
-          <UserPlus className="h-4 w-4" /> Add Participants
-        </h4>
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or phone (min 3 chars)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        {searchQuery.length >= 3 && (
-          <div className="border rounded-lg bg-muted/30 divide-y overflow-hidden">
-            {isSearching ? (
-              <div className="p-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Searching...
-              </div>
-            ) : searchResults && searchResults.length > 0 ? (
-              searchResults.map((p) => {
-                const isAlreadyIn = participants?.some(
-                  (cp) => cp.id === p.id
-                );
-                return (
-                  <div
-                    key={p.id}
-                    className="p-3 flex items-center justify-between hover:bg-background transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium text-sm">{p.full_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {p.phone}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant={isAlreadyIn ? "ghost" : "outline"}
-                      disabled={isAlreadyIn || addMutation.isPending}
-                      onClick={() => addMutation.mutate(p.id)}
-                    >
-                      {isAlreadyIn ? "Added" : "Add"}
-                    </Button>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                No participants found.
-              </div>
-            )}
+      {!readOnly && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <UserPlus className="h-4 w-4" /> Add Participants
+          </h4>
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or phone (min 3 chars)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        )}
-      </div>
+          {searchQuery.length >= 3 && (
+            <div className="border rounded-lg bg-muted/30 divide-y overflow-hidden">
+              {isSearching ? (
+                <div className="p-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Searching...
+                </div>
+              ) : searchResults && searchResults.length > 0 ? (
+                searchResults.map((p) => {
+                  const isAlreadyIn = participants?.some(
+                    (cp) => cp.id === p.id
+                  );
+                  return (
+                    <div
+                      key={p.id}
+                      className="p-3 flex items-center justify-between hover:bg-background transition-colors"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{p.full_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.phone}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={isAlreadyIn ? "ghost" : "outline"}
+                        disabled={isAlreadyIn || addMutation.isPending}
+                        onClick={() => addMutation.mutate(p.id)}
+                      >
+                        {isAlreadyIn ? "Added" : "Add"}
+                      </Button>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  No participants found.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Current List Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">

@@ -8,7 +8,9 @@ import { Batch, BatchRecursionEnum } from "@/types/batch";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+
 import { deleteBatch } from "@/utils/api";
 import {
   AlertDialog,
@@ -33,6 +35,11 @@ interface BatchCardProps {
 const DAYS_MAP = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
+  const { user } = useAuth();
+  const isManager = user?.role === 'Manager';
+  const isVolunteer = user?.role === 'Volunteer';
+  const canManage = isManager || isVolunteer;
+
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [isManageDialogOpen, setIsManageDialogOpen] = React.useState(false);
@@ -64,58 +71,69 @@ const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
 
   return (
     <>
-      <Card className="flex flex-col h-full border-primary/20 bg-primary/5">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <Card className="flex flex-col h-full border-primary/20 bg-primary/5 text-left">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
           <div className="flex flex-col gap-1">
             <Badge className="w-fit bg-primary text-white">Class</Badge>
             <CardTitle className="text-2xl font-semibold mt-1">{batch.name}</CardTitle>
           </div>
-          <div className="flex space-x-1">
-            <Button variant="ghost" size="icon" onClick={() => setIsStatsDialogOpen(true)}>
-              <BarChart3 className="h-5 w-5 text-gray-500 hover:text-primary" />
-              <span className="sr-only">View stats</span>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsVolunteerAssignmentDialogOpen(true)}>
-              <Users className="h-5 w-5 text-gray-500 hover:text-primary" />
-              <span className="sr-only">Assign volunteers</span>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
-              <Pencil className="h-5 w-5 text-gray-500 hover:text-primary" />
-              <span className="sr-only">Edit class details</span>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsManageDialogOpen(true)}>
-              <Settings2 className="h-5 w-5 text-gray-500 hover:text-primary" />
-              <span className="sr-only">Manage class</span>
-            </Button>
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700">
-                  <Trash2 className="h-5 w-5" />
-                  <span className="sr-only">Delete class</span>
+          <div className="flex flex-wrap gap-1">
+            {isManager && (
+              <>
+                <Button variant="ghost" size="icon" onClick={() => setIsStatsDialogOpen(true)}>
+                  <BarChart3 className="h-5 w-5 text-gray-500 hover:text-primary" />
+                  <span className="sr-only">View stats</span>
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete the recurring class{" "}
-                    <span className="font-semibold">{batch.name}</span> and all its attendance data.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={() => deleteMutation.mutate()} 
-                    disabled={deleteMutation.isPending}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                <Button variant="ghost" size="icon" onClick={() => setIsVolunteerAssignmentDialogOpen(true)}>
+                  <Users className="h-5 w-5 text-gray-500 hover:text-primary" />
+                  <span className="sr-only">Assign volunteers</span>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
+                  <Pencil className="h-5 w-5 text-gray-500 hover:text-primary" />
+                  <span className="sr-only">Edit class details</span>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsManageDialogOpen(true)}>
+                  <Settings2 className="h-5 w-5 text-gray-500 hover:text-primary" />
+                  <span className="sr-only">Manage class</span>
+                </Button>
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700">
+                      <Trash2 className="h-5 w-5" />
+                      <span className="sr-only">Delete class</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the recurring class{" "}
+                        <span className="font-semibold">{batch.name}</span> and all its attendance data.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteMutation.mutate()}
+                        disabled={deleteMutation.isPending}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+            {!isManager && (
+              <Button variant="ghost" size="icon" onClick={() => setIsManageDialogOpen(true)}>
+                <Settings2 className="h-5 w-5 text-gray-500 hover:text-primary" />
+                <span className="sr-only">View class details</span>
+              </Button>
+            )}
           </div>
         </CardHeader>
+
         <CardContent className="flex-1 grid gap-3">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {batch.description || "Recurring spiritual class."}
@@ -133,23 +151,23 @@ const BatchCard: React.FC<BatchCardProps> = ({ batch }) => {
           {!batch.is_active && (
             <Badge variant="outline" className="w-fit text-red-500 border-red-200">Inactive</Badge>
           )}
-          
-          <Button 
-              className="w-full mt-2" 
-              variant="outline" 
-              onClick={() => setIsManageDialogOpen(true)}
+
+          <Button
+            className="w-full mt-2"
+            variant="outline"
+            onClick={() => setIsManageDialogOpen(true)}
           >
-              Manage Class
+            {isManager ? "Manage Class" : "View Details"}
           </Button>
         </CardContent>
       </Card>
 
-      <BatchManagementDialog 
+      <BatchManagementDialog
         batch={batch}
         isOpen={isManageDialogOpen}
         onOpenChange={setIsManageDialogOpen}
       />
-      
+
       <EditBatchDialog
         batch={batch}
         isOpen={isEditDialogOpen}

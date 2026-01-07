@@ -28,12 +28,15 @@ import { fetchBatchAttendance } from "@/utils/api";
 import { Batch } from "@/types/batch";
 import { Participant } from "@/types/participant";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/AuthContext";
+import { Check, X } from "lucide-react";
 
 interface BatchAttendanceHistoryDialogProps {
   batch: Batch;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   participants: Participant[];
+  isFullHistoryVisible: boolean;
 }
 
 interface AttendanceRecord {
@@ -48,7 +51,9 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
   isOpen,
   onOpenChange,
   participants,
+  isFullHistoryVisible,
 }) => {
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
@@ -105,8 +110,13 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
   const selectedDateAttendance = React.useMemo(() => {
     if (!selectedDate) return [];
     const dateStr = format(selectedDate, "yyyy-MM-dd");
-    return attendanceByDate[dateStr] || [];
-  }, [selectedDate, attendanceByDate]);
+    const records = attendanceByDate[dateStr] || [];
+
+    if (isFullHistoryVisible) return records;
+
+    // If not full history, only show current user's record
+    return records.filter(r => r.participant_id === user?.user_id);
+  }, [selectedDate, attendanceByDate, isFullHistoryVisible, user?.user_id]);
 
   // Find participant by ID
   const findParticipant = (id: string) => {
@@ -177,7 +187,27 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
               {monthDays.map((day, index) => {
                 const dateStr = format(day, "yyyy-MM-dd");
                 const dayAttendance = attendanceByDate[dateStr] || [];
-                const presentCount = dayAttendance.filter(a => a.status === "Present").length;
+
+                let indicator = null;
+                if (isFullHistoryVisible) {
+                  const presentCount = dayAttendance.filter(a => a.status === "Present").length;
+                  if (presentCount > 0) {
+                    indicator = (
+                      <span className="absolute top-0.5 right-0.5 text-[8px] font-bold">
+                        {presentCount}
+                      </span>
+                    );
+                  }
+                } else {
+                  const myRecord = dayAttendance.find(a => a.participant_id === user?.user_id);
+                  if (myRecord) {
+                    if (myRecord.status === "Present") {
+                      indicator = <Check className="absolute top-0.5 right-0.5 h-2 w-2 text-green-500 font-bold" />;
+                    } else if (myRecord.status === "Absent") {
+                      indicator = <X className="absolute top-0.5 right-0.5 h-2 w-2 text-red-500 font-bold" />;
+                    }
+                  }
+                }
 
                 const isSelected = selectedDate && isSameDay(selectedDate, day);
                 const isCurrentMonthDay = isSameMonth(day, currentMonth);
@@ -195,9 +225,7 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
                     onClick={() => setSelectedDate(day)}
                     disabled={!isCurrentMonthDay}
                   >
-                    <span className="absolute top-0.5 right-0.5 text-[8px] font-bold">
-                      {presentCount > 0 ? presentCount : ""}
-                    </span>
+                    {indicator}
                     {format(day, "d")}
                   </Button>
                 );

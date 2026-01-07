@@ -12,7 +12,8 @@ import CreateBatchDialog from "@/components/CreateBatchDialog";
 import ProgramCard from "@/components/ProgramCard";
 import BatchCard from "@/components/BatchCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchPrograms, fetchBatches } from "@/utils/api";
+import { fetchPrograms, fetchBatches, fetchMyAssignedBatches, fetchMyEnrolledBatches } from "@/utils/api";
+import { useAuth } from "@/context/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,27 +22,39 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const Programs = () => {
+  const { user } = useAuth();
+  const isManager = user?.role === 'Manager';
   const [isCreateProgramDialogOpen, setIsCreateProgramDialogOpen] = React.useState(false);
   const [isCreateBatchDialogOpen, setIsCreateBatchDialogOpen] = React.useState(false);
 
   const { data: programs, isLoading: isLoadingPrograms, error: programsError } = useQuery<Program[], Error>({
     queryKey: ["programs"],
     queryFn: fetchPrograms,
+    enabled: isManager, // Only managers see regular programs
   });
 
   const { data: batches, isLoading: isLoadingBatches, error: batchesError } = useQuery<Batch[], Error>({
-    queryKey: ["batches"],
-    queryFn: fetchBatches,
+    queryKey: ["batches", user?.role, user?.user_id],
+    queryFn: () => {
+      if (isManager) {
+        return fetchBatches();
+      }
+      if (user?.role === 'Volunteer') {
+        return fetchMyAssignedBatches();
+      }
+      return fetchMyEnrolledBatches();
+    },
+    enabled: !!user,
   });
 
   React.useEffect(() => {
-    if (programsError) {
+    if (isManager && programsError) {
       toast.error("Error loading programs", { description: programsError.message });
     }
     if (batchesError) {
       toast.error("Error loading classes", { description: batchesError.message });
     }
-  }, [programsError, batchesError]);
+  }, [programsError, batchesError, isManager]);
 
   const isLoading = isLoadingPrograms || isLoadingBatches;
 
@@ -49,27 +62,30 @@ const Programs = () => {
     <div className="container mx-auto p-6 sm:p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Programs & Classes</h1>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <PlusCircle className="h-5 w-5" />
-              Create New
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => setIsCreateProgramDialogOpen(true)} className="flex items-center gap-2 cursor-pointer">
-              <Calendar className="h-4 w-4" />
-              New Program
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsCreateBatchDialogOpen(true)} className="flex items-center gap-2 cursor-pointer">
-              <LayoutGrid className="h-4 w-4" />
-              New Class
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+        {isManager && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <PlusCircle className="h-5 w-5" />
+                Create New
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setIsCreateProgramDialogOpen(true)} className="flex items-center gap-2 cursor-pointer">
+                <Calendar className="h-4 w-4" />
+                New Program
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsCreateBatchDialogOpen(true)} className="flex items-center gap-2 cursor-pointer">
+                <LayoutGrid className="h-4 w-4" />
+                New Class
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
-      
+
+
       <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mb-8">
         Manage your fixed-duration spiritual programs and recurring daily or weekly classes.
       </p>
@@ -86,7 +102,7 @@ const Programs = () => {
           {programs?.map((program) => (
             <ProgramCard key={program.id} program={program} />
           ))}
-          
+
           {/* Render recurring classes (batches) */}
           {batches?.map((batch) => (
             <BatchCard key={batch.id} batch={batch} />
@@ -105,7 +121,7 @@ const Programs = () => {
         isOpen={isCreateProgramDialogOpen}
         onOpenChange={setIsCreateProgramDialogOpen}
       />
-      
+
       <CreateBatchDialog
         isOpen={isCreateBatchDialogOpen}
         onOpenChange={setIsCreateBatchDialogOpen}

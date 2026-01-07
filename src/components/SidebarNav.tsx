@@ -67,9 +67,15 @@ const SidebarNav = () => {
     <nav className="flex flex-col space-y-1 p-4 flex-1">
       <NavLink to="/" onClick={handleLinkClick}>Home</NavLink>
       <NavLink to="/payments" onClick={handleLinkClick}>Payment History</NavLink>
-      
+
       {isDevoteeFriend && (
         <NavLink to="/friends" onClick={handleLinkClick}>Devotee Friend</NavLink>
+      )}
+
+      <NavLink to="/programs" onClick={handleLinkClick}>Programs</NavLink>
+
+      {(isManager || user?.role === 'Volunteer') && (
+        <NavLink to="/attendance" onClick={handleLinkClick}>Attendance</NavLink>
       )}
 
       {isManager && (
@@ -79,8 +85,6 @@ const SidebarNav = () => {
               Manager
             </AccordionTrigger>
             <AccordionContent className="pt-1 pb-2 space-y-1">
-              <NavLink to="/attendance" onClick={handleLinkClick}>Attendance</NavLink>
-              <NavLink to="/programs" onClick={handleLinkClick}>Programs</NavLink>
               <NavLink to="/yatra" onClick={handleLinkClick}>Yatra</NavLink>
               <NavLink to="/participants" onClick={handleLinkClick}>Participants</NavLink>
               <NavLink to="/stats" onClick={handleLinkClick}>Stats</NavLink>
@@ -88,6 +92,7 @@ const SidebarNav = () => {
           </AccordionItem>
         </Accordion>
       )}
+
     </nav>
   );
 
@@ -99,9 +104,9 @@ const SidebarNav = () => {
           DAS
         </Link>
       </div>
-      
+
       {navItems}
-      
+
       <div className="p-4 border-t mt-auto bg-sidebar-background/50">
         {user && (
           <div className="mb-4 flex flex-col gap-3 px-2">
@@ -113,11 +118,11 @@ const SidebarNav = () => {
               >
                 <Avatar className="h-10 w-10 border border-primary/20 cursor-pointer ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
                   {user.profile_photo_url ? (
-                    <AvatarImage 
+                    <AvatarImage
                       key={user.profile_photo_url}
-                      src={user.profile_photo_url} 
-                      alt={user.full_name} 
-                      className="object-cover h-full w-full" 
+                      src={user.profile_photo_url}
+                      alt={user.full_name}
+                      className="object-cover h-full w-full"
                     />
                   ) : null}
                   <AvatarFallback className="bg-primary/10 text-primary">
@@ -130,8 +135,8 @@ const SidebarNav = () => {
                 <p className="text-xs text-muted-foreground truncate">{user.phone}</p>
               </div>
             </div>
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               className="w-full text-xs h-8 bg-black text-white hover:bg-gray-800 hover:text-white font-medium transition-colors"
               onClick={() => {
                 navigate('/profile');
@@ -183,8 +188,8 @@ const SidebarNav = () => {
           </DialogHeader>
           <div className="p-4 flex justify-center bg-black/5">
             {user?.profile_photo_url ? (
-              <img 
-                src={user.profile_photo_url} 
+              <img
+                src={user.profile_photo_url}
                 alt={user.full_name}
                 className="w-full h-auto rounded-lg shadow-lg max-h-[80vh] object-contain"
               />

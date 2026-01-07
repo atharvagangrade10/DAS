@@ -11,19 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format, parseISO } from "date-fns";
-import { User, CalendarDays, CheckCircle2, XCircle, BarChart3, Percent, BookOpen, Users } from "lucide-react";
+import { User, CalendarDays, BarChart3, Percent, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchBatchAttendance, fetchParticipantById } from "@/utils/api";
-import { Participant } from "@/types/participant";
-import { Batch, BatchStatsResponse, BatchParticipantStats } from "@/types/batch";
+import { fetchBatchStats } from "@/utils/api";
+import { Batch, BatchStatsResponse } from "@/types/batch";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { API_BASE_URL } from "@/config/api";
 
 interface BatchStatsDialogProps {
   batch: Batch;
@@ -41,18 +37,7 @@ const BatchStatsDialog: React.FC<BatchStatsDialogProps> = ({
   // Fetch batch statistics from the new endpoint
   const { data: batchStatsData, isLoading, error } = useQuery<BatchStatsResponse, Error>({
     queryKey: ["batchStats", batch.id],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/batches/${batch.id}/stats`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch batch stats' }));
-        throw new Error(errorData.detail || "Failed to fetch batch stats");
-      }
-      return response.json();
-    },
+    queryFn: () => fetchBatchStats(batch.id),
     enabled: isOpen,
   });
 
@@ -157,15 +142,15 @@ const BatchStatsDialog: React.FC<BatchStatsDialogProps> = ({
                                     stat.attendance_percentage >= 75
                                       ? "default"
                                       : stat.attendance_percentage >= 50
-                                      ? "secondary"
-                                      : "destructive"
+                                        ? "secondary"
+                                        : "destructive"
                                   }
                                   className={cn(
                                     stat.attendance_percentage >= 75
                                       ? "bg-green-600 hover:bg-green-600"
                                       : stat.attendance_percentage >= 50
-                                      ? "bg-yellow-600 hover:bg-yellow-600"
-                                      : "bg-red-600 hover:bg-red-600",
+                                        ? "bg-yellow-600 hover:bg-yellow-600"
+                                        : "bg-red-600 hover:bg-red-600",
                                     "text-white"
                                   )}
                                 >

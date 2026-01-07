@@ -8,6 +8,9 @@ import {
   Loader2,
   Calendar as CalendarIcon,
   Users,
+  CalendarX,
+  FastForward,
+  Copy,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -25,6 +28,8 @@ import { Participant } from "@/types/participant";
 import {
   fetchBatchAttendance,
   markBatchAttendanceBulk,
+  fetchBatchDay,
+  updateBatchDay,
 } from "@/utils/api";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -35,6 +40,7 @@ interface AttendanceTabContentProps {
   participants: Participant[];
   isLoadingParticipants: boolean;
   isOpen: boolean;
+  readOnly?: boolean;
 }
 
 const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
@@ -42,7 +48,9 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
   participants,
   isLoadingParticipants,
   isOpen,
+  readOnly = false,
 }) => {
+
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = React.useState<Date>(new Date());
@@ -57,6 +65,16 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
     queryFn: () => fetchBatchAttendance(batch.id, dateStr),
     enabled: isOpen,
   });
+
+  // Fetch Day Status (to check if skipped)
+  const { data: dayStatus, isLoading: isLoadingDayStatus } = useQuery({
+    queryKey: ["batchDay", batch.id, dateStr],
+    queryFn: () => fetchBatchDay(batch.id, dateStr),
+    enabled: isOpen,
+  });
+
+  const isSkipped = dayStatus?.is_skipped || false;
+  const skipTitle = dayStatus?.title || "";
 
   // Sync current attendance to state
   React.useEffect(() => {
@@ -75,6 +93,16 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
     onSuccess: () => {
       toast.success("Attendance saved successfully!");
       queryClient.invalidateQueries({ queryKey: ["batchAttendance", batch.id, dateStr] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const skipDayMutation = useMutation({
+    mutationFn: (data: { is_skipped: boolean; title?: string }) =>
+      updateBatchDay(batch.id, dateStr, data),
+    onSuccess: (data) => {
+      toast.success(data.is_skipped ? "Day marked as skipped" : "Day skipping removed");
+      queryClient.invalidateQueries({ queryKey: ["batchDay", batch.id, dateStr] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -102,11 +130,50 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
     toast.info("All participants marked as Absent.");
   };
 
+  const handleToggleSkipDay = () => {
+    if (isSkipped) {
+      skipDayMutation.mutate({ is_skipped: false, title: "" });
+    } else {
+      const title = window.prompt("Reason for skipping this day?", "Public Holiday");
+      if (title !== null) {
+        skipDayMutation.mutate({ is_skipped: true, title });
+      }
+    }
+  };
+
   const toggleStatus = (pId: string) => {
+    if (readOnly || isSkipped) return;
     setAttendanceStatuses((prev) => ({
       ...prev,
       [pId]: prev[pId] === "Present" ? "Absent" : "Present",
     }));
+  };
+
+  const handleCopyAttendance = async () => {
+    if (!participants || participants.length === 0) return;
+
+    try {
+      const presentList = participants
+        .filter(p => attendanceStatuses[p.id] === "Present")
+        .map(p => `✅ ${p.full_name}`)
+        .join('\n');
+
+      const absentList = participants
+        .filter(p => attendanceStatuses[p.id] !== "Present")
+        .map(p => `❌ ${p.full_name}`)
+        .join('\n');
+
+      const presentCount = participants.filter(p => attendanceStatuses[p.id] === "Present").length;
+      const totalCount = participants.length;
+
+      const message = `📋 *${batch.name}*\n📅 Date: ${format(selectedDate, 'PPP')}\n\n👥 Total: ${totalCount} | Present: ${presentCount} | Absent: ${totalCount - presentCount}\n\n*Present (${presentCount})*\n${presentList || 'None'}\n\n*Absent (${totalCount - presentCount})*\n${absentList || 'None'}`;
+
+      await navigator.clipboard.writeText(message);
+      toast.success('Attendance copied to clipboard!');
+    } catch (error) {
+      toast.error('Failed to copy attendance');
+      console.error('Copy error:', error);
+    }
   };
 
   return (
@@ -136,39 +203,73 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
             </PopoverContent>
           </Popover>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          {!readOnly && !isSkipped && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleMarkAllAbsent}
+              className="flex-shrink-0"
+            >
+              Mark All Absent
+            </Button>
+          )}
+          {!readOnly && (
+            <Button
+              variant={isSkipped ? "outline" : "ghost"}
+              size="sm"
+              onClick={handleToggleSkipDay}
+              className={cn("gap-2 flex-shrink-0", isSkipped ? "text-blue-600 border-blue-200 bg-blue-50" : "text-amber-600 hover:text-amber-700 hover:bg-amber-50")}
+              disabled={skipDayMutation.isPending}
+            >
+              {isSkipped ? <CalendarIcon className="h-4 w-4" /> : <CalendarX className="h-4 w-4" />}
+              {isSkipped ? "Unskip Day" : "Skip Day"}
+            </Button>
+          )}
+          {!readOnly && !isSkipped && (
+            <Button
+              size="sm"
+              onClick={handleSaveAttendance}
+              disabled={
+                saveAttendanceMutation.isPending ||
+                !participants ||
+                participants.length === 0
+              }
+              className="gap-2 flex-shrink-0"
+            >
+              {saveAttendanceMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              Save Changes
+            </Button>
+          )}
           <Button
-            variant="secondary"
+            variant="outline"
             size="sm"
-            onClick={handleMarkAllAbsent}
+            onClick={handleCopyAttendance}
+            className="gap-2 flex-shrink-0"
+            disabled={!participants || participants.length === 0}
           >
-            Mark All Absent
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSaveAttendance}
-            disabled={
-              saveAttendanceMutation.isPending ||
-              !participants ||
-              participants.length === 0
-            }
-            className="gap-2"
-          >
-            {saveAttendanceMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            Save Changes
+            <Copy className="h-4 w-4" />
+            Copy
           </Button>
         </div>
       </div>
       <div className="space-y-3">
         <h4 className="text-sm font-semibold flex items-center justify-between">
           Attendance Sheet
-          <span className="text-xs font-normal text-muted-foreground italic">
-            (Select date to view/edit)
-          </span>
+          <div className="flex items-center gap-2">
+            {isSkipped && (
+              <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 animate-pulse">
+                SKIPPED: {skipTitle}
+              </Badge>
+            )}
+            <span className="text-xs font-normal text-muted-foreground italic">
+              (Select date to view/edit)
+            </span>
+          </div>
         </h4>
         {isLoadingAttendance || isLoadingParticipants ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -187,10 +288,12 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
                   <div
                     key={p.id}
                     className={cn(
-                      "p-3 flex items-center justify-between border rounded-lg transition-all cursor-pointer",
+                      "p-3 flex items-center justify-between border rounded-lg transition-all",
+                      !readOnly && "cursor-pointer",
                       isPresent
                         ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                        : "bg-background"
+                        : "bg-background",
+                      isSkipped && "opacity-50 cursor-not-allowed grayscale"
                     )}
                     onClick={() => toggleStatus(p.id)}
                   >

@@ -36,6 +36,14 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const AttendanceRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  if (user?.role !== 'Manager' && user?.role !== 'Volunteer') {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+};
+
 const DevoteeFriendRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   if (user?.role !== 'DevoteeFriend' && user?.role !== 'Manager') {
@@ -75,7 +83,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_relativeSplatPath: true }}>
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
@@ -95,9 +103,13 @@ const App = () => {
                 {/* Devotee Friend / Manager Routes */}
                 <Route path="friends" element={<DevoteeFriendRoute><Friends /></DevoteeFriendRoute>} />
 
+                {/* Manager / Volunteer Routes */}
+                <Route path="attendance" element={<AttendanceRoute><Attendance /></AttendanceRoute>} />
+
+                {/* All Protected Roles */}
+                <Route path="programs" element={<Programs />} />
+
                 {/* Manager Only Routes */}
-                <Route path="attendance" element={<ManagerRoute><Attendance /></ManagerRoute>} />
-                <Route path="programs" element={<ManagerRoute><Programs /></ManagerRoute>} />
                 <Route path="yatra" element={<ManagerRoute><YatraPage /></ManagerRoute>} />
                 <Route path="participants" element={<ManagerRoute><ParticipantsPage /></ManagerRoute>} />
                 <Route path="stats" element={<ManagerRoute><Stats /></ManagerRoute>} />
@@ -111,5 +123,6 @@ const App = () => {
     </QueryClientProvider>
   );
 };
+
 
 export default App;

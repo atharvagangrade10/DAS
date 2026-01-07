@@ -75,7 +75,7 @@ export const fetchAllParticipants = async (): Promise<Participant[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/register/participants`);
 };
 
-export const fetchParticipantById = async (id: string): Promise<Participant> => {
+export const fetchParticipantByIdProtected = async (id: string): Promise<Participant> => {
   return fetchAuthenticated(`${API_BASE_URL}/participants/${id}`);
 };
 
@@ -357,11 +357,7 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
   return response.json();
 };
 
-export const fetchParticipantByIdProtected = async (id: string): Promise<Participant> => {
-    return fetchAuthenticated(`${API_BASE_URL}/participants/${id}`);
-};
-
-export const fetchParticipantByIdAny = async (id: string): Promise<Participant> => {
+export const fetchParticipantById = async (id: string): Promise<Participant> => {
     const token = localStorage.getItem('das_auth_token');
     if (token) return fetchParticipantByIdProtected(id);
     return fetchParticipantByIdPublic(id);
@@ -371,5 +367,3 @@ export const fetchParticipantByIdAny = async (id: string): Promise<Participant> 
 export const fetchParticipants = async (query: string): Promise<Participant[]> => {
     return searchParticipantPublic(query);
 };
-
-export { fetchParticipantByIdAny as fetchParticipantById };

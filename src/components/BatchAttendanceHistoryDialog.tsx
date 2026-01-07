@@ -127,7 +127,7 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="w-full sm:max-w-[700px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             <Calendar className="h-6 w-6 text-primary" />
@@ -138,7 +138,7 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col md:flex-row flex-1 overflow-y-auto"> {/* Changed from overflow-hidden to overflow-y-auto */}
+        <div className="flex flex-col md:flex-row flex-1 overflow-y-auto">
           {/* Calendar View */}
           <div className="w-full md:w-1/2 border-r p-4">
             <div className="flex items-center justify-between mb-4">

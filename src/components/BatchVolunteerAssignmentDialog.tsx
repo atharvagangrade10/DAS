@@ -106,7 +106,7 @@ const BatchVolunteerAssignmentDialog: React.FC<BatchVolunteerAssignmentDialogPro
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="w-full sm:max-w-[600px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             <Users className="h-6 w-6 text-primary" />

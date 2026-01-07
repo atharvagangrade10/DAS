@@ -71,7 +71,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0">
+        <DialogContent className="w-full sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
               <Badge className="bg-primary text-white">Class</Badge>
@@ -87,7 +87,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
             className="flex-1 flex flex-col overflow-hidden"
           >
             <div className="px-6 border-b">
-              <TabsList className="w-full justify-start h-auto p-0 bg-transparent gap-6">
+              <TabsList className="w-full justify-start h-auto p-0 bg-transparent gap-6 flex-wrap">
                 <TabsTrigger
                   value="participants"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent pb-3 pt-2"

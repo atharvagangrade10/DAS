@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -56,13 +57,31 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
     end: endOfMonth(currentMonth),
   });
 
-  // Fetch attendance data for the current month
+  // Fetch attendance data for all days in the current month
   const { data: attendanceData = [], isLoading } = useQuery<AttendanceRecord[]>({
     queryKey: ["batchAttendanceHistory", batch.id, format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
-      // In a real implementation, we would fetch attendance for the entire month
-      // For now, we'll return an empty array as a placeholder
-      return [];
+      if (!isOpen || !batch.id) return [];
+
+      const daysInMonth = eachDayOfInterval({
+        start: startOfMonth(currentMonth),
+        end: endOfMonth(currentMonth),
+      });
+
+      const attendancePromises = daysInMonth.map(async (day) => {
+        const dateStr = format(day, "yyyy-MM-dd");
+        try {
+          const dailyAttendance = await fetchBatchAttendance(batch.id, dateStr);
+          // Add the date to each record for easier grouping later
+          return dailyAttendance.map((record: any) => ({ ...record, date: dateStr }));
+        } catch (error) {
+          console.error(`Failed to fetch attendance for ${dateStr}:`, error);
+          return [];
+        }
+      });
+
+      const allDailyAttendance = await Promise.all(attendancePromises);
+      return allDailyAttendance.flat(); // Flatten the array of arrays into a single array
     },
     enabled: isOpen,
   });
@@ -157,7 +176,7 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
                 const dateStr = format(day, "yyyy-MM-dd");
                 const dayAttendance = attendanceByDate[dateStr] || [];
                 const presentCount = dayAttendance.filter(a => a.status === "Present").length;
-                const totalCount = dayAttendance.length;
+                // const totalCount = dayAttendance.length; // Not currently used, but useful for future enhancements
                 
                 const isSelected = selectedDate && isSameDay(selectedDate, day);
                 const isCurrentMonthDay = isSameMonth(day, currentMonth);
@@ -255,6 +274,9 @@ const BatchAttendanceHistoryDialog: React.FC<BatchAttendanceHistoryDialogProps> 
             </ScrollArea>
           </div>
         </div>
+        <DialogFooter className="p-6 pt-3 border-t">
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

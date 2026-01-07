@@ -22,6 +22,7 @@ import { Batch } from "@/types/batch";
 import { Participant } from "@/types/participant";
 import { fetchBatchParticipants, fetchParticipantById } from "@/utils/api";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils"; // Added import for cn
 
 // Import new modular components
 import ParticipantsTabContent from "./batch-management/ParticipantsTabContent";

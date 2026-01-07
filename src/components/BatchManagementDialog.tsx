@@ -36,6 +36,7 @@ import {
   Calendar as CalendarIcon,
   ChevronRight,
   History,
+  BarChart3,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -51,6 +52,7 @@ import {
 } from "@/utils/api";
 import { cn } from "@/lib/utils";
 import BatchAttendanceHistoryDialog from "./BatchAttendanceHistoryDialog";
+import ParticipantStatsDialog from "./ParticipantStatsDialog";
 
 interface BatchManagementDialogProps {
   batch: Batch;
@@ -71,6 +73,8 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
     Record<string, string>
   >({});
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = React.useState(false);
+  const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
+  const [isStatsDialogOpen, setIsStatsDialogOpen] = React.useState(false);
 
   // 1. Fetch Current Participants
   const { data: currentMappings, isLoading: isLoadingMappings } = useQuery({
@@ -144,11 +148,11 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
     const presentIds = Object.entries(attendanceStatuses)
       .filter(([_, status]) => status === "Present")
       .map(([id]) => id);
-      
+
     if (presentIds.length === 0) {
       toast.warning("No participants marked as Present.");
     }
-    
+
     saveAttendanceMutation.mutate({
       date: dateStr,
       participant_ids: presentIds,
@@ -162,6 +166,11 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
       ...prev,
       [pId]: prev[pId] === "Present" ? "Absent" : "Present",
     }));
+  };
+
+  const handleViewStats = (participant: Participant) => {
+    setSelectedParticipant(participant);
+    setIsStatsDialogOpen(true);
   };
 
   return (
@@ -294,7 +303,18 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                                   </p>
                                 </div>
                               </div>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => handleViewStats(p)}
+                                >
+                                  <BarChart3 className="h-4 w-4 text-primary" />
+                                  <span className="sr-only">View stats</span>
+                                </Button>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              </div>
                             </div>
                           ))
                         ) : (
@@ -464,6 +484,13 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
         isOpen={isHistoryDialogOpen}
         onOpenChange={setIsHistoryDialogOpen}
         participants={participants || []}
+      />
+
+      <ParticipantStatsDialog
+        participant={selectedParticipant!}
+        batches={[batch]}
+        isOpen={isStatsDialogOpen}
+        onOpenChange={setIsStatsDialogOpen}
       />
     </>
   );

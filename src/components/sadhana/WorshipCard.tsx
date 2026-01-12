@@ -12,6 +12,7 @@ import { updateActivityLog } from "@/utils/api";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import TimeStepper from "./TimeStepper";
 
 interface WorshipCardProps {

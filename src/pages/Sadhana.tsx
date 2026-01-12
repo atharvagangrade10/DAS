@@ -20,9 +20,11 @@ const Sadhana = () => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = React.useState<Date>(startOfDay(new Date()));
   const dateStr = format(selectedDate, "yyyy-MM-dd");
-  const isTodayOrFuture = selectedDate >= startOfDay(new Date());
-  const isPast = selectedDate < startOfDay(new Date());
+  
+  const todayStart = startOfDay(new Date());
+  const isFuture = selectedDate > todayStart;
   const isToday = isSameDay(selectedDate, new Date());
+  const isEditable = !isFuture; // Today and past are editable
 
   // 1. Fetch Activity Log for the selected date
   const { data: activityLog, isLoading, error } = useQuery<ActivityLogResponse, Error>({
@@ -31,7 +33,7 @@ const Sadhana = () => {
       if (!user?.user_id) throw new Error("User not authenticated.");
       return fetchActivityLogByDate(user.user_id, dateStr);
     },
-    enabled: !!user?.user_id && isPast, // Only fetch if it's a past date or today
+    enabled: !!user?.user_id && isEditable, // Enable query for today and past dates
     retry: (failureCount, error) => {
       // Do not retry on 404 (which means log doesn't exist)
       if (error.message.includes("404")) return false;
@@ -52,12 +54,25 @@ const Sadhana = () => {
     },
   });
 
-  // 3. Check if log exists and create if necessary (only for past dates)
+  // 3. Check if log exists and create if necessary (only for today/past dates)
   React.useEffect(() => {
-    if (user?.user_id && !isLoading && !activityLog && isPast && error?.message.includes("404")) {
-      // If log doesn't exist for a past date, create it with default values
-      const defaultSleepTime = setHours(setMinutes(subDays(selectedDate, 1), 0), 22); // 10 PM yesterday
-      const defaultWakeupTime = setHours(setMinutes(selectedDate, 0), 4); // 4 AM today
+    // Check if the query was enabled, finished loading, no log was found, and the error indicates 404
+    if (
+      user?.user_id && 
+      !isLoading && 
+      isEditable && 
+      !activityLog && 
+      error?.message.includes("404") &&
+      !createMutation.isPending // Prevent multiple creation attempts
+    ) {
+      // If log doesn't exist for an editable date, create it with default values
+      
+      // Default sleep time: 10 PM of the previous day relative to selectedDate
+      const previousDay = subDays(selectedDate, 1);
+      const defaultSleepTime = setHours(setMinutes(previousDay, 0), 22); 
+      
+      // Default wakeup time: 4 AM of the selectedDate
+      const defaultWakeupTime = setHours(setMinutes(selectedDate, 0), 4); 
 
       const defaultLog: ActivityLogCreate = {
         participant_id: user.user_id,
@@ -72,9 +87,9 @@ const Sadhana = () => {
       };
       createMutation.mutate(defaultLog);
     }
-  }, [user?.user_id, isLoading, activityLog, isPast, error, dateStr, selectedDate]);
+  }, [user?.user_id, isLoading, activityLog, isEditable, error, dateStr, selectedDate, createMutation.isPending]);
 
-  const readOnly = isTodayOrFuture && !isToday; // Read-only if future date
+  const readOnly = isFuture; // Read-only if future date
 
   const renderContent = () => {
     if (isLoading || createMutation.isPending) {
@@ -86,7 +101,7 @@ const Sadhana = () => {
       );
     }
 
-    if (isTodayOrFuture && !isToday) {
+    if (isFuture) {
       return (
         <div className="text-center py-20 space-y-4">
           <AlertTriangle className="h-10 w-10 mx-auto text-amber-500" />
@@ -104,7 +119,7 @@ const Sadhana = () => {
           <AssociationSection activity={activityLog} readOnly={readOnly} />
           <BookReadingSection activity={activityLog} readOnly={readOnly} />
           
-          {isPast && !isToday && (
+          {!isToday && (
             <Card className="bg-green-50 dark:bg-green-950/20 border-green-200">
               <CardContent className="p-4 flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />

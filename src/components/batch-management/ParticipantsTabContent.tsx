@@ -138,8 +138,7 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
     return participants?.some((cp) => cp.id === participantId);
   };
 
-  // Only managers or assigned volunteers can manage participants (add/remove)
-  const canManageParticipants = isManager || (isVolunteer && isAssignedVolunteer);
+  const canManageParticipants = isManager || (isVolunteer && isAssignedVolunteer); // Control access based on role and assignment
 
   return (
     <div className="space-y-6">

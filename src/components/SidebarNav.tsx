@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, LogOut, User, Settings } from "lucide-react";
+import { MenuIcon, LogOut, User, Settings, Zap } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,6 +66,10 @@ const SidebarNav = () => {
   const navItems = (
     <nav className="flex flex-col space-y-1 p-4 flex-1">
       <NavLink to="/" onClick={handleLinkClick}>Home</NavLink>
+      <NavLink to="/sadhana" onClick={handleLinkClick}>
+        <Zap className="mr-2 h-5 w-5" />
+        Sadhana Log
+      </NavLink>
       <NavLink to="/payments" onClick={handleLinkClick}>Payment History</NavLink>
 
       {isDevoteeFriend && (

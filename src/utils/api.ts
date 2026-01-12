@@ -4,6 +4,20 @@ import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate, YatraUpdate, PaymentRecord, ReceiptResponse } from "@/types/yatra";
 import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord, BatchVolunteer, BatchStatsResponse, BatchParticipantStats } from "@/types/batch";
+import { 
+  ActivityLogResponse, 
+  ActivityLogCreate, 
+  ActivityLogUpdate, 
+  ChantingLogCreate, 
+  ChantingLogUpdate, 
+  ChantingLogResponse, 
+  BookLogCreate, 
+  BookLogUpdate, 
+  BookLogResponse, 
+  AssociationLogCreate, 
+  AssociationLogUpdate, 
+  AssociationLogResponse 
+} from "@/types/sadhana"; // Import new types
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -302,6 +316,57 @@ export const uploadPhoto = async (file: File, participantId: string): Promise<st
   const data = await response.json();
   return data.link;
 };
+
+// --- Sadhana Activity Endpoints ---
+
+export const fetchActivityLogByDate = async (participantId: string, date: string): Promise<ActivityLogResponse> => {
+  return fetchAuthenticated(`${API_BASE_URL}/activities/date/${participantId}?date=${date}`);
+};
+
+export const createActivityLog = async (data: ActivityLogCreate): Promise<ActivityLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/create`, "POST", data);
+};
+
+export const updateActivityLog = async (activityId: string, data: ActivityLogUpdate): Promise<ActivityLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}`, "PUT", data);
+};
+
+export const addChantingLog = async (activityId: string, data: ChantingLogCreate): Promise<ChantingLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/chanting-logs`, "POST", data);
+};
+
+export const updateChantingLog = async (chantingLogId: string, data: ChantingLogUpdate): Promise<ChantingLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/chanting-logs/${chantingLogId}`, "PUT", data);
+};
+
+export const deleteChantingLog = async (chantingLogId: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/chanting-logs/${chantingLogId}`, "DELETE");
+};
+
+export const addBookLog = async (activityId: string, data: BookLogCreate): Promise<BookLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs`, "POST", data);
+};
+
+export const updateBookLog = async (bookLogId: string, data: BookLogUpdate): Promise<BookLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/book-logs/${bookLogId}`, "PUT", data);
+};
+
+export const deleteBookLog = async (bookLogId: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/book-logs/${bookLogId}`, "DELETE");
+};
+
+export const addAssociationLog = async (activityId: string, data: AssociationLogCreate): Promise<AssociationLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/association-logs`, "POST", data);
+};
+
+export const updateAssociationLog = async (associationLogId: string, data: AssociationLogUpdate): Promise<AssociationLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/association-logs/${associationLogId}`, "PUT", data);
+};
+
+export const deleteAssociationLog = async (associationLogId: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/association-logs/${associationLogId}`, "DELETE");
+};
+
 
 // --- Public Endpoints (Unprotected) ---
 

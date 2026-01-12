@@ -320,6 +320,7 @@ export const uploadPhoto = async (file: File, participantId: string): Promise<st
 // --- Sadhana Activity Endpoints ---
 
 export const fetchActivityLogByDate = async (participantId: string, date: string): Promise<ActivityLogResponse> => {
+  // Corrected URL construction: participant_id is a path parameter, date is a query parameter
   return fetchAuthenticated(`${API_BASE_URL}/activities/date/${participantId}?date=${date}`);
 };
 

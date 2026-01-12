@@ -36,7 +36,7 @@ const Sadhana = () => {
     enabled: !!user?.user_id && isEditable, // Enable query for today and past dates
     retry: (failureCount, error) => {
       // Do not retry on 404 (which means log doesn't exist)
-      if (error.message.includes("404")) return false;
+      if (error.message.includes("Status: 404")) return false;
       return failureCount < 3;
     },
   });
@@ -57,12 +57,14 @@ const Sadhana = () => {
   // 3. Check if log exists and create if necessary (only for today/past dates)
   React.useEffect(() => {
     // Check if the query was enabled, finished loading, no log was found, and the error indicates 404
+    const isNotFoundError = error?.message.includes("Status: 404");
+
     if (
       user?.user_id && 
       !isLoading && 
       isEditable && 
       !activityLog && 
-      error?.message.includes("404") &&
+      isNotFoundError && 
       !createMutation.isPending // Prevent multiple creation attempts
     ) {
       // If log doesn't exist for an editable date, create it with default values
@@ -133,7 +135,7 @@ const Sadhana = () => {
       );
     }
 
-    if (error && error.message.includes("404")) {
+    if (error && error.message.includes("Status: 404")) {
       return (
         <div className="text-center py-20 space-y-4">
           <AlertTriangle className="h-10 w-10 mx-auto text-amber-500" />

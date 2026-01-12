@@ -59,8 +59,9 @@ const fetchAuthenticated = async (url: string) => {
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch data' }));
-    throw new Error(errorData.detail || "Failed to fetch data");
+    const errorData = await response.json().catch(() => ({ detail: `Failed to fetch data (Status: ${response.status})` }));
+    const errorMessage = errorData.detail || `Failed to fetch data (Status: ${response.status})`;
+    throw new Error(errorMessage);
   }
   return response.json();
 };
@@ -79,8 +80,9 @@ const mutateAuthenticated = async (url: string, method: string, body?: any) => {
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: `Failed to ${method}` }));
-    throw new Error(errorData.detail || `Failed to ${method}`);
+    const errorData = await response.json().catch(() => ({ detail: `Failed to ${method} (Status: ${response.status})` }));
+    const errorMessage = errorData.detail || `Failed to ${method} (Status: ${response.status})`;
+    throw new Error(errorMessage);
   }
   return response.json();
 };

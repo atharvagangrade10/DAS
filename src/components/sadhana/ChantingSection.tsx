@@ -126,40 +126,31 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
       </div>
 
       <Dialog open={!!selectedSlot} onOpenChange={() => setSelectedSlot(null)}>
-        <DialogContent className="sm:max-w-[450px] p-6 sm:p-10 rounded-[32px] sm:rounded-[40px] border-none shadow-2xl overflow-hidden">
-          <DialogHeader className="mb-6">
-            <DialogTitle className="text-center text-2xl font-black tracking-tight">Daily Chanting</DialogTitle>
+        <DialogContent className="sm:max-w-[400px] p-6 rounded-3xl">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-center text-xl font-black">Chanting Entry</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-10 py-4">
+          <div className="space-y-8">
             <ScrollPicker label="Rounds Chanted" min={0} max={64} value={tempRounds} onChange={setTempRounds} />
             
-            <div className="space-y-4 px-2">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                    <span>Poor</span>
+            <div className="space-y-2 px-2">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
+                    <span>Average</span>
                     <span>Excellent</span>
                 </div>
-                <ScrollPicker label="Chanting Quality" min={1} max={10} value={tempRating} onChange={setTempRating} />
+                <ScrollPicker label="Quality Rating" min={1} max={10} value={tempRating} onChange={setTempRating} />
             </div>
           </div>
 
-          <DialogFooter className="mt-8 flex flex-row gap-3 sm:gap-4">
+          <DialogFooter className="mt-8 flex flex-row gap-3">
             {activity.chanting_logs.some(l => l.slot === selectedSlot) && (
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-14 w-14 rounded-2xl text-red-500 hover:bg-red-50 hover:text-red-600 shrink-0" 
-                    onClick={() => deleteMutation.mutate(selectedSlot!)}
-                >
-                    <Trash2 className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(selectedSlot!)}>
+                    <Trash2 className="h-5 w-5" />
                 </Button>
             )}
-            <Button 
-                className="flex-1 h-14 rounded-2xl text-lg font-bold shadow-lg" 
-                onClick={handleSave} 
-                disabled={addMutation.isPending || updateMutation.isPending}
-            >
-              {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="animate-spin h-5 w-5" /> : "Save Entry"}
+            <Button className="flex-1 h-12 rounded-xl font-bold" onClick={handleSave} disabled={addMutation.isPending || updateMutation.isPending}>
+              {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="animate-spin h-4 w-4" /> : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>

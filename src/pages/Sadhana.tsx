@@ -27,7 +27,7 @@ const Sadhana = () => {
   const isEditable = !isFuture; // Today and past are editable
 
   // 1. Fetch Activity Log for the selected date
-  const { data: activityLog, isLoading, error } = useQuery<ActivityLogResponse, Error>({
+  const { data: activityLog, isLoading, error, isError } = useQuery<ActivityLogResponse, Error>({
     queryKey: ["activityLog", dateStr],
     queryFn: async () => {
       if (!user?.user_id) throw new Error("User not authenticated.");
@@ -56,8 +56,8 @@ const Sadhana = () => {
 
   // 3. Check if log exists and create if necessary (only for today/past dates)
   React.useEffect(() => {
-    // Check if the query was enabled, finished loading, no log was found, and the error indicates 404
-    const isNotFoundError = error?.message.includes("Status: 404");
+    // Check if the query indicates a 404 error
+    const isNotFoundError = error?.message.includes("Status: 404") || error?.message.toLowerCase().includes("not found");
 
     if (
       user?.user_id && 
@@ -68,6 +68,7 @@ const Sadhana = () => {
       !createMutation.isPending // Prevent multiple creation attempts
     ) {
       // If log doesn't exist for an editable date, create it with default values
+      console.log("Activity log not found for date:", dateStr, "- Triggering fallback creation.");
       
       // Default sleep time: 10 PM of the previous day relative to selectedDate
       const previousDay = subDays(selectedDate, 1);
@@ -98,7 +99,11 @@ const Sadhana = () => {
       return (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-lg text-muted-foreground">Loading Sadhana log for {format(selectedDate, "PPP")}...</p>
+          <p className="text-lg text-muted-foreground">
+            {createMutation.isPending 
+              ? `Creating log for ${format(selectedDate, "PPP")}...` 
+              : `Loading Sadhana log for ${format(selectedDate, "PPP")}...`}
+          </p>
         </div>
       );
     }
@@ -135,17 +140,8 @@ const Sadhana = () => {
       );
     }
 
-    if (error && error.message.includes("Status: 404")) {
-      return (
-        <div className="text-center py-20 space-y-4">
-          <AlertTriangle className="h-10 w-10 mx-auto text-amber-500" />
-          <h3 className="text-xl font-semibold">No Log Found</h3>
-          <p className="text-muted-foreground">A log for {format(selectedDate, "PPP")} is being created automatically.</p>
-        </div>
-      );
-    }
-
-    if (error) {
+    // If there was an error but it's NOT a 404, show the error state
+    if (error && !error.message.includes("Status: 404") && !error.message.toLowerCase().includes("not found")) {
       return (
         <div className="text-center py-20 space-y-4 text-red-500">
           <AlertTriangle className="h-10 w-10 mx-auto" />
@@ -155,7 +151,13 @@ const Sadhana = () => {
       );
     }
 
-    return null;
+    // While fallback creation is handled in useEffect, we show a loading-like state here if the createMutation hasn't started yet but query failed with 404
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-lg text-muted-foreground">Preparing your log for {format(selectedDate, "PPP")}...</p>
+      </div>
+    );
   };
 
   return (

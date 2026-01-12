@@ -7,11 +7,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addAssociationLog, updateAssociationLog, deleteAssociationLog } from "@/utils/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Loader2, Headphones, Users, Mic, Activity, Trash2, Clock } from "lucide-react";
+import { Headphones, Users, Mic, Activity, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import DurationPicker from "./DurationPicker";
 
 interface AssociationSectionProps {
   activity: ActivityLogResponse;
@@ -29,7 +28,7 @@ const ASSOCIATION_CONFIG: { type: AssociationType, label: string, icon: React.El
 const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readOnly }) => {
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = React.useState<AssociationType | null>(null);
-  const [tempDuration, setTempDuration] = React.useState("30");
+  const [duration, setDuration] = React.useState(30);
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["activityLog"] });
@@ -53,17 +52,12 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
 
   const handleOpenDialog = (type: AssociationType) => {
     const log = activity.association_logs.find(l => l.type === type);
-    setTempDuration((log?.duration || 30).toString());
+    setDuration(log?.duration || 30);
     setSelectedType(type);
   };
 
   const handleSave = () => {
     if (!selectedType) return;
-    const duration = parseInt(tempDuration);
-    if (isNaN(duration) || duration < 0) {
-        toast.error("Invalid duration");
-        return;
-    }
     const log = activity.association_logs.find(l => l.type === selectedType);
     if (log) {
         updateMutation.mutate({ type: selectedType, data: { duration } });
@@ -85,7 +79,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
             <Users className="h-5 w-5 text-primary" />
             Association
         </CardTitle>
-        <CardDescription>Time spent in spiritual hearing and service.</CardDescription>
+        <CardDescription>Time spent in hearing and service.</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-3">
         {ASSOCIATION_CONFIG.map(({ type, label, icon: Icon }) => {
@@ -96,8 +90,8 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
             <Card 
               key={type}
               className={cn(
-                "border shadow-none transition-all hover:border-primary/40 cursor-pointer",
-                isFilled ? "bg-primary/5 border-primary/20" : "bg-muted/20"
+                "border shadow-none transition-all active:scale-95 cursor-pointer",
+                isFilled ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-muted/10 border-dashed"
               )}
               onClick={() => !readOnly && handleOpenDialog(type)}
             >
@@ -116,34 +110,25 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
       </CardContent>
 
       <Dialog open={!!selectedType} onOpenChange={() => setSelectedType(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] p-6 rounded-[28px]">
           <DialogHeader>
-            <DialogTitle>Association Time</DialogTitle>
-            <DialogDescription>How many minutes did you spend in this activity?</DialogDescription>
+            <DialogTitle>Duration of Association</DialogTitle>
+            <DialogDescription>Use presets or the stepper to set your time.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Duration (Minutes)</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                    type="number" 
-                    className="pl-10" 
-                    value={tempDuration} 
-                    onChange={e => setTempDuration(e.target.value)} 
-                    placeholder="e.g. 60"
-                />
-              </div>
-            </div>
+          
+          <div className="py-6">
+            <DurationPicker value={duration} onChange={setDuration} />
           </div>
+
           <DialogFooter className="flex flex-row gap-2">
             {activity.association_logs.some(l => l.type === selectedType) && (
-                <Button variant="destructive" size="icon" onClick={() => deleteMutation.mutate(selectedType!)}>
-                    <Trash2 className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(selectedType!)}>
+                    <Trash2 className="h-5 w-5" />
                 </Button>
             )}
-            <Button onClick={handleSave} className="flex-1" disabled={addMutation.isPending || updateMutation.isPending}>
-              Save Association
+            <Button onClick={handleSave} className="flex-1 h-12 rounded-xl font-bold" disabled={addMutation.isPending || updateMutation.isPending}>
+              {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+              Save Time
             </Button>
           </DialogFooter>
         </DialogContent>

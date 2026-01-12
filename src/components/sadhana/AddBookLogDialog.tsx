@@ -23,17 +23,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, BookOpen, Clock } from "lucide-react";
+import { Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { BookLogCreate, BookLogResponse, BookLogUpdate } from "@/types/sadhana";
 import { addBookLog, updateBookLog } from "@/utils/api";
+import DurationPicker from "./DurationPicker";
 
 const formSchema = z.object({
   name: z.string().min(1, "Book name is required"),
-  reading_time: z.preprocess(
-    (val) => (val === "" ? 0 : Number(val)),
-    z.number().int().min(1, "At least 1 minute").max(1440, "Max 24 hours"),
-  ),
+  reading_time: z.number().int().min(1, "At least 1 minute"),
   chapter_name: z.string().optional().or(z.literal('')),
 });
 
@@ -81,7 +79,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
   const addMutation = useMutation({
     mutationFn: (data: BookLogCreate) => addBookLog(activityId, data),
     onSuccess: () => {
-      toast.success("Book log added!");
+      toast.success("Log added!");
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
       onOpenChange(false);
     },
@@ -93,7 +91,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
   const updateMutation = useMutation({
     mutationFn: (data: BookLogUpdate) => updateBookLog(activityId, logToEdit!.name, data),
     onSuccess: () => {
-      toast.success("Book log updated!");
+      toast.success("Log updated!");
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
       onOpenChange(false);
     },
@@ -118,23 +116,25 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] p-6 rounded-[28px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            {isEdit ? "Edit Book Record" : "New Book Record"}
+            {isEdit ? "Edit Reading" : "Log Reading"}
           </DialogTitle>
-          <DialogDescription>Record your spiritual study time.</DialogDescription>
+          <DialogDescription>Record your spiritual study.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Book Title *</FormLabel>
-                  <FormControl><Input {...field} placeholder="e.g. Srimad Bhagavatam" /></FormControl>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Book Title</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g. Bhagavad Gita" className="h-12 rounded-xl" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -145,12 +145,9 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               name="reading_time"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reading Time (Minutes)</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Reading Duration</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                        <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" className="pl-10" {...field} />
-                    </div>
+                    <DurationPicker value={field.value} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -162,17 +159,19 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               name="chapter_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chapter / Section (Optional)</FormLabel>
-                  <FormControl><Input {...field} placeholder="e.g. Canto 1 Chapter 2" /></FormControl>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Chapter / Verse</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="e.g. Chapter 18" className="h-12 rounded-xl" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             <DialogFooter>
-              <Button type="submit" className="w-full" disabled={addMutation.isPending || updateMutation.isPending}>
+              <Button type="submit" className="w-full h-12 rounded-xl font-bold" disabled={addMutation.isPending || updateMutation.isPending}>
                 {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isEdit ? "Update Log" : "Save Log"}
+                {isEdit ? "Update Entry" : "Save Entry"}
               </Button>
             </DialogFooter>
           </form>

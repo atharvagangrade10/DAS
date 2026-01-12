@@ -7,11 +7,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addAssociationLog, updateAssociationLog, deleteAssociationLog } from "@/utils/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Users, Trash2, Star, Book, Mic, Activity, Clock, Edit2 } from "lucide-react";
+import { Plus, Loader2, Users, Trash2, Book, Star, Activity, Mic, Edit2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+import ScrollPicker from "./ScrollPicker";
 
 interface AssociationSectionProps {
   activity: ActivityLogResponse;
@@ -37,7 +36,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
   const addMutation = useMutation({
     mutationFn: (data: AssociationLogCreate) => addAssociationLog(activity.id, data),
     onSuccess: () => {
-      toast.success("Association recorded.");
+      toast.success("Added.");
       invalidateQueries();
     },
     onError: (error: Error) => {
@@ -59,7 +58,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
   const deleteMutation = useMutation({
     mutationFn: (type: string) => deleteAssociationLog(activity.id, type),
     onSuccess: () => {
-      toast.success("Record deleted.");
+      toast.success("Deleted.");
       invalidateQueries();
     },
     onError: (error: Error) => {
@@ -85,7 +84,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
       <CardHeader className="pb-3 bg-primary/5">
         <CardTitle className="text-xl font-semibold flex items-center gap-2 text-primary">
           <Users className="h-6 w-6" />
-          Association & Hearning
+          Association
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
@@ -107,7 +106,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                     <Icon className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p>
                     <p className="text-lg font-bold">
                       {isFilled ? formatDuration(log.duration) : "0m"}
                     </p>
@@ -118,37 +117,32 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                   {isFilled ? (
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="secondary" size="sm" className="h-10 px-4 rounded-full gap-2">
+                        <Button variant="secondary" size="sm" className="h-10 px-4 rounded-full gap-2 font-bold">
                           <Edit2 className="h-4 w-4" />
                           Set
                         </Button>
                       </PopoverTrigger>
                       {!readOnly && (
-                        <PopoverContent className="w-80 p-6 space-y-6" align="end">
-                          <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <Label className="text-base font-bold">Duration: {formatDuration(log.duration)}</Label>
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <Slider
-                              value={[log.duration]}
-                              max={480} // 8 hours max for slider
+                        <PopoverContent className="w-80 p-0 overflow-hidden" align="end">
+                          <div className="p-6 bg-background space-y-6">
+                            <ScrollPicker
+                              label="Duration (Minutes)"
                               min={0}
+                              max={480}
                               step={5}
-                              onValueChange={(val) => handleDurationUpdate(log.type, val[0])}
+                              value={log.duration}
+                              onChange={(val) => handleDurationUpdate(log.type, val)}
                             />
-                            <p className="text-[10px] text-center text-muted-foreground uppercase font-bold tracking-widest">Slide to adjust minutes</p>
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              className="w-full h-12 rounded-xl font-bold" 
+                              onClick={() => deleteMutation.mutate(log.type)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Remove
+                            </Button>
                           </div>
-                          
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            className="w-full" 
-                            onClick={() => deleteMutation.mutate(log.type)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Remove
-                          </Button>
                         </PopoverContent>
                       )}
                     </Popover>
@@ -156,7 +150,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="h-10 px-4 rounded-full border-primary/30 text-primary hover:bg-primary/5"
+                      className="h-10 px-4 rounded-full border-primary/30 text-primary font-bold hover:bg-primary/5"
                       onClick={() => addMutation.mutate({ type, duration: 30 })}
                       disabled={readOnly || addMutation.isPending}
                     >

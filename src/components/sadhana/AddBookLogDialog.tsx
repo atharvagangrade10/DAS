@@ -27,7 +27,7 @@ import { Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { BookLogCreate, BookLogResponse, BookLogUpdate } from "@/types/sadhana";
 import { addBookLog, updateBookLog } from "@/utils/api";
-import { Slider } from "@/components/ui/slider";
+import ScrollPicker from "./ScrollPicker";
 
 const formSchema = z.object({
   name: z.string().min(1, "Book name is required"),
@@ -117,17 +117,15 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
     }
   };
 
-  const readingTime = form.watch("reading_time");
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            {isEdit ? "Edit Reading Record" : "New Reading Entry"}
+            {isEdit ? "Edit Record" : "New Record"}
           </DialogTitle>
-          <DialogDescription>Record your study time and progress.</DialogDescription>
+          <DialogDescription>Record your study time.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
@@ -147,17 +145,15 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               control={form.control}
               name="reading_time"
               render={({ field }) => (
-                <FormItem className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <FormLabel className="font-bold">Time: {readingTime} Minutes</FormLabel>
-                  </div>
+                <FormItem>
                   <FormControl>
-                    <Slider
-                      value={[field.value]}
+                    <ScrollPicker
+                      label="Time Spent (Minutes)"
                       min={1}
                       max={120}
                       step={5}
-                      onValueChange={(val) => field.onChange(val[0])}
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -178,7 +174,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
             />
 
             <DialogFooter>
-              <Button type="submit" className="w-full h-12 text-lg" disabled={addMutation.isPending || updateMutation.isPending}>
+              <Button type="submit" className="w-full h-12 text-lg font-bold" disabled={addMutation.isPending || updateMutation.isPending}>
                 {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {isEdit ? "Update Log" : "Save Log"}
               </Button>

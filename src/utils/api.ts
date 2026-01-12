@@ -139,7 +139,8 @@ export const deleteBatch = async (batchId: string): Promise<void> => {
     headers: getAuthHeaders(),
   });
   if (!response.ok) {
-    throw new Error("Failed to delete batch");
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete batch' }));
+    throw new Error(errorData.detail || "Failed to delete batch");
   }
 };
 
@@ -149,6 +150,11 @@ export const fetchBatchParticipants = async (batchId: string): Promise<any[]> =>
 
 export const addParticipantToBatch = async (batchId: string, participantId: string) => {
   return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/participants`, "POST", { participant_id: participantId });
+};
+
+// New endpoint to remove a participant from a batch
+export const removeParticipantFromBatch = async (batchId: string, participantId: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/participants/${participantId}`, "DELETE");
 };
 
 export const fetchBatchAttendance = async (batchId: string, date: string): Promise<any[]> => {

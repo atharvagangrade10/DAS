@@ -138,7 +138,8 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
     return participants?.some((cp) => cp.id === participantId);
   };
 
-  const canManageParticipants = isManager || (isVolunteer && isAssignedVolunteer); // Only managers or assigned volunteers can manage participants
+  // Only managers or assigned volunteers can manage participants (add/remove)
+  const canManageParticipants = isManager || (isVolunteer && isAssignedVolunteer);
 
   return (
     <div className="space-y-6">

@@ -40,10 +40,10 @@ const Programs = () => {
     queryKey: ["batches", user?.role, user?.user_id],
     queryFn: () => {
       if (isManager) {
-        return fetchBatches();
+        return fetchBatches(); // Managers see all batches
       }
       if (isVolunteer) {
-        return fetchMyAssignedBatches();
+        return fetchMyAssignedBatches(); // Volunteers only see their assigned batches
       }
       // For Attendees, fetch enrolled batches
       return fetchMyEnrolledBatches();

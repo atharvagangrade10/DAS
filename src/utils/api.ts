@@ -17,7 +17,7 @@ import {
   AssociationLogCreate, 
   AssociationLogUpdate, 
   AssociationLogResponse 
-} from "@/types/sadhana"; // Import new types
+} from "@/types/sadhana";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -60,7 +60,6 @@ const fetchAuthenticated = async (url: string) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ detail: `Failed to fetch data` }));
-    // Always include the status code in the thrown error message
     const errorMessage = `${errorData.detail || 'Failed to fetch data'} (Status: ${response.status})`;
     throw new Error(errorMessage);
   }
@@ -82,7 +81,6 @@ const mutateAuthenticated = async (url: string, method: string, body?: any) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ detail: `Failed to ${method}` }));
-    // Always include the status code in the thrown error message
     const errorMessage = `${errorData.detail || 'Failed to execute request'} (Status: ${response.status})`;
     throw new Error(errorMessage);
   }
@@ -189,8 +187,6 @@ export const fetchBatchStats = async (batchId: string): Promise<BatchStatsRespon
   return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/stats`);
 };
 
-// --- NEW Batch Volunteer Endpoints (Verified Backend) ---
-
 export const fetchBatchVolunteers = async (batchId: string): Promise<BatchVolunteer[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers`);
 };
@@ -202,8 +198,6 @@ export const assignVolunteerToBatch = async (batchId: string, participantId: str
 export const removeVolunteerFromBatch = async (batchId: string, participantId: string): Promise<void> => {
   return mutateAuthenticated(`${API_BASE_URL}/batches/${batchId}/volunteers/${participantId}`, "DELETE");
 };
-
-// --- Batch Assignments & Enrollments ---
 
 export const fetchMyAssignedBatches = async (): Promise<Batch[]> => {
   return fetchAuthenticated(`${API_BASE_URL}/batches/assigned/me`);
@@ -231,59 +225,11 @@ export const updateYatra = async (yatraId: string, yatraData: YatraUpdate): Prom
   return mutateAuthenticated(`${API_BASE_URL}/yatra/update/${yatraId}`, "PUT", yatraData);
 };
 
-export interface RazorpayInvoiceRequest {
-  yatra_id: string;
-  fee_category: string;
-  amount: number;
-  participant_id: string;
-  related_participant_ids?: Array<{
-    relation: string;
-    participant_id: string;
-    registration_fee?: {
-      option_name: string;
-      amount: number;
-      child_amount?: number | null;
-      child_condition_by_age?: number | null;
-    };
-  }>;
-  registration_fee?: {
-    option_name: string;
-    amount: number;
-    child_amount?: number | null;
-    child_condition_by_age?: number | null;
-  };
-}
-
-export interface RazorpayInvoiceResponse {
-  id: string;
-  order_id: string;
-  amount: number;
-  currency: string;
-  yatra_name: string;
-  fee_category: string;
-  participant_name: string;
-  participant_phone: string;
-}
-
-export const createRazorpayInvoice = async (data: RazorpayInvoiceRequest): Promise<RazorpayInvoiceResponse> => {
-  return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/order`, "POST", {
-    participant_id: data.participant_id,
-    amount: data.amount,
-    currency: data.currency || "INR",
-    fee_category: data.fee_category,
-    related_participant_ids: data.related_participant_ids || [],
-    registration_fee: data.registration_fee,
-  });
+export const createRazorpayInvoice = async (data: any): Promise<any> => {
+  return mutateAuthenticated(`${API_BASE_URL}/yatra/${data.yatra_id}/order`, "POST", data);
 };
 
-export interface RazorpayVerificationRequest {
-  razorpay_order_id?: string;
-  razorpay_invoice_id?: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-}
-
-export const verifyPayment = async (yatraId: string, data: RazorpayVerificationRequest): Promise<any> => {
+export const verifyPayment = async (yatraId: string, data: any): Promise<any> => {
   return mutateAuthenticated(`${API_BASE_URL}/yatra/${yatraId}/verify-payment`, "POST", data);
 };
 
@@ -321,10 +267,9 @@ export const uploadPhoto = async (file: File, participantId: string): Promise<st
   return data.link;
 };
 
-// --- Sadhana Activity Endpoints ---
+// --- Sadhana Activity Endpoints (Updated to match path parameters) ---
 
 export const fetchActivityLogByDate = async (participantId: string, date: string): Promise<ActivityLogResponse> => {
-  // Corrected URL construction: participant_id is a path parameter, date is a query parameter
   return fetchAuthenticated(`${API_BASE_URL}/activities/date/${participantId}?date=${date}`);
 };
 
@@ -340,45 +285,43 @@ export const addChantingLog = async (activityId: string, data: ChantingLogCreate
   return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/chanting-logs`, "POST", data);
 };
 
-export const updateChantingLog = async (chantingLogId: string, data: ChantingLogUpdate): Promise<ChantingLogResponse> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/chanting-logs/${chantingLogId}`, "PUT", data);
+export const updateChantingLog = async (activityId: string, slot: string, data: ChantingLogUpdate): Promise<ChantingLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/chanting-logs/${slot}`, "PUT", data);
 };
 
-export const deleteChantingLog = async (chantingLogId: string): Promise<void> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/chanting-logs/${chantingLogId}`, "DELETE");
+export const deleteChantingLog = async (activityId: string, slot: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/chanting-logs/${slot}`, "DELETE");
 };
 
 export const addBookLog = async (activityId: string, data: BookLogCreate): Promise<BookLogResponse> => {
   return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs`, "POST", data);
 };
 
-export const updateBookLog = async (bookLogId: string, data: BookLogUpdate): Promise<BookLogResponse> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/book-logs/${bookLogId}`, "PUT", data);
+export const updateBookLog = async (activityId: string, name: string, data: BookLogUpdate): Promise<BookLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs/${encodeURIComponent(name)}`, "PUT", data);
 };
 
-export const deleteBookLog = async (bookLogId: string): Promise<void> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/book-logs/${bookLogId}`, "DELETE");
+export const deleteBookLog = async (activityId: string, name: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs/${encodeURIComponent(name)}`, "DELETE");
 };
 
 export const addAssociationLog = async (activityId: string, data: AssociationLogCreate): Promise<AssociationLogResponse> => {
   return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/association-logs`, "POST", data);
 };
 
-export const updateAssociationLog = async (associationLogId: string, data: AssociationLogUpdate): Promise<AssociationLogResponse> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/association-logs/${associationLogId}`, "PUT", data);
+export const updateAssociationLog = async (activityId: string, type: string, data: AssociationLogUpdate): Promise<AssociationLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/association-logs/${type}`, "PUT", data);
 };
 
-export const deleteAssociationLog = async (associationLogId: string): Promise<void> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/association-logs/${associationLogId}`, "DELETE");
+export const deleteAssociationLog = async (activityId: string, type: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/association-logs/${type}`, "DELETE");
 };
 
 
-// --- Public Endpoints (Unprotected) ---
+// --- Public Endpoints ---
 
 export const fetchYatrasPublic = async (): Promise<Yatra[]> => {
-  const response = await fetch(`${API_BASE_URL}/yatra/`, {
-    headers: { "Content-Type": "application/json" }
-  });
+  const response = await fetch(`${API_BASE_URL}/yatra/`, { headers: { "Content-Type": "application/json" } });
   if (!response.ok) throw new Error("Failed to fetch trip details");
   return response.json();
 };
@@ -389,10 +332,7 @@ export const createAccountCheck = async (phone: string): Promise<AccountStatusRe
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ phone }),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to check account' }));
-    throw new Error(errorData.detail || "Failed to check account status");
-  }
+  if (!response.ok) throw new Error("Failed to check account status");
   return response.json();
 };
 
@@ -402,10 +342,7 @@ export const createParticipantPublic = async (data: any): Promise<Participant> =
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to create participant' }));
-    throw new Error(errorData.detail || "Failed to register participant");
-  }
+  if (!response.ok) throw new Error("Failed to register participant");
   return response.json();
 };
 
@@ -415,10 +352,7 @@ export const setPasswordPublic = async (participant_id: string, password: string
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ participant_id, password }),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to set password' }));
-    throw new Error(errorData.detail || "Failed to set account password");
-  }
+  if (!response.ok) throw new Error("Failed to set account password");
   return response.json();
 };
 
@@ -428,10 +362,7 @@ export const forgotPassword = async (phone: string): Promise<any> => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ phone }),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to initiate password reset' }));
-    throw new Error(errorData.detail || "Failed to initiate password reset");
-  }
+  if (!response.ok) throw new Error("Failed to initiate password reset");
   return response.json();
 };
 
@@ -441,14 +372,10 @@ export const resetPassword = async (token: string, new_password: string): Promis
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, new_password }),
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to reset password' }));
-    throw new Error(errorData.detail || "Failed to reset password");
-  }
+  if (!response.ok) throw new Error("Failed to reset password");
   return response.json();
 };
 
-// Updated search function to use authenticated headers when available
 export const searchParticipantPublic = async (phone: string): Promise<Participant[]> => {
   const response = await fetch(`${API_BASE_URL}/participants/search?query=${encodeURIComponent(phone)}`, {
     headers: getAuthHeaders()
@@ -458,44 +385,29 @@ export const searchParticipantPublic = async (phone: string): Promise<Participan
 };
 
 export const fetchParticipantByIdPublic = async (id: string): Promise<Participant> => {
-  const response = await fetch(`${API_BASE_URL}/participants/${id}`, {
-    headers: { "Content-Type": "application/json" }
-  });
+  const response = await fetch(`${API_BASE_URL}/participants/${id}`, { headers: { "Content-Type": "application/json" } });
   if (!response.ok) throw new Error("Failed to fetch participant");
   return response.json();
 };
 
 export const fetchParticipantByPhonePublic = async (phone: string): Promise<Participant | null> => {
-  const response = await fetch(`${API_BASE_URL}/participants/phone/${phone}`, {
-    headers: { "Content-Type": "application/json" }
-  });
+  const response = await fetch(`${API_BASE_URL}/participants/phone/${phone}`, { headers: { "Content-Type": "application/json" } });
   if (response.status === 404) return null;
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch participant' }));
-    throw new Error(errorData.detail || "Failed to fetch participant");
-  }
+  if (!response.ok) throw new Error("Failed to fetch participant");
   return response.json();
 };
 
 export const upsertParticipantPublic = async (data: any, id?: string): Promise<Participant> => {
-  const url = id
-    ? `${API_BASE_URL}/participants/${id}`
-    : `${API_BASE_URL}/register/participant`;
-
+  const url = id ? `${API_BASE_URL}/participants/${id}` : `${API_BASE_URL}/register/participant`;
   const response = await fetch(url, {
     method: id ? "PUT" : "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...data, participant_id: id }),
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Failed to process request' }));
-    throw new Error(errorData.detail || "Failed to process participant data");
-  }
+  if (!response.ok) throw new Error("Failed to process participant data");
   return response.json();
 };
 
-// Map searchParticipant to fetchParticipants for clarity
 export const fetchParticipants = async (query: string): Promise<Participant[]> => {
   return searchParticipantPublic(query);
 };

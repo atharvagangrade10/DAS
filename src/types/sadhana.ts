@@ -1,10 +1,19 @@
 "use client";
 
-import { date, datetime } from "zod";
-
 // --- Enums/Union Types ---
-export type ChantingSlot = "Before 6:30 am" | "Before 8:30 am" | "Before 10 am" | "After 10 am";
-export type AssociationType = "Preaching" | "Other Activities"; 
+export type ChantingSlot = 
+  | "before_6_30_am" 
+  | "6_30_to_8_30_am" 
+  | "8_30_to_10_am" 
+  | "before_9_30_pm" 
+  | "after_9_30_pm";
+
+export type AssociationType = 
+  | "PRABHUPADA" 
+  | "GURU" 
+  | "OTHER" 
+  | "PREACHING" 
+  | "OTHER_ACTIVITIES"; 
 
 // -------------------------------------------------
 // BASE LOG SCHEMAS
@@ -85,17 +94,11 @@ export interface ActivityLogUpdate {
 // RESPONSE SCHEMAS
 // -------------------------------------------------
 
-export interface ChantingLogResponse extends ChantingLogBase {
-  id: string;
-}
+export interface ChantingLogResponse extends ChantingLogBase {}
 
-export interface BookLogResponse extends BookLogBase {
-  id: string;
-}
+export interface BookLogResponse extends BookLogBase {}
 
-export interface AssociationLogResponse extends AssociationLogBase {
-  id: string;
-}
+export interface AssociationLogResponse extends AssociationLogBase {}
 
 export interface ActivityLogResponse {
   id: string;

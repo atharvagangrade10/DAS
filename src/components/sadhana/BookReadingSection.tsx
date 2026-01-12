@@ -27,7 +27,7 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
   };
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteBookLog(id),
+    mutationFn: (name: string) => deleteBookLog(activity.id, name),
     onSuccess: () => {
       toast.success("Book log deleted.");
       invalidateQueries();
@@ -89,7 +89,7 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
           ) : (
             <div className="space-y-3">
               {activity.book_reading_logs.map((log) => (
-                <div key={log.id} className="p-3 border rounded-lg bg-muted/30 flex items-start justify-between">
+                <div key={log.name} className="p-3 border rounded-lg bg-muted/30 flex items-start justify-between">
                   <div className="flex-1 min-w-0 pr-4">
                     <h4 className="font-semibold truncate">{log.name}</h4>
                     <p className="text-xs text-muted-foreground truncate">
@@ -114,7 +114,7 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-red-400 hover:text-red-600"
-                        onClick={() => deleteMutation.mutate(log.id)}
+                        onClick={() => deleteMutation.mutate(log.name)}
                         disabled={deleteMutation.isPending}
                       >
                         {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}

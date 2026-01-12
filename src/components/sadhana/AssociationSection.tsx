@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addAssociationLog, updateAssociationLog, deleteAssociationLog } from "@/utils/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Loader2, Users, Trash2, Mic, Headphones } from "lucide-react";
+import { Plus, Loader2, Users, Trash2, Mic, Headphones, Book, Star, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -18,9 +18,12 @@ interface AssociationSectionProps {
   readOnly: boolean;
 }
 
-const ASSOCIATION_TYPES: { type: AssociationType, icon: React.ElementType }[] = [
-  { type: "Preaching", icon: Mic },
-  { type: "Other Activities", icon: Headphones },
+const ASSOCIATION_CONFIG: { type: AssociationType, label: string, icon: React.ElementType }[] = [
+  { type: "PRABHUPADA", label: "Prabhupada", icon: Star },
+  { type: "GURU", label: "Guru", icon: Book },
+  { type: "OTHER", label: "Other Devotees", icon: Users },
+  { type: "PREACHING", label: "Preaching", icon: Mic },
+  { type: "OTHER_ACTIVITIES", label: "Other Activities", icon: Activity },
 ];
 
 const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readOnly }) => {
@@ -44,7 +47,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: AssociationLogUpdate }) => updateAssociationLog(id, data),
+    mutationFn: ({ type, data }: { type: string, data: AssociationLogUpdate }) => updateAssociationLog(activity.id, type, data),
     onSuccess: () => {
       invalidateQueries();
     },
@@ -55,7 +58,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteAssociationLog(id),
+    mutationFn: (type: string) => deleteAssociationLog(activity.id, type),
     onSuccess: () => {
       toast.success("Association deleted.");
       invalidateQueries();
@@ -68,7 +71,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
   const handleDurationUpdate = (log: AssociationLogResponse, newDuration: number) => {
     if (readOnly || isUpdating) return;
     setIsUpdating(true);
-    updateMutation.mutate({ id: log.id, data: { duration: newDuration } });
+    updateMutation.mutate({ type: log.type, data: { duration: newDuration } });
   };
 
   const handleAddSlot = (type: AssociationType) => {
@@ -91,8 +94,8 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          {ASSOCIATION_TYPES.map(({ type, icon: Icon }) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          {ASSOCIATION_CONFIG.map(({ type, label, icon: Icon }) => {
             const log = activity.association_logs.find(l => l.type === type);
             const isFilled = !!log;
 
@@ -104,7 +107,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                       variant="ghost"
                       size="icon"
                       className="absolute top-1 right-1 h-6 w-6 text-red-400 hover:text-red-600"
-                      onClick={() => deleteMutation.mutate(log.id)}
+                      onClick={() => deleteMutation.mutate(log.type)}
                       disabled={deleteMutation.isPending || isUpdating}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -113,11 +116,11 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                   <div className="flex items-center justify-center w-full">
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="flex flex-col h-20 w-full p-2">
+                        <Button variant="outline" className="flex flex-col h-16 w-full p-2">
                           <div className="flex items-center gap-2 text-primary">
-                            <Icon className="h-5 w-5" />
+                            <Icon className="h-4 w-4" />
                           </div>
-                          <span className="text-xl font-bold mt-1">{formatDuration(log.duration)}</span>
+                          <span className="text-lg font-bold mt-1">{formatDuration(log.duration)}</span>
                         </Button>
                       </PopoverTrigger>
                       {!readOnly && (
@@ -125,21 +128,15 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                           <Label className="text-sm font-medium mb-2 block">Duration (Minutes)</Label>
                           <Input
                             type="number"
-                            value={tempDuration[log.id] ?? log.duration}
-                            onChange={(e) => setTempDuration({ ...tempDuration, [log.id]: Number(e.target.value) })}
-                            onBlur={() => {
-                                const newDuration = tempDuration[log.id] ?? log.duration;
-                                if (newDuration !== log.duration) {
-                                    handleDurationUpdate(log, newDuration);
-                                }
-                            }}
+                            value={tempDuration[log.type] ?? log.duration}
+                            onChange={(e) => setTempDuration({ ...tempDuration, [log.type]: Number(e.target.value) })}
                             min={0}
                             max={1440}
                           />
                           <Button 
                             size="sm" 
                             className="w-full mt-3" 
-                            onClick={() => handleDurationUpdate(log, tempDuration[log.id] ?? log.duration)}
+                            onClick={() => handleDurationUpdate(log, tempDuration[log.type] ?? log.duration)}
                             disabled={updateMutation.isPending}
                           >
                             Save
@@ -148,7 +145,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                       )}
                     </Popover>
                   </div>
-                  <span className="text-xs text-muted-foreground text-center mt-1">{type}</span>
+                  <span className="text-[10px] text-muted-foreground text-center font-medium leading-tight mt-1">{label}</span>
                 </div>
               );
             } else {
@@ -156,12 +153,12 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
                 <Button
                   key={type}
                   variant="outline"
-                  className="flex flex-col h-20 p-2 items-center justify-center space-y-1 opacity-50 hover:opacity-100"
+                  className="flex flex-col h-24 p-2 items-center justify-center space-y-1 opacity-50 hover:opacity-100 transition-opacity"
                   onClick={() => handleAddSlot(type)}
                   disabled={readOnly || addMutation.isPending}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs text-center">{type}</span>
+                  <Icon className="h-5 w-5 mb-1" />
+                  <span className="text-[10px] text-center font-medium leading-tight">{label}</span>
                 </Button>
               );
             }

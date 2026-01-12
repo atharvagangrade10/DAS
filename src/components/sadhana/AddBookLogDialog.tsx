@@ -91,7 +91,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: BookLogUpdate) => updateBookLog(logToEdit!.id, data),
+    mutationFn: (data: BookLogUpdate) => updateBookLog(activityId, logToEdit!.name, data),
     onSuccess: () => {
       toast.success("Book log updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });

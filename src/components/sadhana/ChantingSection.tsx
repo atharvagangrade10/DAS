@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, Loader2, Zap, Trash2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -19,17 +18,17 @@ interface ChantingSectionProps {
   readOnly: boolean;
 }
 
-const CHANTING_SLOTS: ChantingSlot[] = [
-  "Before 6:30 am",
-  "Before 8:30 am",
-  "Before 10 am",
-  "After 10 am",
+const CHANTING_SLOT_CONFIG: { value: ChantingSlot, label: string }[] = [
+  { value: "before_6_30_am", label: "Before 6:30 AM" },
+  { value: "6_30_to_8_30_am", label: "6:30 - 8:30 AM" },
+  { value: "8_30_to_10_am", label: "8:30 - 10:00 AM" },
+  { value: "before_9_30_pm", label: "Before 9:30 PM" },
+  { value: "after_9_30_pm", label: "After 9:30 PM" },
 ];
 
 const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly }) => {
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [tempRounds, setTempRounds] = React.useState<Record<string, number>>({});
   const [tempRating, setTempRating] = React.useState<Record<string, number>>({});
 
   const invalidateQueries = () => {
@@ -48,7 +47,7 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: ChantingLogUpdate }) => updateChantingLog(id, data),
+    mutationFn: ({ slot, data }: { slot: string, data: ChantingLogUpdate }) => updateChantingLog(activity.id, slot, data),
     onSuccess: () => {
       invalidateQueries();
     },
@@ -59,7 +58,7 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteChantingLog(id),
+    mutationFn: (slot: string) => deleteChantingLog(activity.id, slot),
     onSuccess: () => {
       toast.success("Chanting slot deleted.");
       invalidateQueries();
@@ -74,14 +73,14 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
     const newRounds = Math.max(1, Math.min(108, log.rounds + delta));
     if (newRounds !== log.rounds) {
       setIsUpdating(true);
-      updateMutation.mutate({ id: log.id, data: { rounds: newRounds } });
+      updateMutation.mutate({ slot: log.slot, data: { rounds: newRounds } });
     }
   };
 
   const handleRatingUpdate = (log: ChantingLogResponse, newRating: number) => {
     if (readOnly || isUpdating) return;
     setIsUpdating(true);
-    updateMutation.mutate({ id: log.id, data: { rating: newRating } });
+    updateMutation.mutate({ slot: log.slot, data: { rating: newRating } });
   };
 
   const handleAddSlot = (slot: ChantingSlot) => {
@@ -105,20 +104,20 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {CHANTING_SLOTS.map((slot) => {
-            const log = activity.chanting_logs.find(l => l.slot === slot);
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          {CHANTING_SLOT_CONFIG.map(({ value, label }) => {
+            const log = activity.chanting_logs.find(l => l.slot === value);
             const isFilled = !!log;
 
             if (isFilled) {
               return (
-                <div key={slot} className="relative p-3 border rounded-lg bg-muted/30 flex flex-col items-center justify-center space-y-1">
+                <div key={value} className="relative p-3 border rounded-lg bg-muted/30 flex flex-col items-center justify-center space-y-1">
                   {!readOnly && (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="absolute top-1 right-1 h-6 w-6 text-red-400 hover:text-red-600"
-                      onClick={() => deleteMutation.mutate(log.id)}
+                      onClick={() => deleteMutation.mutate(log.slot)}
                       disabled={deleteMutation.isPending || isUpdating}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -145,7 +144,7 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  <span className="text-xs text-muted-foreground text-center">{slot}</span>
+                  <span className="text-[10px] text-muted-foreground text-center font-medium leading-tight">{label}</span>
                   
                   <Popover>
                     <PopoverTrigger asChild>
@@ -163,8 +162,8 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
                           defaultValue={[log.rating || 5]}
                           max={10}
                           step={1}
-                          onValueChange={(value) => setTempRating({ ...tempRating, [log.id]: value[0] })}
-                          onValueCommit={(value) => handleRatingUpdate(log, value[0])}
+                          onValueChange={(val) => setTempRating({ ...tempRating, [log.slot]: val[0] })}
+                          onValueCommit={(val) => handleRatingUpdate(log, val[0])}
                           className="w-full"
                         />
                         <div className="flex justify-between text-xs text-muted-foreground mt-2">
@@ -179,14 +178,14 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
             } else {
               return (
                 <Button
-                  key={slot}
+                  key={value}
                   variant="outline"
-                  className="flex flex-col h-20 p-2 items-center justify-center space-y-1 opacity-50 hover:opacity-100"
-                  onClick={() => handleAddSlot(slot)}
+                  className="flex flex-col h-24 p-2 items-center justify-center space-y-1 opacity-50 hover:opacity-100 transition-opacity"
+                  onClick={() => handleAddSlot(value)}
                   disabled={readOnly || addMutation.isPending}
                 >
-                  <Plus className="h-5 w-5" />
-                  <span className="text-xs text-center">{slot}</span>
+                  <Plus className="h-5 w-5 mb-1" />
+                  <span className="text-[10px] text-center font-medium leading-tight">{label}</span>
                 </Button>
               );
             }

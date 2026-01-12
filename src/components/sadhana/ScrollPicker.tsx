@@ -33,7 +33,7 @@ const ScrollPicker: React.FC<ScrollPickerProps> = ({
     if (!scrollRef.current) return;
     const container = scrollRef.current;
     const scrollLeft = container.scrollLeft;
-    const itemWidth = 64; // w-16
+    const itemWidth = 80; // Larger item width
     const index = Math.round(scrollLeft / itemWidth);
     const newValue = numbers[index];
     
@@ -46,27 +46,32 @@ const ScrollPicker: React.FC<ScrollPickerProps> = ({
     if (scrollRef.current) {
       const index = numbers.indexOf(value);
       if (index !== -1) {
-        scrollRef.current.scrollLeft = index * 64;
+        scrollRef.current.scrollLeft = index * 80;
       }
     }
   }, [value, numbers]);
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {label && <p className="text-sm font-bold text-center text-muted-foreground">{label}</p>}
+    <div className={cn("space-y-4", className)}>
+      {label && <p className="text-xs font-black text-center text-muted-foreground/60 uppercase tracking-[0.2em]">{label}</p>}
       <div className="relative flex flex-col items-center justify-center">
+        {/* Selection Highlighter */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
+            <div className="h-20 w-20 rounded-3xl border-2 border-primary/20 bg-primary/5 shadow-[0_0_40px_rgba(0,0,0,0.05)]" />
+        </div>
+
         {/* Scroll Container */}
         <div 
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex w-full overflow-x-auto snap-x snap-mandatory py-6 no-scrollbar items-center px-[calc(50%-32px)]"
+          className="flex w-full overflow-x-auto snap-x snap-mandatory py-10 no-scrollbar items-center px-[calc(50%-40px)]"
         >
           {numbers.map((num) => (
             <div 
               key={num}
               className={cn(
-                "flex-none w-16 h-12 flex items-center justify-center snap-center cursor-pointer transition-all duration-200",
-                num === value ? "text-3xl font-black text-primary scale-110" : "text-xl font-medium text-muted-foreground opacity-20"
+                "flex-none w-20 h-16 flex items-center justify-center snap-center cursor-pointer transition-all duration-300",
+                num === value ? "text-5xl font-black text-primary scale-125" : "text-2xl font-bold text-muted-foreground opacity-20 blur-[0.5px]"
               )}
               onClick={() => onChange(num)}
             >
@@ -75,9 +80,8 @@ const ScrollPicker: React.FC<ScrollPickerProps> = ({
           ))}
         </div>
         
-        {/* Triangle Indicator (from image) */}
-        <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[10px] border-b-primary -mt-2" />
-        <div className="w-full h-[1px] bg-muted-foreground/20 mt-4" />
+        {/* Animated Arrow */}
+        <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[12px] border-b-primary -mt-4 animate-bounce" />
       </div>
     </div>
   );

@@ -23,6 +23,7 @@ import {
   fetchParticipants,
   fetchParticipantById,
   removeParticipantFromBatch, // Import the new API function
+  fetchBatchVolunteers, // Import fetchBatchVolunteers
 } from "@/utils/api";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,6 +57,18 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
   const { user } = useAuth();
   const isManager = user?.role === 'Manager';
   const isVolunteer = user?.role === 'Volunteer';
+
+  // Fetch assigned volunteers to determine if the current user is one
+  const { data: batchVolunteers } = useQuery({
+    queryKey: ["batchVolunteers", batch.id],
+    queryFn: () => fetchBatchVolunteers(batch.id),
+    enabled: isOpen,
+  });
+
+  const isAssignedVolunteer = React.useMemo(() => {
+    if (!user || !batchVolunteers) return false;
+    return batchVolunteers.some(v => v.participant_id === user.user_id);
+  }, [user, batchVolunteers]);
 
   // 1. Fetch Current Participants
   const { data: currentMappings, isLoading: isLoadingMappings } = useQuery({
@@ -125,7 +138,7 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
     return participants?.some((cp) => cp.id === participantId);
   };
 
-  const canManageParticipants = isManager || isVolunteer; // Volunteers can manage if they are assigned
+  const canManageParticipants = isManager || (isVolunteer && isAssignedVolunteer); // Control access based on role and assignment
 
   return (
     <div className="space-y-6">

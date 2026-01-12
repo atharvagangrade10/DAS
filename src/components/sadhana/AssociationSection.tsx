@@ -1,15 +1,15 @@
 "use client";
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ActivityLogResponse, AssociationLogCreate, AssociationLogResponse, AssociationLogUpdate, AssociationType } from "@/types/sadhana";
+import { Card, CardContent } from "@/components/ui/card";
+import { ActivityLogResponse, AssociationLogCreate, AssociationLogUpdate, AssociationType } from "@/types/sadhana";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addAssociationLog, updateAssociationLog, deleteAssociationLog } from "@/utils/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Users, Trash2, Book, Star, Activity, Mic, Edit2 } from "lucide-react";
+import { Loader2, Headphones, Star, Book, Users, Mic, Activity, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScrollPicker from "./ScrollPicker";
 
 interface AssociationSectionProps {
@@ -18,153 +18,118 @@ interface AssociationSectionProps {
 }
 
 const ASSOCIATION_CONFIG: { type: AssociationType, label: string, icon: React.ElementType }[] = [
-  { type: "PRABHUPADA", label: "Prabhupada", icon: Star },
-  { type: "GURU", label: "Guru", icon: Book },
-  { type: "OTHER", label: "Devotees", icon: Users },
+  { type: "PRABHUPADA", label: "Prabhupada", icon: Headphones },
+  { type: "GURU", label: "Guru Maharaja", icon: Headphones },
+  { type: "OTHER", label: "Other Devotees", icon: Users },
   { type: "PREACHING", label: "Preaching", icon: Mic },
   { type: "OTHER_ACTIVITIES", label: "Other", icon: Activity },
 ];
 
 const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readOnly }) => {
   const queryClient = useQueryClient();
-  const [isUpdating, setIsUpdating] = React.useState(false);
+  const [selectedType, setSelectedType] = React.useState<AssociationType | null>(null);
+  const [tempDuration, setTempDuration] = React.useState(30);
 
   const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ["activityLog", activity.today_date] });
+    queryClient.invalidateQueries({ queryKey: ["activityLog"] });
+    setSelectedType(null);
   };
 
   const addMutation = useMutation({
     mutationFn: (data: AssociationLogCreate) => addAssociationLog(activity.id, data),
-    onSuccess: () => {
-      toast.success("Added.");
-      invalidateQueries();
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to add", { description: error.message });
-    },
+    onSuccess: () => { toast.success("Added."); invalidateQueries(); },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ type, data }: { type: string, data: AssociationLogUpdate }) => updateAssociationLog(activity.id, type, data),
-    onSuccess: () => {
-      invalidateQueries();
-    },
-    onError: (error: Error) => {
-      toast.error("Update failed", { description: error.message });
-    },
-    onSettled: () => setIsUpdating(false),
+    onSuccess: () => invalidateQueries(),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (type: string) => deleteAssociationLog(activity.id, type),
-    onSuccess: () => {
-      toast.success("Deleted.");
-      invalidateQueries();
-    },
-    onError: (error: Error) => {
-      toast.error("Delete failed", { description: error.message });
-    },
+    onSuccess: () => { toast.success("Deleted."); invalidateQueries(); },
   });
 
-  const handleDurationUpdate = (type: string, duration: number) => {
-    if (readOnly || isUpdating) return;
-    setIsUpdating(true);
-    updateMutation.mutate({ type, data: { duration } });
+  const handleOpenDialog = (type: AssociationType) => {
+    const log = activity.association_logs.find(l => l.type === type);
+    setTempDuration(log?.duration || 30);
+    setSelectedType(type);
   };
 
-  const formatDuration = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return `${m}m`;
-    return `${h}h ${m}m`;
+  const handleSave = () => {
+    if (!selectedType) return;
+    const log = activity.association_logs.find(l => l.type === selectedType);
+    if (log) {
+        updateMutation.mutate({ type: selectedType, data: { duration: tempDuration } });
+    } else {
+        addMutation.mutate({ type: selectedType, duration: tempDuration });
+    }
+  };
+
+  const formatTime = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
   };
 
   return (
-    <Card className="shadow-sm border-primary/10">
-      <CardHeader className="pb-3 bg-primary/5">
-        <CardTitle className="text-xl font-semibold flex items-center gap-2 text-primary">
-          <Users className="h-6 w-6" />
-          Association
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 gap-3">
-          {ASSOCIATION_CONFIG.map(({ type, label, icon: Icon }) => {
-            const log = activity.association_logs.find(l => l.type === type);
-            const isFilled = !!log;
+    <section className="space-y-3">
+      <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 px-1">Association</h3>
+      <div className="grid grid-cols-2 gap-3">
+        {ASSOCIATION_CONFIG.slice(0, 4).map(({ type, label, icon: Icon }) => {
+          const log = activity.association_logs.find(l => l.type === type);
+          const isFilled = !!log;
 
-            return (
-              <div key={type} className={cn(
-                "p-4 border rounded-xl flex items-center justify-between transition-all",
-                isFilled ? "bg-card border-primary/20 shadow-sm" : "bg-muted/30 border-dashed opacity-60"
-              )}>
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "h-12 w-12 rounded-full flex items-center justify-center",
-                    isFilled ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  )}>
+          return (
+            <Card 
+              key={type}
+              className={cn(
+                "border-none shadow-sm transition-all active:scale-95",
+                isFilled ? "bg-primary/5 ring-1 ring-primary/20" : "bg-muted/30"
+              )}
+              onClick={() => !readOnly && handleOpenDialog(type)}
+            >
+              <CardContent className="p-4 flex flex-col items-center text-center space-y-2">
+                <div className={cn(
+                    "h-12 w-12 rounded-2xl flex items-center justify-center relative",
+                    isFilled ? "bg-primary/10 text-primary" : "bg-background/50 text-muted-foreground"
+                )}>
                     <Icon className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p>
-                    <p className="text-lg font-bold">
-                      {isFilled ? formatDuration(log.duration) : "0m"}
+                </div>
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{label}</p>
+                    <p className="text-base font-black text-primary">
+                        {isFilled ? formatTime(log.duration) : "00:00"}
                     </p>
-                  </div>
                 </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-                <div className="flex items-center gap-2">
-                  {isFilled ? (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="secondary" size="sm" className="h-10 px-4 rounded-full gap-2 font-bold">
-                          <Edit2 className="h-4 w-4" />
-                          Set
-                        </Button>
-                      </PopoverTrigger>
-                      {!readOnly && (
-                        <PopoverContent className="w-80 p-0 overflow-hidden" align="end">
-                          <div className="p-6 bg-background space-y-6">
-                            <ScrollPicker
-                              label="Duration (Minutes)"
-                              min={0}
-                              max={480}
-                              step={5}
-                              value={log.duration}
-                              onChange={(val) => handleDurationUpdate(log.type, val)}
-                            />
-                            <Button 
-                              variant="destructive" 
-                              size="sm" 
-                              className="w-full h-12 rounded-xl font-bold" 
-                              onClick={() => deleteMutation.mutate(log.type)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Remove
-                            </Button>
-                          </div>
-                        </PopoverContent>
-                      )}
-                    </Popover>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-10 px-4 rounded-full border-primary/30 text-primary font-bold hover:bg-primary/5"
-                      onClick={() => addMutation.mutate({ type, duration: 30 })}
-                      disabled={readOnly || addMutation.isPending}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+      <Dialog open={!!selectedType} onOpenChange={() => setSelectedType(null)}>
+        <DialogContent className="sm:max-w-[400px] p-6 rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-black">Association Time</DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <ScrollPicker label="Duration (Minutes)" min={0} max={480} step={5} value={tempDuration} onChange={setTempDuration} />
+          </div>
+          <DialogFooter className="flex-row gap-3 sm:justify-center">
+            <Button variant="outline" className="flex-1 rounded-2xl h-12 font-bold" onClick={() => setSelectedType(null)}>Cancel</Button>
+            <Button className="flex-1 rounded-2xl h-12 font-bold" onClick={handleSave} disabled={addMutation.isPending || updateMutation.isPending}>
+              {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="animate-spin h-5 w-5" /> : "Save"}
+            </Button>
+            {activity.association_logs.some(l => l.type === selectedType) && (
+                <Button variant="ghost" size="icon" className="text-red-500" onClick={() => deleteMutation.mutate(selectedType!)}>
+                    <Trash2 className="h-5 w-5" />
+                </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 };
 

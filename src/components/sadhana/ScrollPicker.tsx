@@ -53,25 +53,20 @@ const ScrollPicker: React.FC<ScrollPickerProps> = ({
 
   return (
     <div className={cn("space-y-2", className)}>
-      {label && <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">{label}</p>}
-      <div className="relative flex items-center justify-center">
-        {/* Center Indicator */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="h-14 w-14 border-2 border-primary rounded-xl bg-primary/5 shadow-inner" />
-        </div>
-
+      {label && <p className="text-sm font-bold text-center text-muted-foreground">{label}</p>}
+      <div className="relative flex flex-col items-center justify-center">
         {/* Scroll Container */}
         <div 
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex w-full overflow-x-auto snap-x snap-mandatory py-4 no-scrollbar items-center px-[calc(50%-32px)]"
+          className="flex w-full overflow-x-auto snap-x snap-mandatory py-6 no-scrollbar items-center px-[calc(50%-32px)]"
         >
           {numbers.map((num) => (
             <div 
               key={num}
               className={cn(
                 "flex-none w-16 h-12 flex items-center justify-center snap-center cursor-pointer transition-all duration-200",
-                num === value ? "text-2xl font-black text-primary" : "text-lg font-medium text-muted-foreground opacity-30"
+                num === value ? "text-3xl font-black text-primary scale-110" : "text-xl font-medium text-muted-foreground opacity-20"
               )}
               onClick={() => onChange(num)}
             >
@@ -79,6 +74,10 @@ const ScrollPicker: React.FC<ScrollPickerProps> = ({
             </div>
           ))}
         </div>
+        
+        {/* Triangle Indicator (from image) */}
+        <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[10px] border-b-primary -mt-2" />
+        <div className="w-full h-[1px] bg-muted-foreground/20 mt-4" />
       </div>
     </div>
   );

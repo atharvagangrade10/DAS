@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ActivityLogResponse, BookLogResponse } from "@/types/sadhana";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteBookLog } from "@/utils/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { BookOpen, PlusCircle, Loader2, Trash2, Pencil } from "lucide-react";
+import { BookOpen, Plus, Loader2, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import AddBookLogDialog from "./AddBookLogDialog";
 
 interface BookReadingSectionProps {
@@ -15,118 +16,76 @@ interface BookReadingSectionProps {
   readOnly: boolean;
 }
 
+const DEFAULT_BOOKS = ["BHAGAVAD GITA", "SRIMAD BHAGAVATAM"];
+
 const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readOnly }) => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [logToEdit, setLogToEdit] = React.useState<BookLogResponse | null>(null);
 
-  const totalReadingTime = activity.book_reading_logs.reduce((sum, log) => sum + log.reading_time, 0);
-
   const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ["activityLog", activity.today_date] });
+    queryClient.invalidateQueries({ queryKey: ["activityLog"] });
   };
 
   const deleteMutation = useMutation({
     mutationFn: (name: string) => deleteBookLog(activity.id, name),
-    onSuccess: () => {
-      toast.success("Book log deleted.");
-      invalidateQueries();
-    },
-    onError: (error: Error) => {
-      toast.error("Delete failed", { description: error.message });
-    },
+    onSuccess: () => { toast.success("Deleted."); invalidateQueries(); },
   });
 
-  const handleAdd = () => {
-    setLogToEdit(null);
-    setIsDialogOpen(true);
-  };
+  const handleAdd = () => { setLogToEdit(null); setIsDialogOpen(true); };
+  const handleEdit = (log: BookLogResponse) => { setLogToEdit(log); setIsDialogOpen(true); };
 
-  const handleEdit = (log: BookLogResponse) => {
-    setLogToEdit(log);
-    setIsDialogOpen(true);
-  };
-
-  const formatDuration = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0) {
-        return `${h}h ${m}m`;
-    }
-    return `${m}m`;
+  const formatTime = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
   };
 
   return (
-    <>
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xl font-semibold flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
-              Book Reading
-            </div>
-            <div className="text-sm font-medium text-muted-foreground">
-              Total: <span className="text-primary font-bold">{formatDuration(totalReadingTime)}</span>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!readOnly && (
-            <Button 
-              variant="outline" 
-              className="w-full gap-2" 
-              onClick={handleAdd}
-              disabled={deleteMutation.isPending}
-            >
-              <PlusCircle className="h-4 w-4" /> Add Book Log
-            </Button>
-          )}
+    <section className="space-y-3">
+      <div className="flex items-center justify-between px-1">
+          <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Book Reading</h3>
+          <button className="text-xs font-black text-primary flex items-center gap-1" onClick={handleAdd}>
+            <Plus className="h-3 w-3" /> Add Books
+          </button>
+      </div>
 
-          {activity.book_reading_logs.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground text-sm">
-              No books recorded today.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activity.book_reading_logs.map((log) => (
-                <div key={log.name} className="p-3 border rounded-lg bg-muted/30 flex items-start justify-between">
-                  <div className="flex-1 min-w-0 pr-4">
-                    <h4 className="font-semibold truncate">{log.name}</h4>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {log.chapter_name || "No chapter specified"}
-                    </p>
-                    <p className="text-sm font-bold text-primary mt-1">
-                      {formatDuration(log.reading_time)}
-                    </p>
-                  </div>
-                  {!readOnly && (
-                    <div className="flex gap-1 shrink-0">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-primary/70 hover:text-primary"
-                        onClick={() => handleEdit(log)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-red-400 hover:text-red-600"
-                        onClick={() => deleteMutation.mutate(log.name)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                      </Button>
+      <div className="grid grid-cols-2 gap-3">
+        {activity.book_reading_logs.length === 0 ? (
+            <Card className="col-span-2 border-dashed bg-muted/20 py-10 flex flex-col items-center justify-center text-muted-foreground">
+                <BookOpen className="h-8 w-8 mb-2 opacity-20" />
+                <p className="text-xs font-bold uppercase tracking-widest">No books logged</p>
+            </Card>
+        ) : (
+            activity.book_reading_logs.map((log) => (
+                <Card 
+                  key={log.name}
+                  className="border-none shadow-sm transition-all active:scale-95 bg-primary/5 ring-1 ring-primary/20"
+                  onClick={() => !readOnly && handleEdit(log)}
+                >
+                  <CardContent className="p-4 flex flex-col items-center text-center space-y-2">
+                    <div className="w-full aspect-[3/4] bg-primary/10 rounded-xl flex flex-col items-center justify-center p-3 relative">
+                        <BookOpen className="h-10 w-10 text-primary opacity-20 mb-2" />
+                        <span className="text-[10px] font-black text-primary leading-tight uppercase line-clamp-3">{log.name}</span>
+                        {!readOnly && (
+                            <Button 
+                                variant="ghost" size="icon" 
+                                className="absolute -top-2 -right-2 h-7 w-7 bg-red-500 rounded-full text-white hover:bg-red-600 shadow-md"
+                                onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(log.name); }}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        )}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Duration</p>
+                        <p className="text-base font-black text-primary">{formatTime(log.reading_time)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+            ))
+        )}
+      </div>
 
       <AddBookLogDialog
         activityId={activity.id}
@@ -134,7 +93,7 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
       />
-    </>
+    </section>
   );
 };
 

@@ -104,17 +104,17 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
       </section>
 
       <Dialog open={!!openPicker} onOpenChange={() => setOpenPicker(null)}>
-        <DialogContent className="sm:max-w-[400px] p-8 rounded-[40px] border-none shadow-2xl">
+        <DialogContent className="sm:max-w-[450px] p-6 sm:p-10 rounded-[32px] sm:rounded-[40px] border-none shadow-2xl overflow-hidden">
           <DialogHeader className="mb-6">
             <DialogTitle className="text-center text-2xl font-black tracking-tight">
                 {openPicker === 'sleep' ? 'Sleeping Time' : 'Wakeup Time'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-12">
+          <div className="space-y-12 py-4">
             <ScrollPicker label="Hour (24h Format)" min={0} max={23} value={tempHour} onChange={setTempHour} />
             <ScrollPicker label="Minutes" min={0} max={55} step={5} value={tempMin} onChange={setTempMin} />
           </div>
-          <DialogFooter className="mt-10 flex-row gap-3">
+          <DialogFooter className="mt-8 flex flex-row gap-4">
             <Button variant="outline" className="flex-1 h-14 rounded-2xl text-lg font-bold" onClick={() => setOpenPicker(null)}>Cancel</Button>
             <Button className="flex-1 h-14 rounded-2xl text-lg font-bold shadow-lg" onClick={handleSaveTime} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : "Update Time"}

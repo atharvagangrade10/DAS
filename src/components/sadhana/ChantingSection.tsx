@@ -39,19 +39,16 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
   const addMutation = useMutation({
     mutationFn: (data: ChantingLogCreate) => addChantingLog(activity.id, data),
     onSuccess: () => { toast.success("Rounds recorded."); invalidateQueries(); },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ slot, data }: { slot: string, data: ChantingLogUpdate }) => updateChantingLog(activity.id, slot, data),
     onSuccess: () => { toast.success("Updated."); invalidateQueries(); },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (slot: string) => deleteChantingLog(activity.id, slot),
     onSuccess: () => { toast.success("Deleted."); invalidateQueries(); },
-    onError: (error: Error) => toast.error(error.message),
   });
 
   const handleOpenDialog = (slot: ChantingSlot) => {
@@ -129,30 +126,39 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
       </div>
 
       <Dialog open={!!selectedSlot} onOpenChange={() => setSelectedSlot(null)}>
-        <DialogContent className="sm:max-w-[400px] p-8 rounded-[40px] border-none shadow-2xl">
+        <DialogContent className="sm:max-w-[450px] p-6 sm:p-10 rounded-[32px] sm:rounded-[40px] border-none shadow-2xl overflow-hidden">
           <DialogHeader className="mb-6">
             <DialogTitle className="text-center text-2xl font-black tracking-tight">Daily Chanting</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-12">
+          <div className="space-y-10 py-4">
             <ScrollPicker label="Rounds Chanted" min={0} max={64} value={tempRounds} onChange={setTempRounds} />
             
-            <div className="space-y-4">
-                <div className="flex justify-between px-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                    <span>Average</span>
+            <div className="space-y-4 px-2">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                    <span>Poor</span>
                     <span>Excellent</span>
                 </div>
                 <ScrollPicker label="Chanting Quality" min={1} max={10} value={tempRating} onChange={setTempRating} />
             </div>
           </div>
 
-          <DialogFooter className="mt-10 flex-row gap-3">
+          <DialogFooter className="mt-8 flex flex-row gap-3 sm:gap-4">
             {activity.chanting_logs.some(l => l.slot === selectedSlot) && (
-                <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(selectedSlot!)}>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-14 w-14 rounded-2xl text-red-500 hover:bg-red-50 hover:text-red-600 shrink-0" 
+                    onClick={() => deleteMutation.mutate(selectedSlot!)}
+                >
                     <Trash2 className="h-6 w-6" />
                 </Button>
             )}
-            <Button className="flex-1 h-14 rounded-2xl text-lg font-bold shadow-lg" onClick={handleSave} disabled={addMutation.isPending || updateMutation.isPending}>
+            <Button 
+                className="flex-1 h-14 rounded-2xl text-lg font-bold shadow-lg" 
+                onClick={handleSave} 
+                disabled={addMutation.isPending || updateMutation.isPending}
+            >
               {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="animate-spin h-5 w-5" /> : "Save Entry"}
             </Button>
           </DialogFooter>

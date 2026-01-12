@@ -27,12 +27,13 @@ import { Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { BookLogCreate, BookLogResponse, BookLogUpdate } from "@/types/sadhana";
 import { addBookLog, updateBookLog } from "@/utils/api";
+import { Slider } from "@/components/ui/slider";
 
 const formSchema = z.object({
   name: z.string().min(1, "Book name is required"),
   reading_time: z.preprocess(
     (val) => (val === "" ? 0 : Number(val)),
-    z.number().int().min(1, "Reading time must be at least 1 minute").max(1440, "Max 1440 minutes (24 hours)"),
+    z.number().int().min(1, "At least 1 minute").max(1440, "Max 24 hours"),
   ),
   chapter_name: z.string().optional().or(z.literal('')),
 });
@@ -76,29 +77,29 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
         chapter_name: "",
       });
     }
-  }, [logToEdit, form]);
+  }, [logToEdit, form, isOpen]);
 
   const addMutation = useMutation({
     mutationFn: (data: BookLogCreate) => addBookLog(activityId, data),
     onSuccess: () => {
-      toast.success("Book log added successfully!");
+      toast.success("Book log added!");
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error("Failed to add book log", { description: error.message });
+      toast.error("Failed to add", { description: error.message });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: BookLogUpdate) => updateBookLog(activityId, logToEdit!.name, data),
     onSuccess: () => {
-      toast.success("Book log updated successfully!");
+      toast.success("Book log updated!");
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error("Failed to update book log", { description: error.message });
+      toast.error("Failed to update", { description: error.message });
     },
   });
 
@@ -116,7 +117,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
     }
   };
 
-  const isPending = addMutation.isPending || updateMutation.isPending;
+  const readingTime = form.watch("reading_time");
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -124,64 +125,62 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            {isEdit ? "Edit Book Log" : "Add Book Reading"}
+            {isEdit ? "Edit Reading Record" : "New Reading Entry"}
           </DialogTitle>
-          <DialogDescription>
-            Record the book you read and the time spent.
-          </DialogDescription>
+          <DialogDescription>Record your study time and progress.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Book Name <span className="text-red-500">*</span></FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g., Bhagavad Gita As It Is" />
-                  </FormControl>
+                  <FormLabel className="font-bold">Book Title *</FormLabel>
+                  <FormControl><Input {...field} placeholder="e.g., Srimad Bhagavatam" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="reading_time"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reading Time (Minutes) <span className="text-red-500">*</span></FormLabel>
+                <FormItem className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <FormLabel className="font-bold">Time: {readingTime} Minutes</FormLabel>
+                  </div>
                   <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
-                      min="1"
-                      max="1440"
+                    <Slider
+                      value={[field.value]}
+                      min={1}
+                      max={120}
+                      step={5}
+                      onValueChange={(val) => field.onChange(val[0])}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="chapter_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chapter/Section (Optional)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g., Chapter 1: Observing the Armies" />
-                  </FormControl>
+                  <FormLabel className="font-bold">Chapter / Verse (Optional)</FormLabel>
+                  <FormControl><Input {...field} placeholder="e.g. Canto 1, Chapter 2" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             <DialogFooter>
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isEdit ? "Save Changes" : "Add Log"}
+              <Button type="submit" className="w-full h-12 text-lg" disabled={addMutation.isPending || updateMutation.isPending}>
+                {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isEdit ? "Update Log" : "Save Log"}
               </Button>
             </DialogFooter>
           </form>

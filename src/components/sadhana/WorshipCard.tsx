@@ -4,7 +4,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Moon, Sunrise, Check, X, Utensils, Droplet, Heart, Zap } from "lucide-react";
 import { ActivityLogResponse, ActivityLogUpdate } from "@/types/sadhana";
-import { format, parseISO, setHours, setMinutes, isSameDay } from "date-fns";
+import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ interface WorshipCardProps {
 
 const RegulativePrinciples = [
   { key: 'no_meat', label: 'No Meat', icon: Utensils },
-  { key: 'no_intoxication', label: 'No Intoxication', icon: Droplet },
+  { key: 'no_intoxication', label: 'No Intox', icon: Droplet },
   { key: 'no_illicit_sex', label: 'No Illicit Sex', icon: Heart },
   { key: 'no_gambling', label: 'No Gambling', icon: Zap },
   { key: 'only_prasadam', label: 'Only Prasadam', icon: Check },
@@ -40,7 +40,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
     mutationFn: (data: ActivityLogUpdate) => updateActivityLog(activity.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activityLog", activity.today_date] });
-      toast.success("Activity updated.");
+      toast.success("Schedule updated.");
     },
     onError: (error: Error) => {
       toast.error("Update failed", { description: error.message });
@@ -52,13 +52,6 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
 
     const [hours, minutes] = timeString.split(':').map(Number);
     let newDateTime = setMinutes(setHours(parseISO(activity.today_date), hours), minutes);
-
-    // Handle sleep_at potentially being on the previous day
-    if (field === 'sleep_at' && hours >= 12 && hours <= 23) {
-        // If sleep time is in the evening (12:00 PM to 11:59 PM), it belongs to the previous day relative to the log date.
-        // We assume the backend handles this time shift correctly based on the log date.
-        // For frontend display and update, we just ensure the time component is correct.
-    }
     
     const payload: ActivityLogUpdate = {
         [field]: newDateTime.toISOString(),
@@ -69,10 +62,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   const handleRegulativeToggle = (key: keyof ActivityLogUpdate) => {
     if (readOnly || updateMutation.isPending) return;
     const currentValue = activity[key as keyof ActivityLogResponse];
-    const payload: ActivityLogUpdate = {
-        [key]: !currentValue,
-    };
-    updateMutation.mutate(payload);
+    updateMutation.mutate({ [key]: !currentValue });
   };
 
   const renderTimeInput = (field: 'sleep_at' | 'wakeup_at', timeValue: string, tempValue: string, setTempValue: (v: string) => void, icon: React.ElementType) => {
@@ -81,30 +71,30 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="flex flex-col h-20 w-full p-2">
-            <div className="flex items-center gap-2 text-primary">
+          <Button variant="outline" className="flex flex-col h-24 w-full p-4 border-primary/20 shadow-sm">
+            <div className="flex items-center gap-2 text-primary/70 mb-1">
               {React.createElement(icon, { className: "h-5 w-5" })}
-              <span className="text-xs font-medium">{field === 'sleep_at' ? 'Sleep At' : 'Wakeup At'}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">{field === 'sleep_at' ? 'Sleep' : 'Wakeup'}</span>
             </div>
-            <span className="text-xl font-bold mt-1">{time}</span>
+            <span className="text-2xl font-black text-primary">{time}</span>
           </Button>
         </PopoverTrigger>
         {!readOnly && (
-          <PopoverContent className="w-auto p-3">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Set Time (24h format)</p>
+          <PopoverContent className="w-auto p-4" align="center">
+            <div className="space-y-4">
+              <p className="text-sm font-bold text-center">Set {field === 'sleep_at' ? 'Sleep' : 'Wakeup'} Time</p>
               <Input
                 type="time"
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
+                className="text-lg h-12"
               />
               <Button 
-                size="sm" 
                 className="w-full" 
                 onClick={() => handleTimeUpdate(field, tempValue)}
                 disabled={updateMutation.isPending}
               >
-                Save
+                {updateMutation.isPending ? "Updating..." : "Save Time"}
               </Button>
             </div>
           </PopoverContent>
@@ -114,54 +104,51 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-xl font-semibold flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary" />
-          Daily Schedule & Principles
+    <Card className="shadow-sm border-primary/10 overflow-hidden">
+      <CardHeader className="pb-3 bg-primary/5">
+        <CardTitle className="text-xl font-semibold flex items-center gap-2 text-primary">
+          <Clock className="h-6 w-6" />
+          Schedule & Vows
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Sleep/Wake Times */}
-        <div className="grid grid-cols-2 gap-4">
+      <CardContent className="p-4 space-y-6">
+        <div className="grid grid-cols-2 gap-3">
           {renderTimeInput('sleep_at', activity.sleep_at, tempSleepTime, setTempSleepTime, Moon)}
           {renderTimeInput('wakeup_at', activity.wakeup_at, tempWakeupTime, setTempWakeupTime, Sunrise)}
         </div>
 
-        {/* Regulative Principles */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">Regulative Principles</h3>
-          <div className="grid grid-cols-3 gap-3">
-            {RegulativePrinciples.map(({ key, label, icon: Icon }) => {
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Regulative Principles</h3>
+            <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">DAILY VOWS</span>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {RegulativePrinciples.map(({ key, icon: Icon }) => {
               const isFollowed = activity[key as keyof ActivityLogResponse] as boolean;
               return (
                 <Button
                   key={key}
                   variant="outline"
                   className={cn(
-                    "flex flex-col h-24 p-2 transition-colors",
+                    "flex flex-col h-20 p-2 transition-all rounded-xl",
                     isFollowed
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                      : "border-red-500 bg-red-50 dark:bg-red-950/20",
+                      ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-950/20"
+                      : "border-red-500 bg-red-50 text-red-700 dark:bg-red-950/20",
                     readOnly && "opacity-70 cursor-default"
                   )}
                   onClick={() => handleRegulativeToggle(key as keyof ActivityLogUpdate)}
                   disabled={readOnly || updateMutation.isPending}
                 >
-                  <div className="flex items-center justify-center h-8 w-8 rounded-full mb-1">
-                    <Icon className={cn("h-5 w-5", isFollowed ? "text-green-600" : "text-red-600")} />
-                  </div>
-                  <span className="text-xs font-medium text-center">{label}</span>
-                  <div className="mt-1">
-                    {isFollowed ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <X className="h-4 w-4 text-red-600" />
-                    )}
+                  <Icon className="h-6 w-6 mb-1" />
+                  <div className="mt-auto">
+                    {isFollowed ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
                   </div>
                 </Button>
               );
             })}
+          </div>
+          <div className="flex justify-between text-[10px] text-muted-foreground font-medium px-1">
+             {RegulativePrinciples.map(p => <span key={p.key} className="text-center flex-1">{p.label}</span>)}
           </div>
         </div>
       </CardContent>

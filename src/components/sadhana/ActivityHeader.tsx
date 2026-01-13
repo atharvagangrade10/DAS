@@ -5,6 +5,12 @@ import { format, subDays, addDays, isSameDay, eachDayOfInterval, isToday, startO
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 interface ActivityHeaderProps {
   selectedDate: Date;
@@ -24,9 +30,23 @@ const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateCha
     <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pt-4 pb-6 border-b">
       <div className="flex items-center justify-between px-6 mb-6">
         <h2 className="text-2xl font-black text-primary tracking-tight">Sadhana Log</h2>
-        <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
-            <CalendarIcon className="h-5 w-5" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
+                <CalendarIcon className="h-5 w-5" />
+                <span className="sr-only">Open calendar</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && onDateChange(date)}
+              disabled={(date) => date > startOfDay(new Date())}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="flex items-center gap-2 px-4">

@@ -18,6 +18,8 @@ interface ActivityHeaderProps {
 }
 
 const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateChange }) => {
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+  
   const weekDays = eachDayOfInterval({
     start: subDays(selectedDate, 3),
     end: addDays(selectedDate, 3),
@@ -26,11 +28,18 @@ const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateCha
   const handlePrevDay = () => onDateChange(subDays(selectedDate, 1));
   const handleNextDay = () => onDateChange(addDays(selectedDate, 1));
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      onDateChange(date);
+      setIsCalendarOpen(false);
+    }
+  };
+
   return (
     <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pt-4 pb-6 border-b">
       <div className="flex items-center justify-between px-6 mb-6">
         <h2 className="text-2xl font-black text-primary tracking-tight">Sadhana Log</h2>
-        <Popover>
+        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
                 <CalendarIcon className="h-5 w-5" />
@@ -41,7 +50,7 @@ const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateCha
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={(date) => date && onDateChange(date)}
+              onSelect={handleDateSelect}
               disabled={(date) => date > startOfDay(new Date())}
               initialFocus
             />

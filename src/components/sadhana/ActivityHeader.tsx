@@ -38,7 +38,7 @@ const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateCha
   return (
     <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm pt-4 pb-6 border-b">
       <div className="flex items-center justify-between px-6 mb-6">
-        <h2 className="text-2xl font-black text-primary tracking-tight">Sadhana Log</h2>
+        <h2 className="text-2xl font-black text-primary tracking-tight">My Sadhana</h2>
         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="icon" className="rounded-full h-10 w-10">

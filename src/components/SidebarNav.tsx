@@ -68,7 +68,7 @@ const SidebarNav = () => {
       <NavLink to="/" onClick={handleLinkClick}>Home</NavLink>
       <NavLink to="/sadhana" onClick={handleLinkClick}>
         <Zap className="mr-2 h-5 w-5" />
-        Sadhana Log
+        My Sadhana
       </NavLink>
       <NavLink to="/payments" onClick={handleLinkClick}>Payment History</NavLink>
 

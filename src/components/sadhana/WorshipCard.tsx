@@ -4,7 +4,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Moon, Sunrise, Loader2, CheckCircle2 } from "lucide-react";
 import { ActivityLogResponse, ActivityLogUpdate } from "@/types/sadhana";
-import { format, parseISO, setHours, setMinutes, isValid } from "date-fns";
+import { format, parseISO, setHours, setMinutes, isValid, subDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -46,10 +46,16 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
 
   const handleOpenPicker = (type: 'sleep' | 'wakeup') => {
     if (readOnly) return;
-    const time = parseISO(type === 'sleep' ? activity.sleep_at : activity.wakeup_at);
+    const timeStr = type === 'sleep' ? activity.sleep_at : activity.wakeup_at;
+    const time = parseISO(timeStr);
+    
     if (isValid(time)) {
         setTempHour(time.getHours());
         setTempMin(time.getMinutes());
+    } else {
+        // Fallbacks if date is weird
+        setTempHour(type === 'sleep' ? 22 : 4);
+        setTempMin(0);
     }
     setOpenPicker(type);
   };
@@ -57,15 +63,32 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   const handleSaveTime = () => {
     if (!openPicker) return;
     
-    // Get the base date from the existing activity record to preserve correct day/month/year
-    const baseDate = parseISO(openPicker === 'sleep' ? activity.sleep_at : activity.wakeup_at);
-    if (!isValid(baseDate)) {
-        toast.error("Invalid base date. Cannot update time.");
-        return;
+    // We use the logical date from the activity
+    const today = parseISO(activity.today_date);
+    let baseDate = today;
+
+    if (openPicker === 'sleep') {
+        // If they slept late (e.g., 6 PM to 11:59 PM), it belongs to "Yesterday" logically
+        // If they slept very late (e.g., 12 AM to 6 AM), it belongs to "Today"
+        if (tempHour >= 12) {
+            baseDate = subDays(today, 1);
+        }
     }
 
     const updatedDate = setMinutes(setHours(baseDate, tempHour), tempMin);
-    updateMutation.mutate({ [openPicker === 'sleep' ? 'sleep_at' : 'wakeup_at']: updatedDate.toISOString() });
+    
+    // Use format to send an ISO-like string without Z to ensure it's treated as local time
+    // This avoids the common 'different time showing after save' timezone bug.
+    const dateString = format(updatedDate, "yyyy-MM-dd'T'HH:mm:ss");
+    
+    updateMutation.mutate({ 
+        [openPicker === 'sleep' ? 'sleep_at' : 'wakeup_at']: dateString 
+    });
+  };
+
+  const formatDisplayTime = (isoString: string) => {
+    const date = parseISO(isoString);
+    return isValid(date) ? format(date, 'hh:mm a') : "--:--";
   };
 
   return (
@@ -81,7 +104,9 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-primary">{format(parseISO(activity.sleep_at), 'hh:mm a')}</div>
+            <div className="text-3xl font-black text-primary">
+                {formatDisplayTime(activity.sleep_at)}
+            </div>
           </CardContent>
         </Card>
 
@@ -95,7 +120,9 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-primary">{format(parseISO(activity.wakeup_at), 'hh:mm a')}</div>
+            <div className="text-3xl font-black text-primary">
+                {formatDisplayTime(activity.wakeup_at)}
+            </div>
           </CardContent>
         </Card>
       </div>

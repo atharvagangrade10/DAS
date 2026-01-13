@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Clock } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TimeStepperProps {
@@ -31,20 +31,47 @@ const TimeStepper: React.FC<TimeStepperProps> = ({ hour, minute, onChange }) => 
     onChange(newHour, minute);
   };
 
+  const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val)) return;
+    
+    // Clamp 1-12
+    if (val < 1) val = 1;
+    if (val > 12) val = 12;
+
+    let new24Hour = val % 12;
+    if (isPM) new24Hour += 12;
+    onChange(new24Hour, minute);
+  };
+
+  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val)) return;
+
+    if (val < 0) val = 0;
+    if (val > 59) val = 59;
+    onChange(hour, val);
+  };
+
   return (
     <div className="space-y-6 w-full py-2">
       <div className="flex items-center justify-around gap-2">
         {/* Hour Section */}
         <div className="flex flex-col items-center gap-2">
-          <Button variant="outline" size="icon" className="h-12 w-12 rounded-full" onClick={() => adjustHour(1)}>
-            <Plus className="h-5 w-5" />
+          <Button variant="outline" size="icon" className="h-10 w-10 rounded-full" onClick={() => adjustHour(1)}>
+            <Plus className="h-4 w-4" />
           </Button>
           <div className="flex flex-col items-center">
-            <span className="text-4xl font-black tabular-nums">{displayHour.toString().padStart(2, '0')}</span>
+            <input 
+              type="number"
+              className="w-16 bg-transparent text-4xl font-black tabular-nums text-center border-none focus:outline-none focus:ring-0"
+              value={displayHour.toString().padStart(2, '0')}
+              onChange={handleHourChange}
+            />
             <span className="text-[10px] font-bold uppercase text-muted-foreground">Hour</span>
           </div>
-          <Button variant="outline" size="icon" className="h-12 w-12 rounded-full" onClick={() => adjustHour(-1)}>
-            <Minus className="h-5 w-5" />
+          <Button variant="outline" size="icon" className="h-10 w-10 rounded-full" onClick={() => adjustHour(-1)}>
+            <Minus className="h-4 w-4" />
           </Button>
         </div>
 
@@ -52,15 +79,20 @@ const TimeStepper: React.FC<TimeStepperProps> = ({ hour, minute, onChange }) => 
 
         {/* Minute Section */}
         <div className="flex flex-col items-center gap-2">
-          <Button variant="outline" size="icon" className="h-12 w-12 rounded-full" onClick={() => adjustMinute(5)}>
-            <Plus className="h-5 w-5" />
+          <Button variant="outline" size="icon" className="h-10 w-10 rounded-full" onClick={() => adjustMinute(1)}>
+            <Plus className="h-4 w-4" />
           </Button>
           <div className="flex flex-col items-center">
-            <span className="text-4xl font-black tabular-nums">{minute.toString().padStart(2, '0')}</span>
+            <input 
+              type="number"
+              className="w-16 bg-transparent text-4xl font-black tabular-nums text-center border-none focus:outline-none focus:ring-0"
+              value={minute.toString().padStart(2, '0')}
+              onChange={handleMinChange}
+            />
             <span className="text-[10px] font-bold uppercase text-muted-foreground">Min</span>
           </div>
-          <Button variant="outline" size="icon" className="h-12 w-12 rounded-full" onClick={() => adjustMinute(-5)}>
-            <Minus className="h-5 w-5" />
+          <Button variant="outline" size="icon" className="h-10 w-10 rounded-full" onClick={() => adjustMinute(-1)}>
+            <Minus className="h-4 w-4" />
           </Button>
         </div>
 
@@ -68,14 +100,14 @@ const TimeStepper: React.FC<TimeStepperProps> = ({ hour, minute, onChange }) => 
         <div className="flex flex-col gap-2 mb-2">
             <Button 
                 variant={!isPM ? "default" : "outline"} 
-                className={cn("h-12 w-14 font-black rounded-xl", !isPM && "shadow-lg")}
+                className={cn("h-10 w-14 font-black rounded-xl", !isPM && "shadow-lg")}
                 onClick={() => isPM && toggleAMPM()}
             >
                 AM
             </Button>
             <Button 
                 variant={isPM ? "default" : "outline"} 
-                className={cn("h-12 w-14 font-black rounded-xl", isPM && "shadow-lg")}
+                className={cn("h-10 w-14 font-black rounded-xl", isPM && "shadow-lg")}
                 onClick={() => !isPM && toggleAMPM()}
             >
                 PM

@@ -26,6 +26,13 @@ const DurationPicker: React.FC<DurationPickerProps> = ({ value, onChange, label 
     onChange(newValue);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value);
+    if (!isNaN(val)) {
+        onChange(Math.max(0, val));
+    }
+  };
+
   return (
     <div className="space-y-4 w-full">
       {label && <p className="text-sm font-medium text-muted-foreground">{label}</p>}
@@ -36,7 +43,7 @@ const DurationPicker: React.FC<DurationPickerProps> = ({ value, onChange, label 
           variant="ghost" 
           size="icon" 
           className="h-12 w-12 rounded-xl"
-          onClick={() => adjust(-5)}
+          onClick={() => adjust(-1)}
           type="button"
         >
           <Minus className="h-6 w-6" />
@@ -45,7 +52,15 @@ const DurationPicker: React.FC<DurationPickerProps> = ({ value, onChange, label 
         <div className="flex flex-col items-center flex-1">
             <div className="flex items-center gap-2 text-primary">
                 <Clock className="h-4 w-4 opacity-50" />
-                <span className="text-2xl font-black tracking-tight">{formatDisplay(value)}</span>
+                <div className="flex items-baseline">
+                    <input 
+                      type="number"
+                      className="w-16 bg-transparent text-2xl font-black tracking-tight text-center border-none focus:outline-none focus:ring-0"
+                      value={value}
+                      onChange={handleInputChange}
+                    />
+                    <span className="text-xs font-bold uppercase text-muted-foreground/60 ml-[-4px]">mins</span>
+                </div>
             </div>
             <span className="text-[10px] uppercase font-bold text-muted-foreground/60">Total Duration</span>
         </div>
@@ -54,7 +69,7 @@ const DurationPicker: React.FC<DurationPickerProps> = ({ value, onChange, label 
           variant="ghost" 
           size="icon" 
           className="h-12 w-12 rounded-xl"
-          onClick={() => adjust(5)}
+          onClick={() => adjust(1)}
           type="button"
         >
           <Plus className="h-6 w-6" />

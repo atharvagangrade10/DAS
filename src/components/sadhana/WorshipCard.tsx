@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Moon, Sunrise, Loader2, CheckCircle2, Church } from "lucide-react";
+import { Moon, Sunrise, Loader2, CheckCircle2, Sun } from "lucide-react";
 import { ActivityLogResponse, ActivityLogUpdate } from "@/types/sadhana";
 import { format, parseISO, setHours, setMinutes, isValid, subDays } from "date-fns";
 import { Button } from "@/components/ui/button";

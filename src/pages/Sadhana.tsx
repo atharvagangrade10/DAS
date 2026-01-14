@@ -13,6 +13,7 @@ import WorshipCard from "@/components/sadhana/WorshipCard";
 import ChantingSection from "@/components/sadhana/ChantingSection";
 import AssociationSection from "@/components/sadhana/AssociationSection";
 import BookReadingSection from "@/components/sadhana/BookReadingSection";
+import NotesSection from "@/components/sadhana/NotesSection";
 
 const Sadhana = () => {
   const { user } = useAuth();
@@ -56,9 +57,10 @@ const Sadhana = () => {
         no_illicit_sex: true,
         no_gambling: true,
         only_prasadam: true,
+        notes_of_day: null,
       });
     }
-  }, [user?.user_id, isLoading, activityLog, error, dateStr, isFuture, createMutation]);
+  }, [user?.user_id, isLoading, activityLog, error, dateStr, isFuture, createMutation, selectedDate]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -82,6 +84,7 @@ const Sadhana = () => {
               <ChantingSection activity={activityLog} readOnly={isFuture} />
               <AssociationSection activity={activityLog} readOnly={isFuture} />
               <BookReadingSection activity={activityLog} readOnly={isFuture} />
+              <NotesSection activity={activityLog} readOnly={isFuture} />
               
               <div className="pt-10 text-center">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-30">Your daily journey continues</p>

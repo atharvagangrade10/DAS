@@ -56,6 +56,7 @@ export interface ActivityLogCreate {
   no_illicit_sex: boolean;
   no_gambling: boolean;
   only_prasadam: boolean;
+  notes_of_day?: string | null;
 }
 
 // -------------------------------------------------
@@ -88,6 +89,7 @@ export interface ActivityLogUpdate {
   no_illicit_sex?: boolean;
   no_gambling?: boolean;
   only_prasadam?: boolean;
+  notes_of_day?: string | null;
 }
 
 // -------------------------------------------------
@@ -112,6 +114,7 @@ export interface ActivityLogResponse {
   no_illicit_sex: boolean;
   no_gambling: boolean;
   only_prasadam: boolean;
+  notes_of_day: string | null;
 
   chanting_logs: ChantingLogResponse[];
   book_reading_logs: BookLogResponse[];

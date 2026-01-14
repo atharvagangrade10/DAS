@@ -143,7 +143,8 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
                 {formatDisplayTime(activity.wakeup_at)}
             </div>
           </CardContent>
-        </div>
+        </Card>
+      </div>
 
       <Card className="border-none shadow-lg">
         <CardHeader className="pb-4 border-b">

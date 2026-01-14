@@ -143,16 +143,15 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
                 {formatDisplayTime(activity.wakeup_at)}
             </div>
           </CardContent>
-        </Card>
-      </div>
+        </div>
 
       <Card className="border-none shadow-lg">
         <CardHeader className="pb-4 border-b">
           <CardTitle className="text-lg font-bold flex items-center gap-2">
             <Church className="h-5 w-5 text-blue-600" />
-            Temple Programs
+            Arti
           </CardTitle>
-          <CardDescription>Attendance at temple services.</CardDescription>
+          <CardDescription>Daily arti attendance.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-0 p-0">
           {TemplePrograms.map(({ key, label }, idx) => (

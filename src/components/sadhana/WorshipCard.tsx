@@ -149,7 +149,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
       <Card className="border-none shadow-lg">
         <CardHeader className="pb-4 border-b">
           <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <Church className="h-5 w-5 text-blue-600" />
+            <Sun className="h-5 w-5 text-blue-600" />
             Arti
           </CardTitle>
           <CardDescription>Daily arti attendance.</CardDescription>

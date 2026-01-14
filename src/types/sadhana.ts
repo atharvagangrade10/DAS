@@ -57,6 +57,13 @@ export interface ActivityLogCreate {
   no_gambling: boolean;
   only_prasadam: boolean;
   notes_of_day?: string | null;
+
+  mangla_attended: boolean;
+  narshima_attended: boolean;
+  tulsi_arti_attended: boolean;
+  darshan_arti_attended: boolean;
+  guru_puja_attended: boolean;
+  sandhya_arti_attended: boolean;
 }
 
 // -------------------------------------------------
@@ -90,6 +97,13 @@ export interface ActivityLogUpdate {
   no_gambling?: boolean;
   only_prasadam?: boolean;
   notes_of_day?: string | null;
+
+  mangla_attended?: boolean;
+  narshima_attended?: boolean;
+  tulsi_arti_attended?: boolean;
+  darshan_arti_attended?: boolean;
+  guru_puja_attended?: boolean;
+  sandhya_arti_attended?: boolean;
 }
 
 // -------------------------------------------------
@@ -115,6 +129,13 @@ export interface ActivityLogResponse {
   no_gambling: boolean;
   only_prasadam: boolean;
   notes_of_day: string | null;
+
+  mangla_attended: boolean;
+  narshima_attended: boolean;
+  tulsi_arti_attended: boolean;
+  darshan_arti_attended: boolean;
+  guru_puja_attended: boolean;
+  sandhya_arti_attended: boolean;
 
   chanting_logs: ChantingLogResponse[];
   book_reading_logs: BookLogResponse[];

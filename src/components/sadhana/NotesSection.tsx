@@ -34,6 +34,12 @@ const NotesSection: React.FC<NotesSectionProps> = ({ activity, readOnly }) => {
       no_illicit_sex: activity.no_illicit_sex,
       no_gambling: activity.no_gambling,
       only_prasadam: activity.only_prasadam,
+      mangla_attended: activity.mangla_attended,
+      narshima_attended: activity.narshima_attended,
+      tulsi_arti_attended: activity.tulsi_arti_attended,
+      darshan_arti_attended: activity.darshan_arti_attended,
+      guru_puja_attended: activity.guru_puja_attended,
+      sandhya_arti_attended: activity.sandhya_arti_attended,
       notes_of_day: newNotes 
     }),
     onSuccess: () => {

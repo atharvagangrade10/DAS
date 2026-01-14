@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Moon, Sunrise, Loader2, CheckCircle2 } from "lucide-react";
+import { Moon, Sunrise, Loader2, CheckCircle2, Church } from "lucide-react";
 import { ActivityLogResponse, ActivityLogUpdate } from "@/types/sadhana";
 import { format, parseISO, setHours, setMinutes, isValid, subDays } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,15 @@ const RegulativePrinciples = [
   { key: 'only_prasadam', label: 'Only prasadam' },
 ] as const;
 
+const TemplePrograms = [
+  { key: 'mangla_attended', label: 'Mangala Arti' },
+  { key: 'narshima_attended', label: 'Narasimha Arti' },
+  { key: 'tulsi_arti_attended', label: 'Tulsi Arti' },
+  { key: 'darshan_arti_attended', label: 'Darshan Arti' },
+  { key: 'guru_puja_attended', label: 'Guru Puja' },
+  { key: 'sandhya_arti_attended', label: 'Sandhya Arti' },
+] as const;
+
 const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   const queryClient = useQueryClient();
   const [openPicker, setOpenPicker] = React.useState<'sleep' | 'wakeup' | null>(null);
@@ -45,6 +54,12 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
         no_gambling: activity.no_gambling,
         only_prasadam: activity.only_prasadam,
         notes_of_day: activity.notes_of_day,
+        mangla_attended: activity.mangla_attended,
+        narshima_attended: activity.narshima_attended,
+        tulsi_arti_attended: activity.tulsi_arti_attended,
+        darshan_arti_attended: activity.darshan_arti_attended,
+        guru_puja_attended: activity.guru_puja_attended,
+        sandhya_arti_attended: activity.sandhya_arti_attended,
         ...data
     }),
     onSuccess: () => {
@@ -130,6 +145,38 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-none shadow-lg">
+        <CardHeader className="pb-4 border-b">
+          <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <Church className="h-5 w-5 text-blue-600" />
+            Temple Programs
+          </CardTitle>
+          <CardDescription>Attendance at temple services.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-0 p-0">
+          {TemplePrograms.map(({ key, label }, idx) => (
+            <div 
+                key={key} 
+                className={cn(
+                    "flex items-center justify-between px-6 py-4 transition-colors",
+                    idx % 2 === 0 ? "bg-muted/30" : "bg-white"
+                )}
+            >
+              <Label htmlFor={key} className="text-base font-bold text-primary/80">
+                {label}
+              </Label>
+              <Switch 
+                id={key}
+                checked={activity[key as keyof ActivityLogResponse] as boolean}
+                onCheckedChange={(checked) => !readOnly && updateMutation.mutate({ [key]: checked })}
+                disabled={readOnly || updateMutation.isPending}
+                className="scale-110"
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <Card className="border-none shadow-lg">
         <CardHeader className="pb-4 border-b">

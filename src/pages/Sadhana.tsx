@@ -2,9 +2,8 @@
 
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfDay, isSameDay, subDays, parseISO, setHours, setMinutes } from "date-fns";
+import { format, startOfDay, subDays, setHours, setMinutes } from "date-fns";
 import { Loader2, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { ActivityLogResponse, ActivityLogCreate } from "@/types/sadhana";
 import { fetchActivityLogByDate, createActivityLog } from "@/utils/api";
@@ -58,6 +57,12 @@ const Sadhana = () => {
         no_gambling: true,
         only_prasadam: true,
         notes_of_day: null,
+        mangla_attended: false,
+        narshima_attended: false,
+        tulsi_arti_attended: false,
+        darshan_arti_attended: false,
+        guru_puja_attended: false,
+        sandhya_arti_attended: false,
       });
     }
   }, [user?.user_id, isLoading, activityLog, error, dateStr, isFuture, createMutation, selectedDate]);

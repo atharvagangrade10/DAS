@@ -267,7 +267,7 @@ export const uploadPhoto = async (file: File, participantId: string): Promise<st
   return data.link;
 };
 
-// --- Sadhana Activity Endpoints (Updated to match path parameters) ---
+// --- Sadhana Activity Endpoints ---
 
 export const fetchActivityLogByDate = async (participantId: string, date: string): Promise<ActivityLogResponse> => {
   return fetchAuthenticated(`${API_BASE_URL}/activities/date/${participantId}?date=${date}`);

@@ -35,11 +35,22 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   const [tempMin, setTempMin] = React.useState(0);
 
   const updateMutation = useMutation({
-    mutationFn: (data: ActivityLogUpdate) => updateActivityLog(activity.id, data),
+    mutationFn: (data: ActivityLogUpdate) => updateActivityLog(activity.id, {
+        // Spread existing activity to satisfy strict backend models
+        sleep_at: activity.sleep_at,
+        wakeup_at: activity.wakeup_at,
+        no_meat: activity.no_meat,
+        no_intoxication: activity.no_intoxication,
+        no_illicit_sex: activity.no_illicit_sex,
+        no_gambling: activity.no_gambling,
+        only_prasadam: activity.only_prasadam,
+        notes_of_day: activity.notes_of_day,
+        ...data
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
       setOpenPicker(null);
-      toast.success("Time updated successfully.");
+      toast.success("Updated successfully.");
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -53,7 +64,6 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
         setTempHour(time.getHours());
         setTempMin(time.getMinutes());
     } else {
-        // Fallbacks if date is weird
         setTempHour(type === 'sleep' ? 22 : 4);
         setTempMin(0);
     }
@@ -63,22 +73,16 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   const handleSaveTime = () => {
     if (!openPicker) return;
     
-    // We use the logical date from the activity
     const today = parseISO(activity.today_date);
     let baseDate = today;
 
     if (openPicker === 'sleep') {
-        // If they slept late (e.g., 6 PM to 11:59 PM), it belongs to "Yesterday" logically
-        // If they slept very late (e.g., 12 AM to 6 AM), it belongs to "Today"
         if (tempHour >= 12) {
             baseDate = subDays(today, 1);
         }
     }
 
     const updatedDate = setMinutes(setHours(baseDate, tempHour), tempMin);
-    
-    // Use format to send an ISO-like string without Z to ensure it's treated as local time
-    // This avoids the common 'different time showing after save' timezone bug.
     const dateString = format(updatedDate, "yyyy-MM-dd'T'HH:mm:ss");
     
     updateMutation.mutate({ 

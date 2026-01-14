@@ -25,7 +25,17 @@ const NotesSection: React.FC<NotesSectionProps> = ({ activity, readOnly }) => {
   }, [activity.notes_of_day]);
 
   const mutation = useMutation({
-    mutationFn: (newNotes: string) => updateActivityLog(activity.id, { notes_of_day: newNotes }),
+    mutationFn: (newNotes: string) => updateActivityLog(activity.id, { 
+      // Send required fields along with the note to prevent 422 errors
+      sleep_at: activity.sleep_at,
+      wakeup_at: activity.wakeup_at,
+      no_meat: activity.no_meat,
+      no_intoxication: activity.no_intoxication,
+      no_illicit_sex: activity.no_illicit_sex,
+      no_gambling: activity.no_gambling,
+      only_prasadam: activity.only_prasadam,
+      notes_of_day: newNotes 
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
       toast.success("Notes saved.");

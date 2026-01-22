@@ -1,0 +1,547 @@
+{
+    "books": [
+        {
+            "name": "Bhagavad-gita As It Is",
+            "chapters": [
+                "Bg: Foreword",
+                "Bg: Preface",
+                "Bg: introduction",
+                "Bg 1: Observing the Armies on the Battlefield of Kuruksetra",
+                "Bg 2: Contents of the Gita Summarized",
+                "Bg 3: Karma-yoga",
+                "Bg 4: Transcendental Knowledge",
+                "Bg 5: Karma-yoga-Action in Krsna Consciousness",
+                "Bg 6: Sankhya-yoga",
+                "Bg 7: Knowledge of the Absolute",
+                "Bg 8: Attaining the Supreme",
+                "Bg 9: The Most Confidential Knowledge",
+                "Bg 10: The Opulence of the Absolute",
+                "Bg 11: The Universal Form",
+                "Bg 12: Devotional Service",
+                "Bg 13: Nature, the Enjoyer, and Consciousness",
+                "Bg 14: The Three Modes of Material Nature",
+                "Bg 15: The Yoga of the Supreme Person",
+                "Bg 16: The Divine and Demoniac Natures",
+                "Bg 17: The Divisions of Faith",
+                "Bg 18: Conclusion-The Perfection of Renunciation"
+            ]
+        },
+        {
+            "name": "Srimad-Bhagavatam",
+            "chapters": [
+                "Canto 1:\"Creation\"",
+                "Canto 2: \"The Cosmic Manifestation\"",
+                "Canto 3: \"The Status Quo\"",
+                "Canto 4: \"The Creation of the Fourth Order\"",
+                "Canto 5: \"The Creative Impetus\"",
+                "Canto 6: \"Prescribed Duties for Mankind\"",
+                "Canto 7: \"The Science of God\"",
+                "Canto 8: \"Withdrawal of the Cosmic Creations\"",
+                "Canto 9: \"Liberation\"",
+                "Canto 10: \"The Summum Bonum\""
+            ]
+        },
+        {
+            "name": "Sri Caitanya-caritamrta",
+            "chapters": [
+                "Cc. Preface",
+                "Cc. Introduction",
+                "Cc. Adi-lila",
+                "Cc. Madhya-lila",
+                "Cc. Antya-lila"
+            ]
+        },
+        {
+            "name": "Teachings of Lord Caitanya",
+            "chapters": [
+                "TLC Preface",
+                "TLC Prologue",
+                "TLC Mission",
+                "TLC Intoduction",
+                "TLC 1: Teachings to Rupa Gosvami",
+                "TLC 2: Sanatana Gosvami",
+                "TLC 3: Teachings to Sanatana Gosvami",
+                "TLC 4: The Wise Man",
+                "TLC 5: How to Approach God",
+                "TLC 6: His Forms Are One and the Same",
+                "TLC 7: Unlimited Forms of Godhead",
+                "TLC 8: The Avataras",
+                "TLC 9: The Opulences of Krsna",
+                "TLC 10: The Beauty of Krsna",
+                "TLC 11: Service to the Lord",
+                "TLC 12: The Devotee",
+                "TLC 13: Devotional Service in Attachment",
+                "TLC 14: The Ecstasy of the Lord and His Devotees",
+                "TLC 15: Explanation of the Atmarama Verse in Srimad Bhagavatam",
+                "TLC 16: Conclusion of Teachings to Sanatana Gosvami",
+                "TLC 17: Lord Caitanya, the Original Personality of Godhead",
+                "TLC 18: The Conversations with Prakasananda",
+                "TLC 19: Further Talks with Prakasananda",
+                "TLC 20: The Goal of Vedanta Study",
+                "TLC 21: The Mayavadi Philosophers are Converted",
+                "TLC 22: The Srimad Bhagavatam",
+                "TLC 23: Why Study the Vedanta-sutra?",
+                "TLC 24: Talks with Sarvabhauma Bhattacarya",
+                "TLC 25: Personal and Impersonal Realization",
+                "TLC 26: Bhattacarya is Converted",
+                "TLC 27: Lord Caitanya and Ramananda Raya",
+                "TLC 28: Relationship with the Supreme",
+                "TLC 29: Pure Love for Krsna",
+                "TLC 30: The Transcendental Pastimes of Radha and Krsna",
+                "TLC 31: The Supreme Perfection",
+                "TLC 32: Conclusion"
+            ]
+        },
+        {
+            "name": "The Nectar of Devotion",
+            "chapters": [
+                "NoD: Preface",
+                "NoD: Introduction",
+                "NoD 1: Characteristics of Pure Devotional Service",
+                "NoD 2: The First Stages of Devotion",
+                "NoD 3: Eligibility of the Candidate for Accepting Devotional Service",
+                "NoD 4: Devotional Service Surpasses All Liberation",
+                "NoD 5: Purity of Devotional Service",
+                "NoD 6: How to Discharge Devotional Service",
+                "NoD 7: Evidence Regarding Devotional Principles",
+                "NoD 8: Offenses to Be Avoided",
+                "NoD 9: Further Consideration of Devotional Principles",
+                "NoD 10: Techniques of Hearing and Memorizing",
+                "NoD 11: Aspects of Transcendental Service",
+                "NoD 12: Revealed Scriptures",
+                "NoD 13: The Maha-mantra",
+                "NoD 14: Devotional Qualifications",
+                "NoD 15: Spontaneous Devotional Service",
+                "NoD 16: Varieties of Love for Krsna",
+                "NoD 17: Ecstatic Love",
+                "NoD 18: Character of One in Ecstatic Love",
+                "NoD 19: Devotional Service in Love of God",
+                "NoD 20: Transcendental Mellow",
+                "NoD 21: Qualities of Sri Krsna",
+                "NoD 22: Qualities of Krsna Further Explained",
+                "NoD 23: Krsna's Personality",
+                "NoD 24: Further Traits of Sri Krsna",
+                "NoD 25: Devotees of Krsna",
+                "NoD 26: Stimulation for Ecstatic Love",
+                "NoD 27: Symptoms of Ecstatic Love",
+                "NoD 28: Other Ecstatic Symptoms",
+                "NoD 29: Expressions of Love for Krsna",
+                "NoD 30: Further Features of Ecstatic Love for Krsna",
+                "NoD 31: Additional Symptoms",
+                "NoD 32: Symptoms of Continuous Ecstasy",
+                "NoD 33: Conjugal Affection",
+                "NoD 34: The Nectar of Devotion",
+                "NoD 35: Neutral Love of God",
+                "NoD 36: Transcendental Affection (Servitude)",
+                "NoD 37: Impetuses for Krsna's Service",
+                "NoD 38: Indifference and Separation",
+                "NoD 39: Ways of Meeting Krsna",
+                "NoD 40: Reverential Devotion of Sons and Other Subordinates",
+                "NoD 41: Fraternal Devotion",
+                "NoD 42: Fraternal Loving Affairs",
+                "NoD 43: Parenthood",
+                "NoD 44: Devotional Service in Conjugal Love",
+                "NoD 45: Laughing Ecstasy",
+                "NoD 46: Astonishment and Chivalry",
+                "NoD 47: Compassion and Anger",
+                "NoD 48: Dread and Ghastliness",
+                "NoD 49: Mixing of Rasas",
+                "NoD 50: Further Analysis of Mixed Rasas",
+                "NoD 51: Perverted Expression of Mellows"
+            ]
+        },
+        {
+            "name": "The Nectar of Instruction",
+            "chapters": [
+                "NoI Preface",
+                "NoI Texts"
+            ]
+        },
+        {
+            "name": "Easy Journey to Other Planets",
+            "chapters": [
+                "EJ Preface",
+                "EJ 1: Antimaterial Worlds",
+                "EJ 2: Varieties of Planetary Systems"
+            ]
+        },
+        {
+            "name": "Krsna Consciousness The Topmost Yoga System",
+            "chapters": [
+                "TYS 1: The Perfection of Yoga",
+                "TYS 2: Yoga and the Master of Yoga",
+                "TYS 3: Beyond the Laws of Nature",
+                "TYS 4: The Goal of Yoga",
+                "TYS 5: Our Real Life",
+                "TYS 6: The Hare Krsna Mantra",
+                "TYS 7: How Bhakti-yoga Works",
+                "TYS 8: Sources of Absolute Knowledge",
+                "TYS 9: The Real Peace Formula"
+            ]
+        },
+        {
+            "name": "KRSNA, The Supreme Personality of Godhead",
+            "chapters": [
+                "Volume 1",
+                "Volume 2"
+            ]
+        },
+        {
+            "name": "Perfect Questions, Perfect Answers",
+            "chapters": [
+                "PQPA Introduction",
+                "PQPA 1: Krsna, the All-Attractive",
+                "PQPA 2: Vedic Culture: Varnasrama-dharma",
+                "PQPA 3: The Real Goal of life",
+                "PQPA 4: The Three Modes Of Nature",
+                "PQPA 5: Becoming Pure",
+                "PQPA 6: The Perfect Devotee",
+                "PQPA 7: Acting in Knowledge of Krsna",
+                "PQPA 8: Advancing in Krsna Consciousness",
+                "PQPA 9: Deciding for the Future",
+                "PQPA Concluding words"
+            ]
+        },
+        {
+            "name": "Teachings of Lord Kapila, the Son of Devahuti",
+            "chapters": [
+                "TLK Foreword",
+                "TLK 1: The Purpose of Lord Kapila's Advent",
+                "TLK 2: The Transcendental Matter and Supreme Yogi",
+                "TLK 3: How to Understand the Lord's Activities",
+                "TLK 4: Approaching a Bona Fide Guru",
+                "TLK 5: Lord Kapila Takes Charge of His Mother, Devahuti",
+                "TLK 6: Devahuti Desires Transcendental Knowledge",
+                "TLK 7: Lord Kapila Begins to Explain Self-realization",
+                "TLK 8: Bhakti-yoga: The Supreme Yoga System",
+                "TLK 9: Purifying the Mind for Self-realization",
+                "TLK 10: Spiritual Attachment and Material Detachment",
+                "TLK 11: The Symptoms of a Sadhu",
+                "TLK 12: Association with the Supreme Lord Through Hearing",
+                "TLK 13: Perfect Knowledge Through Surrender",
+                "TLK 14: Bhakti as Ultimate Liberation",
+                "TLK 15: Meditation on the Lord's Transcendental Form",
+                "TLK 16: The Pure Devotees' Spiritual Opulences",
+                "TLK 17: Taking Shelter of Krsna, the Supreme Controller",
+                "TLK 18: Devotional Service: The Final Perfection"
+            ]
+        },
+        {
+            "name": "Teachings of Queen Kunti",
+            "chapters": [
+                "QK Introduction",
+                "TQK 1: The Original Person",
+                "TQK 2: Beyond the Senses",
+                "TQK 3: The Most Intelligent Woman",
+                "TQK 4: Approaching Krsna, the All-pervading Truth",
+                "TQK 5: The Vision of Lotuses",
+                "TQK 6: The Master of the Senses",
+                "TQK 7: Dangerous Encounters",
+                "TQK 8: Let There Be Calamities",
+                "TQK 9: Decreasing the Fever of Illusion",
+                "TQK 10: The Property of the Impoverished",
+                "TQK 11: The Touch of Superior Energy",
+                "TQK 12: Bewildering Pastimes",
+                "TQK 13: The Vital Force of the Universe",
+                "TQK 14: Lord Krsna's Wonderful Activities",
+                "TQK 15: Beyond Birth and Death",
+                "TQK 16: Returning to Our Natural Consciousness",
+                "TQK 17: Lightening the Burden of the World",
+                "TQK 18: Liberation from Ignorance and Suffering",
+                "TQK 19: Crossing Beyond Illusion's Currents",
+                "TQK 20: Full Surrender",
+                "TQK 21: What Is Our Actual Value?",
+                "TQK 22: Beauty in Krsna's Presence",
+                "TQK 23: Natural Prosperity",
+                "TQK 24: Cutting Off Ties of Affection",
+                "TQK 25: Unalloyed Devotion",
+                "TQK 26: Enchantment by Krsna's Glories"
+            ]
+        },
+        {
+            "name": "Krsna, the Reservoir of Pleasure",
+            "chapters": [
+                "About the Author",
+                "KRSNA the Reservoir of Pleasure",
+                "Who is Crazy?!",
+                "Introduction to the Bhagavad Gita"
+            ]
+        },
+        {
+            "name": "The Science of Self Realization",
+            "chapters": [
+                "SSR Foreword",
+                "SSR Introduction",
+                "SSR 1: Learning the Science of the Self",
+                "SSR 2: Choosing a Spiritual Master",
+                "SSR 3: Discovering the Roots",
+                "SSR 4: Understanding Krsna and Christ",
+                "SSR 5: Practicing Yoga in the Modern Age",
+                "SSR 6: Finding Spiritual Solutions to Material Problems",
+                "SSR 7: Exploring the Spiritual Frontier",
+                "SSR 8: Attaining Perfection"
+            ]
+        },
+        {
+            "name": "The Path of Perfection",
+            "chapters": [
+                "PoP Introduction",
+                "PoP 1: Yoga as Action",
+                "PoP 2: Mastering the Mind and Senses",
+                "PoP 3: Learning How to See God",
+                "PoP 4: Moderation in Yoga",
+                "PoP 5: Determination and Steadiness in Yoga",
+                "PoP 6: Perception of the Supersoul",
+                "PoP 7: Yoga for the Modern Age",
+                "PoP 8: Failure and Success in Yoga",
+                "PoP 9: Destination After Death",
+                "PoP 10: The Path of Perfection"
+            ]
+        },
+        {
+            "name": "Life Comes From Life",
+            "chapters": [
+                "LCFL Foreword",
+                "The First Morning Walk: April 18, 1973",
+                "The Second Morning Walk: April 19, 1973",
+                "The Third Morning Walk: April 28, 1973",
+                "The Fourth Morning Walk: April, 29, 1973",
+                "The Fifth Morning Walk: May 3, 1973",
+                "The Sixth Morning Walk: May 7, 1973",
+                "The Seventh Morning Walk: May 8, 1973",
+                "The Eighth Morning Walk: May 11, 1973",
+                "The Ninth Morning Walk: May 13, 1973",
+                "The Tenth Morning Walk: May 14, 1973",
+                "The Eleventh Morning Walk: May 15, 1973",
+                "The Twelfth Morning Walk: May 17, 1973",
+                "The Thirteenth Morning Walk: December 2, 1973",
+                "The Fourteenth Morning Walk: December 3, 1973",
+                "The Fifteenth Morning Walk: December 7, 1973",
+                "The Sixteenth Morning Walk: December 10, 1973"
+            ]
+        },
+        {
+            "name": "The Perfection of Yoga",
+            "chapters": [
+                "PoY 1: Yoga as Rejected by Arjuna",
+                "PoY 2: Yoga as Work in Devotion",
+                "PoY 3: Yoga as Meditation on Krsna",
+                "PoY 4: Yoga as Body and Mind Control",
+                "PoY 5: Yoga as Freedom from Duality and Designation",
+                "PoY 6: The Fate of the Unsuccessful Yogi",
+                "PoY 7: Yoga as Reestablishing Relations with Krsna",
+                "PoY 8: The Perfection of Yoga"
+            ]
+        },
+        {
+            "name": "Beyond Birth and Death",
+            "chapters": [
+                "BBD 1: We Are Not These Bodies",
+                "BBD 2: Elevation at Death",
+                "BBD 3: Liberation from Material Planets",
+                "BBD 4: The Sky Beyond the Universe",
+                "BBD 5: Associating with Krsna"
+            ]
+        },
+        {
+            "name": "On the Way to Krsna",
+            "chapters": [
+                "OWK 1: Throughway to Happiness",
+                "OWK 2: The Way of Chanting and Knowing Krsna",
+                "OWK 3: Seeing Krsna Everywhere and Always",
+                "OWK 4: The Roads of the Foolish and the Wise",
+                "OWK 5: Steering Toward the Supreme"
+            ]
+        },
+        {
+            "name": "Raja - Vidya: The King of Knowledge",
+            "chapters": [
+                "RV 1: Raja-Vidya: The King of Knowledge",
+                "RV 2: Knowledge Beyond Samsara",
+                "RV 3: Knowledge of Krsna's Energies",
+                "RV 4: Knowledge by Way of the Mahatmas, Great Souls",
+                "RV 5: Parampara: Knowledge Through Disciplic Succession",
+                "RV 6: Knowledge of Krsna's Appearances and Activities",
+                "RV 7: Knowledge as Faith in Guru and surrender to Krsna",
+                "RV 8: Action in Knowledge of Krsna"
+            ]
+        },
+        {
+            "name": "Elevation to Krsna Consciousness",
+            "chapters": [
+                "EK 1: Choosing Human and Animal Lives",
+                "EK 2: Hard Struggle for Happiness",
+                "EK 3: Toward a Peaceful Society",
+                "EK 4: Knowing Krsna as He Is",
+                "EK 5: Knowing Krsna's Energies",
+                "EK 6: Taking to Krsna Consciousness"
+            ]
+        },
+        {
+            "name": "Krsna Consciousness, The Matchless Gift",
+            "chapters": [
+                "MG 1: Spiritual Knowledge Through Krsna",
+                "MG 2: Getting Out the Material Mire",
+                "MG 3: Learning to love",
+                "MG 4: Learning Tapasya, Self-Control",
+                "MG 5: Learning Steadiness in Krsna Consciousness",
+                "MG 6: Transcending Designations and Problems"
+            ]
+        },
+        {
+            "name": "Light of the Bhagavata",
+            "chapters": [
+                "LoB Preface",
+                "LoB 1",
+                "LoB 2",
+                "LoB 3",
+                "LoB 4",
+                "LoB 5",
+                "LoB 6",
+                "LoB 7",
+                "LoB 8",
+                "LoB 9",
+                "LoB 10",
+                "LoB 11",
+                "LoB 12",
+                "LoB 13",
+                "LoB 14",
+                "LoB 15",
+                "LoB 16",
+                "LoB 17",
+                "LoB 18",
+                "LoB 19",
+                "LoB 20",
+                "LoB 21",
+                "LoB 22",
+                "LoB 23",
+                "LoB 24",
+                "LoB 25",
+                "LoB 26",
+                "LoB 27",
+                "LoB 28",
+                "LoB 29",
+                "LoB 30",
+                "LoB 31",
+                "LoB 32",
+                "LoB 33",
+                "LoB 34",
+                "LoB 35",
+                "LoB 36",
+                "LoB 37",
+                "LoB 38",
+                "LoB 39",
+                "LoB 40",
+                "LoB 41",
+                "LoB 42",
+                "LoB 43",
+                "LoB 44",
+                "LoB 45",
+                "LoB 46",
+                "LoB 47",
+                "LoB 48"
+            ]
+        },
+        {
+            "name": "Sri Isopanisad",
+            "chapters": [
+                "Iso Introduction",
+                "Iso Invocation",
+                "Iso 1",
+                "Iso 2",
+                "Iso 3",
+                "Iso 4",
+                "Iso 5",
+                "Iso 6",
+                "Iso 7",
+                "Iso 8",
+                "Iso 9",
+                "Iso 10",
+                "Iso 11",
+                "Iso 12",
+                "Iso 13",
+                "Iso 14",
+                "Iso 15",
+                "Iso 16",
+                "Iso 17",
+                "Iso 18"
+            ]
+        },
+        {
+            "name": "The Journey of Self-Discovery",
+            "chapters": [
+                "JSD Introduction",
+                "JSD 1: The Journey of Self-Discovery",
+                "JSD 2: Superconsciousness",
+                "JSD 3: The Pleasure Principle",
+                "JSD 4: The Spiritual Master",
+                "JSD 5: Yoga and Meditation",
+                "JSD 6: Material Problems, Spiritual Solutions",
+                "JSD 7: Perspectives on Science and Philosophy"
+            ]
+        },
+        {
+            "name": "Transcendental Teachings of Prahlada Maharaja",
+            "chapters": [
+                "1: The Dearmost Person",
+                "2: We Are Spoiling Our Lives",
+                "3: Family Illusion",
+                "4: I Love Krsna More Than Anything!",
+                "5: Realizing that God Is Everywhere",
+                "6: Krsna Consciousness: The Perfection of Mercy"
+            ]
+        },
+        {
+            "name": "A Second Chance: The Story of a Near-Death Experience",
+            "chapters": [
+                "SC: Introduction",
+                "SC 1: Separating the Men From the Animals",
+                "SC 2: In Imitation Of the Original",
+                "SC 3: At the Final Hour",
+                "SC 4: Neither Birth Nor Death",
+                "SC 5: The Visnudutas To the Rescue",
+                "SC 6: The Residents Of the Spiritual Sky",
+                "SC 7: Authorized Discrimination",
+                "SC 8: Religion",
+                "SC 9: Punishment",
+                "SC 10: The Next Life: It's Up to Us",
+                "SC 11: The Realm of the Senses",
+                "SC 12: Bewildered by Desire",
+                "SC 13: Ajamila Begins His Degraded Life",
+                "SC 14: Betrayed by Leaders",
+                "SC 15: Atonement",
+                "SC 16: Awakening Love of God",
+                "SC 17: The Moment of Truth",
+                "SC 18: Pilgrim with a Purpose",
+                "SC 19: Erasing All Doubts",
+                "SC 20: Under One Master",
+                "SC 21: Confidential Knowledge",
+                "SC 22: The Glories Of the Holy Name"
+            ]
+        },
+        {
+            "name": "Mukunda-mala-stotra",
+            "chapters": [
+                "MM 1",
+                "MM 2",
+                "MM 3",
+                "MM 4",
+                "MM 5",
+                "MM 6"
+            ]
+        },
+        {
+            "name": "Narada-bhakti-sutra",
+            "chapters": [
+                "NBS 1",
+                "NBS 2",
+                "NBS 3",
+                "NBS 4",
+                "NBS 5",
+                "NBS 6",
+                "NBS 7",
+                "NBS 8"
+            ]
+        }
+    ]
+}

@@ -45,22 +45,22 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
 
   const updateMutation = useMutation({
     mutationFn: (data: ActivityLogUpdate) => updateActivityLog(activity.id, {
-        // Spread existing activity to satisfy strict backend models
-        sleep_at: activity.sleep_at,
-        wakeup_at: activity.wakeup_at,
-        no_meat: activity.no_meat,
-        no_intoxication: activity.no_intoxication,
-        no_illicit_sex: activity.no_illicit_sex,
-        no_gambling: activity.no_gambling,
-        only_prasadam: activity.only_prasadam,
-        notes_of_day: activity.notes_of_day,
-        mangla_attended: activity.mangla_attended,
-        narshima_attended: activity.narshima_attended,
-        tulsi_arti_attended: activity.tulsi_arti_attended,
-        darshan_arti_attended: activity.darshan_arti_attended,
-        guru_puja_attended: activity.guru_puja_attended,
-        sandhya_arti_attended: activity.sandhya_arti_attended,
-        ...data
+      // Spread existing activity to satisfy strict backend models
+      sleep_at: activity.sleep_at,
+      wakeup_at: activity.wakeup_at,
+      no_meat: activity.no_meat,
+      no_intoxication: activity.no_intoxication,
+      no_illicit_sex: activity.no_illicit_sex,
+      no_gambling: activity.no_gambling,
+      only_prasadam: activity.only_prasadam,
+      notes_of_day: activity.notes_of_day,
+      mangla_attended: activity.mangla_attended,
+      narshima_attended: activity.narshima_attended,
+      tulsi_arti_attended: activity.tulsi_arti_attended,
+      darshan_arti_attended: activity.darshan_arti_attended,
+      guru_puja_attended: activity.guru_puja_attended,
+      sandhya_arti_attended: activity.sandhya_arti_attended,
+      ...data
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
@@ -74,34 +74,34 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
     if (readOnly) return;
     const timeStr = type === 'sleep' ? activity.sleep_at : activity.wakeup_at;
     const time = parseISO(timeStr);
-    
+
     if (isValid(time)) {
-        setTempHour(time.getHours());
-        setTempMin(time.getMinutes());
+      setTempHour(time.getHours());
+      setTempMin(time.getMinutes());
     } else {
-        setTempHour(type === 'sleep' ? 22 : 4);
-        setTempMin(0);
+      setTempHour(type === 'sleep' ? 22 : 4);
+      setTempMin(0);
     }
     setOpenPicker(type);
   };
 
   const handleSaveTime = () => {
     if (!openPicker) return;
-    
+
     const today = parseISO(activity.today_date);
     let baseDate = today;
 
     if (openPicker === 'sleep') {
-        if (tempHour >= 12) {
-            baseDate = subDays(today, 1);
-        }
+      if (tempHour >= 12) {
+        baseDate = subDays(today, 1);
+      }
     }
 
     const updatedDate = setMinutes(setHours(baseDate, tempHour), tempMin);
     const dateString = format(updatedDate, "yyyy-MM-dd'T'HH:mm:ss");
-    
-    updateMutation.mutate({ 
-        [openPicker === 'sleep' ? 'sleep_at' : 'wakeup_at']: dateString 
+
+    updateMutation.mutate({
+      [openPicker === 'sleep' ? 'sleep_at' : 'wakeup_at']: dateString
     });
   };
 
@@ -113,9 +113,9 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card 
-            className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5 border-primary/10 shadow-none" 
-            onClick={() => handleOpenPicker('sleep')}
+        <Card
+          className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5 border-primary/10 shadow-none"
+          onClick={() => handleOpenPicker('sleep')}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-muted-foreground/60">
@@ -124,14 +124,14 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-primary">
-                {formatDisplayTime(activity.sleep_at)}
+              {formatDisplayTime(activity.sleep_at)}
             </div>
           </CardContent>
         </Card>
 
-        <Card 
-            className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5 border-primary/10 shadow-none" 
-            onClick={() => handleOpenPicker('wakeup')}
+        <Card
+          className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5 border-primary/10 shadow-none"
+          onClick={() => handleOpenPicker('wakeup')}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-muted-foreground/60">
@@ -140,7 +140,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-primary">
-                {formatDisplayTime(activity.wakeup_at)}
+              {formatDisplayTime(activity.wakeup_at)}
             </div>
           </CardContent>
         </Card>
@@ -156,17 +156,17 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
         </CardHeader>
         <CardContent className="grid gap-0 p-0">
           {TemplePrograms.map(({ key, label }, idx) => (
-            <div 
-                key={key} 
-                className={cn(
-                    "flex items-center justify-between px-6 py-4 transition-colors",
-                    idx % 2 === 0 ? "bg-muted/30" : "bg-white"
-                )}
+            <div
+              key={key}
+              className={cn(
+                "flex items-center justify-between px-6 py-4 transition-colors",
+                idx % 2 === 0 ? "bg-muted/30" : "bg-white"
+              )}
             >
               <Label htmlFor={key} className="text-base font-bold text-primary/80">
                 {label}
               </Label>
-              <Switch 
+              <Switch
                 id={key}
                 checked={activity[key as keyof ActivityLogResponse] as boolean}
                 onCheckedChange={(checked) => !readOnly && updateMutation.mutate({ [key]: checked })}
@@ -188,17 +188,17 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
         </CardHeader>
         <CardContent className="grid gap-0 p-0">
           {RegulativePrinciples.map(({ key, label }, idx) => (
-            <div 
-                key={key} 
-                className={cn(
-                    "flex items-center justify-between px-6 py-4 transition-colors",
-                    idx % 2 === 0 ? "bg-muted/30" : "bg-white"
-                )}
+            <div
+              key={key}
+              className={cn(
+                "flex items-center justify-between px-6 py-4 transition-colors",
+                idx % 2 === 0 ? "bg-muted/30" : "bg-white"
+              )}
             >
               <Label htmlFor={key} className="text-base font-bold text-primary/80">
                 {label}
               </Label>
-              <Switch 
+              <Switch
                 id={key}
                 checked={activity[key as keyof ActivityLogResponse] as boolean}
                 onCheckedChange={(checked) => !readOnly && updateMutation.mutate({ [key]: checked })}
@@ -214,11 +214,11 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
         <DialogContent className="sm:max-w-[400px] p-6 rounded-[28px]">
           <DialogHeader className="mb-4">
             <DialogTitle className="text-center text-xl font-black">
-                Set {openPicker === 'sleep' ? 'Sleeping' : 'Wakeup'} Time
+              Set {openPicker === 'sleep' ? 'Sleeping' : 'Wakeup'} Time
             </DialogTitle>
             <DialogDescription className="text-center">Select your actual time below.</DialogDescription>
           </DialogHeader>
-          
+
           <TimeStepper hour={tempHour} minute={tempMin} onChange={(h, m) => { setTempHour(h); setTempMin(m); }} />
 
           <DialogFooter className="mt-8">

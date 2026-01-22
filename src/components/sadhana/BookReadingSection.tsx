@@ -44,46 +44,51 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Book Reading</h3>
-          <button className="text-xs font-black text-primary flex items-center gap-1" onClick={handleAdd}>
-            <Plus className="h-3 w-3" /> Add Books
-          </button>
+        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Book Reading</h3>
+        <button className="text-xs font-black text-primary flex items-center gap-1" onClick={handleAdd}>
+          <Plus className="h-3 w-3" /> Add Books
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         {activity.book_reading_logs.length === 0 ? (
-            <Card className="col-span-2 border-dashed bg-muted/20 py-10 flex flex-col items-center justify-center text-muted-foreground">
-                <BookOpen className="h-8 w-8 mb-2 opacity-20" />
-                <p className="text-xs font-bold uppercase tracking-widest">No books logged</p>
-            </Card>
+          <Card className="col-span-2 border-dashed bg-muted/20 py-10 flex flex-col items-center justify-center text-muted-foreground">
+            <BookOpen className="h-8 w-8 mb-2 opacity-20" />
+            <p className="text-xs font-bold uppercase tracking-widest">No books logged</p>
+          </Card>
         ) : (
-            activity.book_reading_logs.map((log) => (
-                <Card 
-                  key={log.name}
-                  className="border-none shadow-sm transition-all active:scale-95 bg-primary/5 ring-1 ring-primary/20"
-                  onClick={() => !readOnly && handleEdit(log)}
-                >
-                  <CardContent className="p-4 flex flex-col items-center text-center space-y-2">
-                    <div className="w-full aspect-[3/4] bg-primary/10 rounded-xl flex flex-col items-center justify-center p-3 relative">
-                        <BookOpen className="h-10 w-10 text-primary opacity-20 mb-2" />
-                        <span className="text-[10px] font-black text-primary leading-tight uppercase line-clamp-3">{log.name}</span>
-                        {!readOnly && (
-                            <Button 
-                                variant="ghost" size="icon" 
-                                className="absolute -top-2 -right-2 h-7 w-7 bg-red-500 rounded-full text-white hover:bg-red-600 shadow-md"
-                                onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(log.name); }}
-                            >
-                                <Trash2 className="h-3 w-3" />
-                            </Button>
-                        )}
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Duration</p>
-                        <p className="text-base font-black text-primary">{formatTime(log.reading_time)}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-            ))
+          activity.book_reading_logs.map((log) => (
+            <Card
+              key={log.name}
+              className="border-none shadow-sm transition-all active:scale-95 bg-primary/5 ring-1 ring-primary/20"
+              onClick={() => !readOnly && handleEdit(log)}
+            >
+              <CardContent className="p-4 flex flex-col items-center text-center space-y-2">
+                <div className="w-full aspect-[3/4] bg-primary/10 rounded-xl flex flex-col items-center justify-center p-3 relative">
+                  <BookOpen className="h-10 w-10 text-primary opacity-20 mb-2" />
+                  <span className="text-[10px] font-black text-primary leading-tight uppercase line-clamp-3">{log.name}</span>
+                  {log.chapter_name && (
+                    <span className="text-[9px] font-bold text-muted-foreground leading-tight uppercase line-clamp-2 mt-1 px-1">
+                      {log.chapter_name}
+                    </span>
+                  )}
+                  {!readOnly && (
+                    <Button
+                      variant="ghost" size="icon"
+                      className="absolute -top-2 -right-2 h-7 w-7 bg-red-500 rounded-full text-white hover:bg-red-600 shadow-md"
+                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(log.name); }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Duration</p>
+                  <p className="text-base font-black text-primary">{formatTime(log.reading_time)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 

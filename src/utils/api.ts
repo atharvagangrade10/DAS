@@ -4,19 +4,19 @@ import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate, YatraUpdate, PaymentRecord, ReceiptResponse } from "@/types/yatra";
 import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord, BatchVolunteer, BatchStatsResponse, BatchParticipantStats } from "@/types/batch";
-import { 
-  ActivityLogResponse, 
-  ActivityLogCreate, 
-  ActivityLogUpdate, 
-  ChantingLogCreate, 
-  ChantingLogUpdate, 
-  ChantingLogResponse, 
-  BookLogCreate, 
-  BookLogUpdate, 
-  BookLogResponse, 
-  AssociationLogCreate, 
-  AssociationLogUpdate, 
-  AssociationLogResponse 
+import {
+  ActivityLogResponse,
+  ActivityLogCreate,
+  ActivityLogUpdate,
+  ChantingLogCreate,
+  ChantingLogUpdate,
+  ChantingLogResponse,
+  BookLogCreate,
+  BookLogUpdate,
+  BookLogResponse,
+  AssociationLogCreate,
+  AssociationLogUpdate,
+  AssociationLogResponse
 } from "@/types/sadhana";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
@@ -48,7 +48,8 @@ const getAuthHeaders = () => {
 };
 
 // Helper function for authenticated GET requests
-const fetchAuthenticated = async (url: string) => {
+export const fetchAuthenticated = async (url: string) => {
+
   const response = await fetch(url, {
     headers: getAuthHeaders(),
   });
@@ -67,7 +68,8 @@ const fetchAuthenticated = async (url: string) => {
 };
 
 // Helper function for authenticated POST/PUT/DELETE requests
-const mutateAuthenticated = async (url: string, method: string, body?: any) => {
+export const mutateAuthenticated = async (url: string, method: string, body?: any) => {
+
   const response = await fetch(url, {
     method: method,
     headers: getAuthHeaders(),

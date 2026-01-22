@@ -23,11 +23,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, BookOpen } from "lucide-react";
+import { Loader2, BookOpen, Check, ChevronsUpDown, Search } from "lucide-react";
 import { toast } from "sonner";
 import { BookLogCreate, BookLogResponse, BookLogUpdate } from "@/types/sadhana";
 import { addBookLog, updateBookLog } from "@/utils/api";
 import DurationPicker from "./DurationPicker";
+import booksData from "./BooksName.json";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(1, "Book name is required"),
@@ -50,6 +54,8 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const isEdit = !!logToEdit;
+  const [bookSearchOpen, setBookSearchOpen] = React.useState(false);
+  const [chapterSearchOpen, setChapterSearchOpen] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,6 +65,12 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
       chapter_name: logToEdit?.chapter_name || "",
     },
   });
+
+  const selectedBookName = form.watch("name");
+  const filteredChapters = React.useMemo(() => {
+    const book = booksData.books.find((b) => b.name === selectedBookName);
+    return book ? book.chapters : [];
+  }, [selectedBookName]);
 
   React.useEffect(() => {
     if (logToEdit) {
@@ -130,11 +142,61 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Book Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g. Bhagavad Gita" className="h-12 rounded-xl" />
-                  </FormControl>
+                  <Popover open={bookSearchOpen} onOpenChange={setBookSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={bookSearchOpen}
+                          className={cn(
+                            "h-12 w-full justify-between rounded-xl px-4 font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? booksData.books.find((book) => book.name === field.value)?.name || field.value
+                            : "Select a book..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[var(--radix-popover-trigger-width)] p-0"
+                      onWheel={(e) => e.stopPropagation()}
+                      onTouchMove={(e) => e.stopPropagation()}
+                    >
+                      <Command className="h-[300px] flex flex-col">
+                        <CommandInput placeholder="Search book..." className="h-9 shrink-0" />
+                        <CommandList className="flex-1 overflow-y-auto">
+                          <CommandEmpty>No book found.</CommandEmpty>
+                          <CommandGroup>
+                            {booksData.books.map((book) => (
+                              <CommandItem
+                                value={book.name}
+                                key={book.name}
+                                onSelect={() => {
+                                  form.setValue("name", book.name);
+                                  form.setValue("chapter_name", ""); // Reset chapter when book changes
+                                  setBookSearchOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    book.name === field.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {book.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -158,11 +220,59 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               control={form.control}
               name="chapter_name"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Chapter / Verse</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g. Chapter 18" className="h-12 rounded-xl" />
-                  </FormControl>
+                  <Popover open={chapterSearchOpen} onOpenChange={setChapterSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={chapterSearchOpen}
+                          className={cn(
+                            "h-12 w-full justify-between rounded-xl px-4 font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={!selectedBookName}
+                        >
+                          {field.value || "Select chapter..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[var(--radix-popover-trigger-width)] p-0"
+                      onWheel={(e) => e.stopPropagation()}
+                      onTouchMove={(e) => e.stopPropagation()}
+                    >
+                      <Command className="h-[300px] flex flex-col">
+                        <CommandInput placeholder="Search chapter..." className="h-9 shrink-0" />
+                        <CommandList className="flex-1 overflow-y-auto">
+                          <CommandEmpty>No chapter found.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredChapters.map((chapter) => (
+                              <CommandItem
+                                value={chapter}
+                                key={chapter}
+                                onSelect={() => {
+                                  form.setValue("chapter_name", chapter);
+                                  setChapterSearchOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    chapter === field.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {chapter}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}

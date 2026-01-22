@@ -3,9 +3,13 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfDay, subDays, setHours, setMinutes } from "date-fns";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, BarChart2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Link } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
 import { ActivityLogResponse, ActivityLogCreate } from "@/types/sadhana";
+
 import { fetchActivityLogByDate, createActivityLog } from "@/utils/api";
 import ActivityHeader from "@/components/sadhana/ActivityHeader";
 import WorshipCard from "@/components/sadhana/WorshipCard";
@@ -13,13 +17,15 @@ import ChantingSection from "@/components/sadhana/ChantingSection";
 import AssociationSection from "@/components/sadhana/AssociationSection";
 import BookReadingSection from "@/components/sadhana/BookReadingSection";
 import NotesSection from "@/components/sadhana/NotesSection";
+import ExerciseSection from "@/components/sadhana/ExerciseSection";
+
 
 const Sadhana = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = React.useState<Date>(startOfDay(new Date()));
   const dateStr = format(selectedDate, "yyyy-MM-dd");
-  
+
   const todayStart = startOfDay(new Date());
   const isFuture = selectedDate > todayStart;
 
@@ -63,6 +69,7 @@ const Sadhana = () => {
         darshan_arti_attended: false,
         guru_puja_attended: false,
         sandhya_arti_attended: false,
+        exercise_time: 0,
       });
     }
   }, [user?.user_id, isLoading, activityLog, error, dateStr, isFuture, createMutation, selectedDate]);
@@ -71,9 +78,20 @@ const Sadhana = () => {
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="max-w-md mx-auto">
         <ActivityHeader selectedDate={selectedDate} onDateChange={setSelectedDate} />
-        
+
         <div className="px-4 py-6 space-y-10">
+          <div className="flex justify-between items-center -mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Daily Entry</h3>
+            <Link to="/sadhana/insights">
+              <Button variant="ghost" size="sm" className="h-8 rounded-full text-primary gap-1.5 font-bold hover:bg-primary/5">
+                <BarChart2 className="h-4 w-4" />
+                View Insights
+              </Button>
+            </Link>
+          </div>
+
           {isLoading || createMutation.isPending ? (
+
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Hare Krishna...</p>
@@ -88,9 +106,11 @@ const Sadhana = () => {
               <WorshipCard activity={activityLog} readOnly={isFuture} />
               <ChantingSection activity={activityLog} readOnly={isFuture} />
               <AssociationSection activity={activityLog} readOnly={isFuture} />
+              <ExerciseSection activity={activityLog} readOnly={isFuture} />
               <BookReadingSection activity={activityLog} readOnly={isFuture} />
+
               <NotesSection activity={activityLog} readOnly={isFuture} />
-              
+
               <div className="pt-10 text-center">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-30">Your daily journey continues</p>
               </div>

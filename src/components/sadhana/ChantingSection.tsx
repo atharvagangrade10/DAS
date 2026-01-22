@@ -13,6 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/context/AuthContext";
+
 
 interface ChantingSectionProps {
   activity: ActivityLogResponse;
@@ -20,18 +23,22 @@ interface ChantingSectionProps {
 }
 
 const CHANTING_SLOT_CONFIG: { value: ChantingSlot, label: string }[] = [
-  { value: "before_6_30_am", label: "Before 6:30 AM" },
-  { value: "6_30_to_8_30_am", label: "6:30 - 8:30 AM" },
+  { value: "before_7_30_am", label: "Before 7:30 AM" },
+  { value: "7_30_to_8_30_am", label: "7:30 - 8:30 AM" },
   { value: "8_30_to_10_am", label: "8:30 - 10:00 AM" },
   { value: "before_9_30_pm", label: "Before 9:30 PM" },
   { value: "after_9_30_pm", label: "Late Night" },
 ];
 
 const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly }) => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedSlot, setSelectedSlot] = React.useState<ChantingSlot | null>(null);
   const [tempRounds, setTempRounds] = React.useState("16");
   const [tempRating, setTempRating] = React.useState("8");
+
+  const targetRounds = user?.chanting_rounds || 16;
+
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["activityLog"] });
@@ -66,9 +73,9 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
     const log = activity.chanting_logs.find(l => l.slot === selectedSlot);
     const data = { rounds: parseInt(tempRounds), rating: parseInt(tempRating) };
     if (log) {
-        updateMutation.mutate({ slot: selectedSlot, data });
+      updateMutation.mutate({ slot: selectedSlot, data });
     } else {
-        addMutation.mutate({ slot: selectedSlot, ...data });
+      addMutation.mutate({ slot: selectedSlot, ...data });
     }
   };
 
@@ -76,25 +83,37 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Chanting
-          </CardTitle>
-          <CardDescription>Track your daily rounds.</CardDescription>
+      <CardHeader className="flex flex-col gap-4">
+        <div className="flex flex-row items-center justify-between w-full">
+          <div>
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Chanting
+            </CardTitle>
+            <CardDescription>Track your daily rounds.</CardDescription>
+          </div>
+          <div className="text-right">
+            <span className="text-2xl font-black text-primary">{totalRounds}</span>
+            <span className="text-sm font-bold text-muted-foreground ml-1">/ {targetRounds}</span>
+          </div>
         </div>
-        <Badge variant="secondary" className="text-lg px-3 py-1 font-bold">
-          {totalRounds} Rounds
-        </Badge>
+
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+            <span>Daily Progress</span>
+            <span>{Math.round((totalRounds / targetRounds) * 100)}%</span>
+          </div>
+          <Progress value={(totalRounds / targetRounds) * 100} className="h-2" />
+        </div>
       </CardHeader>
+
       <CardContent className="grid gap-3">
         {CHANTING_SLOT_CONFIG.map(({ value, label }) => {
           const log = activity.chanting_logs.find(l => l.slot === value);
           const isFilled = !!log;
 
           return (
-            <div 
+            <div
               key={value}
               className={cn(
                 "flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer",
@@ -105,17 +124,17 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-muted-foreground uppercase tracking-tight">{label}</span>
                 <span className="text-lg font-black">
-                    {isFilled ? `${log.rounds} Rounds` : "Not Recorded"}
+                  {isFilled ? `${log.rounds} Rounds` : "Not Recorded"}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 {isFilled && (
-                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                        ⭐ {log.rating}/10
-                    </Badge>
+                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                    ⭐ {log.rating}/10
+                  </Badge>
                 )}
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Plus className={cn("h-5 w-5", isFilled ? "text-primary" : "text-muted-foreground")} />
+                  <Plus className={cn("h-5 w-5", isFilled ? "text-primary" : "text-muted-foreground")} />
                 </Button>
               </div>
             </div>
@@ -159,9 +178,9 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
           </div>
           <DialogFooter className="flex flex-row gap-2">
             {activity.chanting_logs.some(l => l.slot === selectedSlot) && (
-                <Button variant="destructive" size="icon" onClick={() => deleteMutation.mutate(selectedSlot!)}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+              <Button variant="destructive" size="icon" onClick={() => deleteMutation.mutate(selectedSlot!)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             )}
             <Button onClick={handleSave} className="flex-1" disabled={addMutation.isPending || updateMutation.isPending}>
               Save Chanting

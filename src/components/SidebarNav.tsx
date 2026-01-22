@@ -49,9 +49,17 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children, onClick }) => {
   );
 };
 
-const SidebarNav = () => {
+interface SidebarNavProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const SidebarNav: React.FC<SidebarNavProps> = ({ open, onOpenChange }) => {
   const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setIsOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
   const [isProfileDialogOpen, setIsProfileDialogOpen] = React.useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -168,13 +176,7 @@ const SidebarNav = () => {
     <>
       {isMobile ? (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border shadow-sm">
-              <MenuIcon className="h-6 w-6" />
-              <span className="sr-only">Toggle navigation</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0 border-r shadow-xl">
+          <SheetContent side="right" className="w-72 p-0 border-l shadow-xl">
             {sidebarContent}
           </SheetContent>
         </Sheet>

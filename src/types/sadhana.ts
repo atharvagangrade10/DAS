@@ -1,19 +1,19 @@
 "use client";
 
 // --- Enums/Union Types ---
-export type ChantingSlot = 
-  | "before_6_30_am" 
-  | "6_30_to_8_30_am" 
-  | "8_30_to_10_am" 
-  | "before_9_30_pm" 
+export type ChantingSlot =
+  | "before_7_30_am"
+  | "7_30_to_8_30_am"
+  | "8_30_to_10_am"
+  | "before_9_30_pm"
   | "after_9_30_pm";
 
-export type AssociationType = 
-  | "PRABHUPADA" 
-  | "GURU" 
-  | "OTHER" 
-  | "PREACHING" 
-  | "OTHER_ACTIVITIES"; 
+export type AssociationType =
+  | "PRABHUPADA"
+  | "GURU"
+  | "OTHER"
+  | "PREACHING"
+  | "OTHER_ACTIVITIES";
 
 // -------------------------------------------------
 // BASE LOG SCHEMAS
@@ -40,9 +40,9 @@ export interface AssociationLogBase {
 // CREATE SCHEMAS
 // -------------------------------------------------
 
-export interface ChantingLogCreate extends ChantingLogBase {}
-export interface BookLogCreate extends BookLogBase {}
-export interface AssociationLogCreate extends AssociationLogBase {}
+export interface ChantingLogCreate extends ChantingLogBase { }
+export interface BookLogCreate extends BookLogBase { }
+export interface AssociationLogCreate extends AssociationLogBase { }
 
 export interface ActivityLogCreate {
   participant_id: string;
@@ -64,6 +64,8 @@ export interface ActivityLogCreate {
   darshan_arti_attended: boolean;
   guru_puja_attended: boolean;
   sandhya_arti_attended: boolean;
+
+  exercise_time: number; // minutes
 }
 
 // -------------------------------------------------
@@ -104,17 +106,19 @@ export interface ActivityLogUpdate {
   darshan_arti_attended?: boolean;
   guru_puja_attended?: boolean;
   sandhya_arti_attended?: boolean;
+
+  exercise_time?: number;
 }
 
 // -------------------------------------------------
 // RESPONSE SCHEMAS
 // -------------------------------------------------
 
-export interface ChantingLogResponse extends ChantingLogBase {}
+export interface ChantingLogResponse extends ChantingLogBase { }
 
-export interface BookLogResponse extends BookLogBase {}
+export interface BookLogResponse extends BookLogBase { }
 
-export interface AssociationLogResponse extends AssociationLogBase {}
+export interface AssociationLogResponse extends AssociationLogBase { }
 
 export interface ActivityLogResponse {
   id: string;
@@ -137,10 +141,74 @@ export interface ActivityLogResponse {
   guru_puja_attended: boolean;
   sandhya_arti_attended: boolean;
 
+  exercise_time: number;
+
   chanting_logs: ChantingLogResponse[];
   book_reading_logs: BookLogResponse[];
   association_logs: AssociationLogResponse[];
 
   created_at: string;
   updated_at: string | null;
+}
+
+export interface SleepInsightResponse {
+  days_count: number;
+  median_wakeup_time: string | null;
+  iqr_wakeup_minutes: number | null;
+  percent_wakeup_before_5am: number;
+  median_sleep_time: string | null;
+  iqr_sleep_minutes: number | null;
+  median_sleep_duration_minutes: number | null;
+}
+
+export interface ChantingInsightResponse {
+  days_count: number;
+  daily_target_rounds: number | null;
+  median_daily_rounds: number | null;
+  iqr_daily_rounds: number | null;
+  percent_days_meeting_target: number;
+  zero_round_days: number;
+  percent_rounds_before_7_30_am: number;
+  percent_rounds_after_9_30_pm: number;
+  median_rating: number | null;
+  iqr_rating: number | null;
+}
+
+export interface BookInsightResponse {
+  days_count: number;
+  reading_days: number;
+  median_daily_reading_minutes: number | null;
+  iqr_daily_reading_minutes: number | null;
+  longest_reading_streak: number;
+  primary_book_name: string | null;
+  primary_book_return_ratio: number | null;
+}
+
+export interface AssociationInsightResponse {
+  days_count: number;
+  association_days: number;
+  median_daily_association_minutes: number | null;
+  iqr_daily_association_minutes: number | null;
+  median_minutes_by_type: Record<AssociationType, number>;
+  association_days_by_type: Record<AssociationType, number>;
+}
+
+export interface AratiInsightResponse {
+  days_count: number;
+  total_arati_attendance_days: number;
+  mangla_attended_days: number;
+  narasimha_attended_days: number;
+  tulsi_arati_attended_days: number;
+  darshan_arati_attended_days: number;
+  guru_puja_attended_days: number;
+  sandhya_arati_attended_days: number;
+  morning_arati_days: number;
+}
+
+export interface ExerciseInsightResponse {
+  days_count: number;
+  exercise_days: number;
+  percent_days_exercised: number;
+  median_exercise_minutes: number | null;
+  iqr_exercise_minutes: number | null;
 }

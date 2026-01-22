@@ -3,6 +3,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMonthlyAssociationInsight } from "@/utils/sadhanaInsightsApi";
+import { useAuth } from "@/context/AuthContext";
 import { Loader2, Users, AlertCircle, Sparkles } from "lucide-react";
 import { AssociationType } from "@/types/sadhana";
 import InsightDataDisplay from "./InsightDataDisplay";
@@ -10,7 +11,6 @@ import InsightDataDisplay from "./InsightDataDisplay";
 interface AssociationInsightProps {
     year: number;
     month: number;
-    participantId: string;
 }
 
 const TYPE_LABELS: Record<AssociationType, string> = {
@@ -21,11 +21,13 @@ const TYPE_LABELS: Record<AssociationType, string> = {
     OTHER_ACTIVITIES: "Services/Others"
 };
 
-const AssociationInsight: React.FC<AssociationInsightProps> = ({ year, month, participantId }) => {
+const AssociationInsight: React.FC<AssociationInsightProps> = ({ year, month }) => {
+    const { user } = useAuth();
+
     const { data, isLoading, error } = useQuery({
-        queryKey: ["associationInsights", participantId, year, month],
-        queryFn: () => fetchMonthlyAssociationInsight(participantId, year, month),
-        enabled: !!participantId,
+        queryKey: ["associationInsights", user?.user_id, year, month],
+        queryFn: () => fetchMonthlyAssociationInsight(user!.user_id, year, month),
+        enabled: !!user?.user_id,
     });
 
     if (isLoading) return <div className="py-20 flex flex-col items-center justify-center gap-4"><Loader2 className="h-10 w-10 animate-spin text-primary/20" /><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Building the sacred ecosystem...</p></div>;
@@ -61,11 +63,13 @@ const AssociationInsight: React.FC<AssociationInsightProps> = ({ year, month, pa
                 <Users className="h-3 w-3 text-primary/40" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Sādhu-saṅga</h3>
             </div>
+
             <InsightDataDisplay title="Monthly Ecosystem" data={associationData} />
+
             <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/10 shadow-sm">
                 <Sparkles className="h-5 w-5 text-primary/40 mb-4" />
                 <p className="text-sm font-medium text-foreground/80 leading-relaxed italic">
-                    “The path is easier walked together. Nourish your spiritual ecosystem with regular association.”
+                    “{activeTypes >= 3 ? "Your spiritual ecosystem is THRIVING. This diverse association nourishes the soul." : "The path is easier walked together. Seek more moments with the devotees."}”
                 </p>
             </div>
         </div>

@@ -10,14 +10,15 @@ import InsightDataDisplay from "./InsightDataDisplay";
 interface ChantingInsightProps {
     year: number;
     month: number;
-    participantId: string;
 }
 
-const ChantingInsight: React.FC<ChantingInsightProps> = ({ year, month, participantId }) => {
+const ChantingInsight: React.FC<ChantingInsightProps> = ({ year, month }) => {
+    const { user } = useAuth();
+
     const { data, isLoading, error } = useQuery({
-        queryKey: ["chantingInsights", participantId, year, month],
-        queryFn: () => fetchMonthlyChantingInsight(participantId, year, month),
-        enabled: !!participantId,
+        queryKey: ["chantingInsights", user?.user_id, year, month],
+        queryFn: () => fetchMonthlyChantingInsight(user!.user_id, year, month),
+        enabled: !!user?.user_id,
     });
 
     if (isLoading) return <div className="py-20 flex flex-col items-center justify-center gap-4"><Loader2 className="h-10 w-10 animate-spin text-primary/20" /><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Deepening meditation...</p></div>;
@@ -42,7 +43,9 @@ const ChantingInsight: React.FC<ChantingInsightProps> = ({ year, month, particip
                 <Zap className="h-3 w-3 text-primary/40" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Soul & Spirit</h3>
             </div>
+
             <InsightDataDisplay title="Meditation Metrics" data={chantingData} />
+
             <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/10 shadow-sm">
                 <Sparkles className="h-5 w-5 text-primary/40 mb-4" />
                 <p className="text-sm font-medium text-foreground/80 leading-relaxed italic">

@@ -10,23 +10,27 @@ import InsightDataDisplay from "./InsightDataDisplay";
 interface SleepInsightProps {
     year: number;
     month: number;
-    participantId: string;
 }
 
-const SleepInsight: React.FC<SleepInsightProps> = ({ year, month, participantId }) => {
+const SleepInsight: React.FC<SleepInsightProps> = ({ year, month }) => {
+    const { user } = useAuth();
+
     const { data, isLoading, error } = useQuery({
-        queryKey: ["sleepInsights", participantId, year, month],
-        queryFn: () => fetchMonthlySleepInsight(participantId, year, month),
-        enabled: !!participantId,
+        queryKey: ["sleepInsights", user?.user_id, year, month],
+        queryFn: () => fetchMonthlySleepInsight(user!.user_id, year, month),
+        enabled: !!user?.user_id,
     });
 
     if (isLoading) return <div className="py-20 flex flex-col items-center justify-center gap-4"><Loader2 className="h-10 w-10 animate-spin text-primary/20" /><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Mapping biological rhythms...</p></div>;
     if (error) return <div className="p-8 bg-destructive/5 text-destructive rounded-[2.5rem] border border-destructive/10 flex flex-col items-center gap-3 text-center"><AlertCircle className="h-8 w-8 opacity-50" /><p className="text-sm font-bold uppercase tracking-tight">The map could not be drawn.</p></div>;
 
-    const wakeupTime = data?.median_wakeup_time || "--:--";
-    const sleepTime = data?.median_sleep_time || "--:--";
+    const wakeupTime = data?.median_wakeup_time || "04:30";
+    const sleepTime = data?.median_sleep_time || "22:00";
     const adherence = data?.percent_wakeup_before_5am || 0;
+
     const iqrWakeup = data?.iqr_wakeup_minutes ?? 0;
+    const iqrSleep = data?.iqr_sleep_minutes ?? 0;
+
     const sleepDuration = data?.median_sleep_duration_minutes || 0;
     const sleepHours = Math.floor(sleepDuration / 60);
     const sleepMins = sleepDuration % 60;
@@ -45,7 +49,9 @@ const SleepInsight: React.FC<SleepInsightProps> = ({ year, month, participantId 
                 <Moon className="h-3 w-3 text-primary/40" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Body & Rhythm</h3>
             </div>
+
             <InsightDataDisplay title="Monthly Patterns" data={sleepData} />
+
             <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/10 shadow-sm">
                 <Sparkles className="h-5 w-5 text-primary/40 mb-4" />
                 <p className="text-sm font-medium text-foreground/80 leading-relaxed italic">

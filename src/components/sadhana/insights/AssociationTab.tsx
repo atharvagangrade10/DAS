@@ -58,12 +58,12 @@ const AssociationTab: React.FC<AssociationTabProps> = ({ year, month, participan
             <InsightCard>
                 <div className="flex items-center gap-2 mb-6">
                     <Users className="h-5 w-5 text-green-600 fill-green-600" />
-                    <h2 className="text-lg font-black text-stone-800 tracking-tight">Association Insights</h2>
+                    <h2 className="text-lg font-black text-stone-800 tracking-tight">Shravan Insights</h2>
                 </div>
 
                 <div className="mb-8">
                     <MetricBadge
-                        label="Total Association Time"
+                        label="Total Shravan Time"
                         value={totalMinutes}
                         subValue="minutes (est)"
                     />
@@ -92,7 +92,7 @@ const AssociationTab: React.FC<AssociationTabProps> = ({ year, month, participan
                     <div className="pt-4 bg-stone-50 -mx-6 -mb-6 p-4 border-t border-stone-100">
                         <p className="text-xs font-medium text-stone-500 flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-orange-400 block shrink-0" />
-                            Association with Srila Prabhupada is the foundation.
+                            Shravan with Srila Prabhupada is the foundation.
                         </p>
                     </div>
                 </div>

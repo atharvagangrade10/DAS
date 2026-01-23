@@ -60,9 +60,9 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
     if (!selectedType) return;
     const log = activity.association_logs.find(l => l.type === selectedType);
     if (log) {
-        updateMutation.mutate({ type: selectedType, data: { duration } });
+      updateMutation.mutate({ type: selectedType, data: { duration } });
     } else {
-        addMutation.mutate({ type: selectedType, duration });
+      addMutation.mutate({ type: selectedType, duration });
     }
   };
 
@@ -76,8 +76,8 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            Association
+          <Users className="h-5 w-5 text-primary" />
+          Shravan
         </CardTitle>
         <CardDescription>Time spent in hearing and service.</CardDescription>
       </CardHeader>
@@ -87,7 +87,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
           const isFilled = !!log;
 
           return (
-            <Card 
+            <Card
               key={type}
               className={cn(
                 "border shadow-none transition-all active:scale-95 cursor-pointer",
@@ -98,10 +98,10 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
               <CardContent className="p-4 flex flex-col items-center text-center gap-2">
                 <Icon className={cn("h-6 w-6", isFilled ? "text-primary" : "text-muted-foreground")} />
                 <div className="space-y-0.5">
-                    <p className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">{label}</p>
-                    <p className="text-sm font-black">
-                        {isFilled ? formatTime(log.duration) : "0"}
-                    </p>
+                  <p className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">{label}</p>
+                  <p className="text-sm font-black">
+                    {isFilled ? formatTime(log.duration) : "0"}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -112,19 +112,19 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
       <Dialog open={!!selectedType} onOpenChange={() => setSelectedType(null)}>
         <DialogContent className="sm:max-w-[425px] p-6 rounded-[28px]">
           <DialogHeader>
-            <DialogTitle>Duration of Association</DialogTitle>
+            <DialogTitle>Duration of Shravan</DialogTitle>
             <DialogDescription>Use presets or the stepper to set your time.</DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-6">
             <DurationPicker value={duration} onChange={setDuration} />
           </div>
 
           <DialogFooter className="flex flex-row gap-2">
             {activity.association_logs.some(l => l.type === selectedType) && (
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(selectedType!)}>
-                    <Trash2 className="h-5 w-5" />
-                </Button>
+              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl text-red-500 hover:bg-red-50" onClick={() => deleteMutation.mutate(selectedType!)}>
+                <Trash2 className="h-5 w-5" />
+              </Button>
             )}
             <Button onClick={handleSave} className="flex-1 h-12 rounded-xl font-bold" disabled={addMutation.isPending || updateMutation.isPending}>
               {(addMutation.isPending || updateMutation.isPending) ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}

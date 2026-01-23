@@ -106,6 +106,7 @@ const App = () => {
                 <Route path="sadhana/insights" element={<SadhanaInsights />} />
 
 
+
                 {/* Devotee Friend / Manager Routes */}
                 <Route path="friends" element={<DevoteeFriendRoute><Friends /></DevoteeFriendRoute>} />
 

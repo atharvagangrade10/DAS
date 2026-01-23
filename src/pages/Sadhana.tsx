@@ -3,13 +3,15 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfDay, subDays, setHours, setMinutes } from "date-fns";
-import { Loader2, AlertTriangle, BarChart2 } from "lucide-react";
+import { Loader2, AlertTriangle, BarChart2, Copy, Share2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { ActivityLogResponse, ActivityLogCreate } from "@/types/sadhana";
 
+import { useToast } from "@/hooks/use-toast";
+import { formatSadhanaReport } from "@/utils/sadhanaFormatters";
 import { fetchActivityLogByDate, createActivityLog } from "@/utils/api";
 import ActivityHeader from "@/components/sadhana/ActivityHeader";
 import WorshipCard from "@/components/sadhana/WorshipCard";
@@ -22,6 +24,7 @@ import ExerciseSection from "@/components/sadhana/ExerciseSection";
 
 const Sadhana = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = React.useState<Date>(startOfDay(new Date()));
   const dateStr = format(selectedDate, "yyyy-MM-dd");
@@ -82,12 +85,34 @@ const Sadhana = () => {
         <div className="px-4 py-6 space-y-10">
           <div className="flex justify-between items-center -mb-6">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Daily Entry</h3>
-            <Link to="/sadhana/insights">
-              <Button variant="ghost" size="sm" className="h-8 rounded-full text-primary gap-1.5 font-bold hover:bg-primary/5">
-                <BarChart2 className="h-4 w-4" />
-                View Insights
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full text-foreground/70 gap-1.5 font-bold hover:bg-primary/5"
+                onClick={() => {
+                  if (activityLog) {
+                    const text = formatSadhanaReport(activityLog);
+                    navigator.clipboard.writeText(text);
+                    toast({
+                      title: "Copied to clipboard",
+                      description: "Sadhana report ready to share on WhatsApp",
+                    });
+                  }
+                }}
+                disabled={!activityLog}
+              >
+                <Copy className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only sm:inline-block">Copy</span>
               </Button>
-            </Link>
+
+              <Link to="/sadhana/insights">
+                <Button variant="ghost" size="sm" className="h-8 rounded-full text-primary gap-1.5 font-bold hover:bg-primary/5">
+                  <BarChart2 className="h-4 w-4" />
+                  View Insights
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {isLoading || createMutation.isPending ? (

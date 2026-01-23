@@ -66,6 +66,7 @@ export interface ActivityLogCreate {
   sandhya_arti_attended: boolean;
 
   exercise_time: number; // minutes
+  finished_by?: string | null; // datetime string (ISO format)
 }
 
 // -------------------------------------------------
@@ -108,6 +109,7 @@ export interface ActivityLogUpdate {
   sandhya_arti_attended?: boolean;
 
   exercise_time?: number;
+  finished_by?: string | null; // datetime string (ISO format)
 }
 
 // -------------------------------------------------
@@ -142,6 +144,7 @@ export interface ActivityLogResponse {
   sandhya_arti_attended: boolean;
 
   exercise_time: number;
+  finished_by: string | null; // datetime string (ISO format)
 
   chanting_logs: ChantingLogResponse[];
   book_reading_logs: BookLogResponse[];

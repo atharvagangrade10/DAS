@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfDay, subDays, setHours, setMinutes } from "date-fns";
+import { format, startOfDay, subDays, setHours, setMinutes, parse, getHours, getMinutes } from "date-fns";
 import { Loader2, AlertTriangle, BarChart2, Copy, Share2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
@@ -10,9 +10,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ActivityLogResponse, ActivityLogCreate } from "@/types/sadhana";
 
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatSadhanaReport } from "@/utils/sadhanaFormatters";
-import { fetchActivityLogByDate, createActivityLog } from "@/utils/api";
+import { fetchActivityLogByDate, createActivityLog, updateActivityLog } from "@/utils/api";
 import ActivityHeader from "@/components/sadhana/ActivityHeader";
 import WorshipCard from "@/components/sadhana/WorshipCard";
 import ChantingSection from "@/components/sadhana/ChantingSection";
@@ -24,11 +24,11 @@ import ExerciseSection from "@/components/sadhana/ExerciseSection";
 
 const Sadhana = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = React.useState<Date>(startOfDay(new Date()));
   const [targetFinishedTime, setTargetFinishedTime] = React.useState<string>("");
   const dateStr = format(selectedDate, "yyyy-MM-dd");
+
 
   const todayStart = startOfDay(new Date());
   const isFuture = selectedDate > todayStart;
@@ -59,11 +59,44 @@ const Sadhana = () => {
     retry: false, // Don't retry if not found
   });
 
+  React.useEffect(() => {
+    if (activityLog?.finished_by) {
+      setTargetFinishedTime(format(new Date(activityLog.finished_by), "h:mm a"));
+    } else {
+      setTargetFinishedTime("");
+    }
+  }, [activityLog?.finished_by]);
+
   // 2. Fallback Creation
   const createMutation = useMutation({
     mutationFn: (data: ActivityLogCreate) => createActivityLog(data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["activityLog", dateStr] }),
   });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateActivityLog(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activityLog"] });
+      toast.success("Activity log updated successfully.");
+    },
+  });
+
+  const handleTargetFinishedTimeChange = (time: string) => {
+    setTargetFinishedTime(time);
+    if (!activityLog) return;
+
+    try {
+      const parsedTime = parse(time, "h:mm a", new Date());
+      const fullDate = setMinutes(setHours(selectedDate, getHours(parsedTime)), getMinutes(parsedTime));
+
+      updateMutation.mutate({
+        id: activityLog.id,
+        data: { finished_by: format(fullDate, "yyyy-MM-dd'T'HH:mm:ss") }
+      });
+    } catch (e) {
+      console.error("Failed to parse time", e);
+    }
+  };
 
   React.useEffect(() => {
     const isNotFoundError = error?.message.includes("Status: 404") || error?.message.toLowerCase().includes("not found");
@@ -112,10 +145,7 @@ const Sadhana = () => {
                       user?.chanting_rounds ?? 16
                     );
                     navigator.clipboard.writeText(text);
-                    toast({
-                      title: "Copied to clipboard",
-                      description: "Sadhana report ready to share on WhatsApp",
-                    });
+                    toast.success("Sadhana report copied to clipboard");
                   }
                 }}
                 disabled={!activityLog}
@@ -151,7 +181,7 @@ const Sadhana = () => {
                 activity={activityLog}
                 readOnly={isFuture}
                 targetFinishedTime={targetFinishedTime}
-                onTargetFinishedTimeChange={setTargetFinishedTime}
+                onTargetFinishedTimeChange={handleTargetFinishedTimeChange}
               />
               <AssociationSection activity={activityLog} readOnly={isFuture} />
               <ExerciseSection activity={activityLog} readOnly={isFuture} />

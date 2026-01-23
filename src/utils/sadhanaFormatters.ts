@@ -1,29 +1,37 @@
 import { ActivityLogResponse } from "@/types/sadhana";
 import { format, parseISO } from "date-fns";
 
-export const formatSadhanaReport = (activity: ActivityLogResponse): string => {
+export const formatSadhanaReport = (
+    activity: ActivityLogResponse,
+    targetFinishedTime?: string | null,
+    lastDaySleepWithTime?: string | null,
+    targetRounds: number = 16
+): string => {
     const dateStr = format(parseISO(activity.today_date), "dd MMM yyyy");
 
     // Sleep & Wakeup
     const wakeupTime = activity.wakeup_at ? format(parseISO(activity.wakeup_at), "h:mm a") : "N/A";
-    const sleepTime = activity.sleep_at ? format(parseISO(activity.sleep_at), "h:mm a") : "N/A";
+    let sleepTime = "N/A";
+
+    if (lastDaySleepWithTime) {
+        sleepTime = format(parseISO(lastDaySleepWithTime), "h:mm a");
+    } else if (activity.sleep_at) {
+        sleepTime = format(parseISO(activity.sleep_at), "h:mm a");
+    }
 
     // Chanting
     const totalRounds = activity.chanting_logs.reduce((acc, log) => acc + log.rounds, 0);
-    const chantingDetails = activity.chanting_logs
-        .filter(log => log.rounds > 0)
-        .map(log => {
-            let slotName = "";
-            switch (log.slot) {
-                case "before_7_30_am": slotName = "Before 7:30 AM"; break;
-                case "7_30_to_8_30_am": slotName = "7:30 - 8:30 AM"; break;
-                case "8_30_to_10_am": slotName = "8:30 - 10:00 AM"; break;
-                case "before_9_30_pm": slotName = "Before 9:30 PM"; break;
-                case "after_9_30_pm": slotName = "After 9:30 PM"; break;
-            }
-            return `${slotName}: ${log.rounds}`;
-        })
-        .join("\n   • ");
+    const roundsBefore730 = activity.chanting_logs
+        .filter(log => log.slot === "before_7_30_am")
+        .reduce((acc, log) => acc + log.rounds, 0);
+
+    let chantingLine = `📿 *Chanting:* ${totalRounds}/${targetRounds}`;
+    if (roundsBefore730 > 0) {
+        chantingLine += ` (Before 7:30 AM: ${roundsBefore730})`;
+    }
+    if (targetFinishedTime) {
+        chantingLine += ` - Finished by ${targetFinishedTime}`;
+    }
 
     // Reading
     const totalReading = activity.book_reading_logs.reduce((acc, log) => acc + log.reading_time, 0);
@@ -44,8 +52,7 @@ export const formatSadhanaReport = (activity: ActivityLogResponse): string => {
         `*Sadhana Report - ${dateStr}*`,
         "",
         `🌅 *Wake Up:* ${wakeupTime}`,
-        `📿 *Chanting:* ${totalRounds} rounds`,
-        ...(chantingDetails ? [`   • ${chantingDetails}`] : []),
+        chantingLine,
         `📚 *Reading:* ${totalReading} mins ${readingDetails ? ` - ${readingDetails}` : ""}`,
         `🤝 *Shravan:* ${totalAssociation} mins`,
         `🧘 *Exercise:* ${activity.exercise_time} mins`,

@@ -27,6 +27,7 @@ const Sadhana = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = React.useState<Date>(startOfDay(new Date()));
+  const [targetFinishedTime, setTargetFinishedTime] = React.useState<string>("");
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
   const todayStart = startOfDay(new Date());
@@ -44,6 +45,18 @@ const Sadhana = () => {
       if (error.message.includes("Status: 404")) return false;
       return failureCount < 3;
     },
+  });
+
+  // 1.1 Fetch Previous Day Activity Log (for Sleep)
+  const prevDateStr = format(subDays(selectedDate, 1), "yyyy-MM-dd");
+  const { data: prevActivityLog } = useQuery<ActivityLogResponse, Error>({
+    queryKey: ["activityLog", prevDateStr],
+    queryFn: async () => {
+      if (!user?.user_id) throw new Error("User not authenticated.");
+      return fetchActivityLogByDate(user.user_id, prevDateStr);
+    },
+    enabled: !!user?.user_id,
+    retry: false, // Don't retry if not found
   });
 
   // 2. Fallback Creation
@@ -92,7 +105,12 @@ const Sadhana = () => {
                 className="h-8 rounded-full text-foreground/70 gap-1.5 font-bold hover:bg-primary/5"
                 onClick={() => {
                   if (activityLog) {
-                    const text = formatSadhanaReport(activityLog);
+                    const text = formatSadhanaReport(
+                      activityLog,
+                      targetFinishedTime,
+                      prevActivityLog?.sleep_at,
+                      user?.chanting_rounds ?? 16
+                    );
                     navigator.clipboard.writeText(text);
                     toast({
                       title: "Copied to clipboard",
@@ -129,7 +147,12 @@ const Sadhana = () => {
           ) : activityLog ? (
             <>
               <WorshipCard activity={activityLog} readOnly={isFuture} />
-              <ChantingSection activity={activityLog} readOnly={isFuture} />
+              <ChantingSection
+                activity={activityLog}
+                readOnly={isFuture}
+                targetFinishedTime={targetFinishedTime}
+                onTargetFinishedTimeChange={setTargetFinishedTime}
+              />
               <AssociationSection activity={activityLog} readOnly={isFuture} />
               <ExerciseSection activity={activityLog} readOnly={isFuture} />
               <BookReadingSection activity={activityLog} readOnly={isFuture} />

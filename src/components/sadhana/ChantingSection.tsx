@@ -15,11 +15,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/context/AuthContext";
+import TimeStepper from "./TimeStepper";
+import { parse, getHours, getMinutes, setHours, setMinutes, format, isValid } from "date-fns";
 
 
 interface ChantingSectionProps {
   activity: ActivityLogResponse;
   readOnly: boolean;
+  targetFinishedTime?: string;
+  onTargetFinishedTimeChange?: (time: string) => void;
 }
 
 const CHANTING_SLOT_CONFIG: { value: ChantingSlot, label: string }[] = [
@@ -30,12 +34,22 @@ const CHANTING_SLOT_CONFIG: { value: ChantingSlot, label: string }[] = [
   { value: "after_9_30_pm", label: "Late Night" },
 ];
 
-const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly }) => {
+const ChantingSection: React.FC<ChantingSectionProps> = ({
+  activity,
+  readOnly,
+  targetFinishedTime,
+  onTargetFinishedTimeChange
+}) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedSlot, setSelectedSlot] = React.useState<ChantingSlot | null>(null);
   const [tempRounds, setTempRounds] = React.useState("16");
   const [tempRating, setTempRating] = React.useState("8");
+
+  // Time Picker State
+  const [showTimePicker, setShowTimePicker] = React.useState(false);
+  const [tempHour, setTempHour] = React.useState(8);
+  const [tempMinute, setTempMinute] = React.useState(30);
 
   const targetRounds = user?.chanting_rounds || 16;
 
@@ -79,6 +93,25 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
     }
   };
 
+  const handleOpenTimePicker = () => {
+    if (targetFinishedTime) {
+      const date = parse(targetFinishedTime, "h:mm a", new Date());
+      if (isValid(date)) {
+        setTempHour(getHours(date));
+        setTempMinute(getMinutes(date));
+      }
+    }
+    setShowTimePicker(true);
+  };
+
+  const handleSaveTime = () => {
+    if (onTargetFinishedTimeChange) {
+      const date = setMinutes(setHours(new Date(), tempHour), tempMinute);
+      onTargetFinishedTimeChange(format(date, "h:mm a"));
+    }
+    setShowTimePicker(false);
+  };
+
   const totalRounds = activity.chanting_logs.reduce((sum, log) => sum + log.rounds, 0);
 
   return (
@@ -97,6 +130,22 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
             <span className="text-sm font-bold text-muted-foreground ml-1">/ {targetRounds}</span>
           </div>
         </div>
+
+        {!readOnly && onTargetFinishedTimeChange && (
+          <div className="flex items-center gap-2 mt-2 bg-muted/30 p-3 rounded-lg border border-dashed justify-between">
+            <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+              Finished By:
+            </Label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenTimePicker}
+              className="font-bold min-w-[100px]"
+            >
+              {targetFinishedTime || "Select Time"}
+            </Button>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
@@ -184,6 +233,25 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({ activity, readOnly })
             )}
             <Button onClick={handleSave} className="flex-1" disabled={addMutation.isPending || updateMutation.isPending}>
               Save Chanting
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
+        <DialogContent className="sm:max-w-[400px] p-6 rounded-[28px]">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-center text-xl font-black">
+              Target Finish Time
+            </DialogTitle>
+            <DialogDescription className="text-center">When did you finish your rounds?</DialogDescription>
+          </DialogHeader>
+
+          <TimeStepper hour={tempHour} minute={tempMinute} onChange={(h, m) => { setTempHour(h); setTempMinute(m); }} />
+
+          <DialogFooter className="mt-8">
+            <Button onClick={handleSaveTime} className="w-full h-12 rounded-xl font-bold text-lg">
+              Set Time
             </Button>
           </DialogFooter>
         </DialogContent>

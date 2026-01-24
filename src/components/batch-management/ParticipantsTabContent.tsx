@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
+import CreateParticipantDialog from "@/components/CreateParticipantDialog";
 
 interface ParticipantsTabContentProps {
   batch: Batch;
@@ -110,15 +111,33 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
   // Control access based on role and assignment
   const canManageParticipants = isManager || (isVolunteer && isAssignedVolunteer);
 
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
+
   return (
     <div className="space-y-6">
+      {/* Create Participant Dialog */}
+      <CreateParticipantDialog
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onCreationSuccess={(newParticipant) => {
+          // Optionally auto-add to batch if desired, or just let them search for it.
+          // For now, let's just toast and maybe search for them automatically?
+          setSearchQuery(newParticipant.phone);
+        }}
+      />
+
       {/* Search & Add Section */}
       {!readOnly && canManageParticipants && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            Add Participants
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Add Participants
+            </h4>
+            <Button size="sm" variant="outline" onClick={() => setIsCreateDialogOpen(true)}>
+              Create New
+            </Button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -198,7 +217,7 @@ const ParticipantsTabContent: React.FC<ParticipantsTabContentProps> = ({ batch, 
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isManager && (
+                      {canManageParticipants && (
                         <>
                           <AlertDialog open={isDeleteDialogOpen && participantIdToRemove === p.id} onOpenChange={(open) => {
                             setIsDeleteDialogOpen(open);

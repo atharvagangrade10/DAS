@@ -18,6 +18,9 @@ import RegisterFullForm from "./pages/RegisterFullForm";
 import PublicSetPassword from "./pages/PublicSetPassword";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import Sadhana from "./pages/Sadhana"; // New import
+import SadhanaInsights from "./pages/SadhanaInsights";
+
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -25,6 +28,13 @@ import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import { Loader2 } from "lucide-react";
+// LMS Pages
+import Courses from "./pages/Courses";
+import CourseBuilder from "./pages/CourseBuilder";
+import MyLearning from "./pages/MyLearning";
+import Review from "./pages/Review";
+import CourseView from "./pages/CourseView";
+import StepView from "./pages/StepView";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +109,10 @@ const App = () => {
                 <Route index element={<Index />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="payments" element={<PaymentHistory />} />
+                <Route path="sadhana" element={<Sadhana />} /> {/* New Sadhana Route */}
+                <Route path="sadhana/insights" element={<SadhanaInsights />} />
+
+
 
                 {/* Devotee Friend / Manager Routes */}
                 <Route path="friends" element={<DevoteeFriendRoute><Friends /></DevoteeFriendRoute>} />
@@ -108,11 +122,17 @@ const App = () => {
 
                 {/* All Protected Roles */}
                 <Route path="programs" element={<Programs />} />
+                <Route path="my-learning" element={<MyLearning />} />
+                <Route path="courses/:courseId" element={<CourseView />} />
+                <Route path="steps/:stepId" element={<StepView />} />
 
                 {/* Manager Only Routes */}
                 <Route path="yatra" element={<ManagerRoute><YatraPage /></ManagerRoute>} />
                 <Route path="participants" element={<ManagerRoute><ParticipantsPage /></ManagerRoute>} />
                 <Route path="stats" element={<ManagerRoute><Stats /></ManagerRoute>} />
+                <Route path="courses" element={<ManagerRoute><Courses /></ManagerRoute>} />
+                <Route path="courses/builder/:courseId" element={<ManagerRoute><CourseBuilder /></ManagerRoute>} />
+                <Route path="review" element={<ManagerRoute><Review /></ManagerRoute>} />
               </Route>
             </Route>
 

@@ -131,6 +131,8 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
   >({
     queryKey: ["devoteeFriends"],
     queryFn: fetchDevoteeFriends,
+    enabled: isOpen,
+    retry: false, // Don't retry if it fails (e.g. 403)
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -166,8 +168,8 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
 
   const mutation = useMutation({
     mutationFn: (values: z.infer<typeof formSchema>) => {
-      const profession = values.profession_type === "Other" 
-        ? values.profession_other 
+      const profession = values.profession_type === "Other"
+        ? values.profession_other
         : values.profession_type;
 
       const payload = {
@@ -283,7 +285,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="dob"
@@ -341,7 +343,7 @@ const CreateParticipantDialog: React.FC<CreateParticipantDialogProps> = ({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="profession_type"

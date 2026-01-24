@@ -21,39 +21,58 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const EnrolledBatchesSection = ({ user }: { user: any }) => {
+  const { data: enrolledBatches, isLoading } = useQuery<Batch[], Error>({
+    queryKey: ["enrolledBatches", user?.user_id],
+    queryFn: fetchMyEnrolledBatches,
+    enabled: !!user,
+  });
+
+  if (isLoading || !enrolledBatches || enrolledBatches.length === 0) return null;
+
+  return (
+    <div className="mt-12 space-y-6">
+      <div className="flex items-center gap-2 border-b pb-2">
+        <h2 className="text-2xl font-bold">My Enrolled Classes</h2>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {enrolledBatches.map((batch) => (
+          <BatchCard key={batch.id} batch={batch} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
+
 const Programs = () => {
   const { user } = useAuth();
   const isManager = user?.role === 'Manager';
+  const isVolunteer = user?.role === 'Volunteer';
+
   const [isCreateProgramDialogOpen, setIsCreateProgramDialogOpen] = React.useState(false);
   const [isCreateBatchDialogOpen, setIsCreateBatchDialogOpen] = React.useState(false);
 
   const { data: programs, isLoading: isLoadingPrograms, error: programsError } = useQuery<Program[], Error>({
     queryKey: ["programs"],
     queryFn: fetchPrograms,
-    enabled: isManager, // Only managers see regular programs
+    enabled: isManager,
   });
 
   const { data: batches, isLoading: isLoadingBatches, error: batchesError } = useQuery<Batch[], Error>({
     queryKey: ["batches", user?.role, user?.user_id],
     queryFn: () => {
-      if (isManager) {
-        return fetchBatches();
-      }
-      if (user?.role === 'Volunteer') {
-        return fetchMyAssignedBatches();
-      }
+      if (isManager) return fetchBatches();
+      if (isVolunteer) return fetchMyAssignedBatches();
       return fetchMyEnrolledBatches();
     },
     enabled: !!user,
   });
 
   React.useEffect(() => {
-    if (isManager && programsError) {
-      toast.error("Error loading programs", { description: programsError.message });
-    }
-    if (batchesError) {
-      toast.error("Error loading classes", { description: batchesError.message });
-    }
+    if (isManager && programsError) toast.error("Error loading programs", { description: programsError.message });
+    if (batchesError) toast.error("Error loading classes", { description: batchesError.message });
   }, [programsError, batchesError, isManager]);
 
   const isLoading = isLoadingPrograms || isLoadingBatches;
@@ -85,7 +104,6 @@ const Programs = () => {
         )}
       </div>
 
-
       <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mb-8">
         Manage your fixed-duration spiritual programs and recurring daily or weekly classes.
       </p>
@@ -99,7 +117,7 @@ const Programs = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Render regular programs */}
-          {programs?.map((program) => (
+          {isManager && programs?.map((program) => (
             <ProgramCard key={program.id} program={program} />
           ))}
 
@@ -108,14 +126,19 @@ const Programs = () => {
             <BatchCard key={batch.id} batch={batch} />
           ))}
 
-          {(!programs || programs.length === 0) && (!batches || batches.length === 0) && (
+          {(!isManager || (!programs || programs.length === 0)) && (!batches || batches.length === 0) && (
             <div className="col-span-full text-center py-20">
               <p className="text-gray-500 text-xl">No activities found.</p>
-              <p className="text-gray-500">Create a new program or class to get started.</p>
+              <p className="text-gray-500">
+                {isManager ? "Create a new program or class to get started." : "You are not enrolled in any programs or classes yet."}
+              </p>
             </div>
           )}
         </div>
       )}
+
+      {/* Enrolled Classes Section (visible to everyone who has enrollments) */}
+      <EnrolledBatchesSection user={user} />
 
       <CreateProgramDialog
         isOpen={isCreateProgramDialogOpen}

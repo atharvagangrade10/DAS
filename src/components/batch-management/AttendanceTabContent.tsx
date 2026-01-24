@@ -12,6 +12,7 @@ import {
   FastForward,
   Copy,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import {
   Popover,
@@ -50,6 +51,15 @@ const AttendanceTabContent: React.FC<AttendanceTabContentProps> = ({
   isOpen,
   readOnly = false,
 }) => {
+  const { user } = useAuth();
+  // Debug log for AttendanceTab permission
+  console.log("AttendanceTabContent Debug:", {
+    batchId: batch.id,
+    batchName: batch.name,
+    readOnly,
+    userRole: user?.role,
+    userId: user?.user_id
+  });
 
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();

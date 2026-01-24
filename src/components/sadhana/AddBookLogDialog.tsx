@@ -23,15 +23,28 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, BookOpen, Check, ChevronsUpDown, Search } from "lucide-react";
+import { Loader2, BookOpen, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { BookLogCreate, BookLogResponse, BookLogUpdate } from "@/types/sadhana";
 import { addBookLog, updateBookLog } from "@/utils/api";
 import DurationPicker from "./DurationPicker";
-import booksData from "./BooksName.json";
+import booksDataFile from "./BooksName.json"; // Import raw json
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+
+// --- Types for Local Helper ---
+interface SectionDef {
+  name: string;
+  chapters: string[];
+}
+interface BookDef {
+  name: string;
+  chapters?: string[];
+  sections?: SectionDef[];
+}
+
+const booksData = booksDataFile as { books: BookDef[] };
 
 const formSchema = z.object({
   name: z.string().min(1, "Book name is required"),
@@ -55,38 +68,102 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
   const queryClient = useQueryClient();
   const isEdit = !!logToEdit;
   const [bookSearchOpen, setBookSearchOpen] = React.useState(false);
+  const [sectionSearchOpen, setSectionSearchOpen] = React.useState(false);
   const [chapterSearchOpen, setChapterSearchOpen] = React.useState(false);
+
+  // We need local state for "Section" just for browsing, not saved to backend 
+  // (unless we decide to prepend it to chapter_name, but we assume chapter strings are unique enough or user just logs chapter)
+  const [selectedSection, setSelectedSection] = React.useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: logToEdit?.name || "",
-      reading_time: logToEdit?.reading_time || 30,
-      chapter_name: logToEdit?.chapter_name || "",
+      name: "",
+      reading_time: 30,
+      chapter_name: "",
     },
   });
 
   const selectedBookName = form.watch("name");
-  const filteredChapters = React.useMemo(() => {
-    const book = booksData.books.find((b) => b.name === selectedBookName);
-    return book ? book.chapters : [];
-  }, [selectedBookName]);
 
+  // Reset form when dialog opens or log changes
   React.useEffect(() => {
-    if (logToEdit) {
-      form.reset({
-        name: logToEdit.name,
-        reading_time: logToEdit.reading_time,
-        chapter_name: logToEdit.chapter_name || "",
-      });
-    } else {
-      form.reset({
-        name: "",
-        reading_time: 30,
-        chapter_name: "",
-      });
+    if (isOpen) {
+      if (logToEdit) {
+        let rawChapterName = logToEdit.chapter_name || "";
+        let foundSectionName: string | null = null;
+
+        // Smart Parse: Check if current book has sections
+        const book = booksData.books.find(b => b.name === logToEdit.name);
+
+        if (book && book.sections && rawChapterName) {
+          // Try 1: Check if stored name is composite "Section - Chapter"
+          for (const section of book.sections) {
+            const prefix = `${section.name} - `;
+            if (rawChapterName.startsWith(prefix)) {
+              foundSectionName = section.name;
+              rawChapterName = rawChapterName.substring(prefix.length); // Strip prefix for form
+              break;
+            }
+            // Try 2: Maybe stored name is JUST the section name (if chapter was empty)
+            if (rawChapterName === section.name) {
+              foundSectionName = section.name;
+              rawChapterName = "";
+              break;
+            }
+            // Try 3: Legacy/Fallback - checks if raw chapter exists in a section directly
+            if (section.chapters.includes(rawChapterName)) {
+              foundSectionName = section.name;
+              break;
+            }
+          }
+        }
+
+        setSelectedSection(foundSectionName);
+        form.reset({
+          name: logToEdit.name,
+          reading_time: logToEdit.reading_time,
+          chapter_name: rawChapterName,
+        });
+
+      } else {
+        form.reset({
+          name: "",
+          reading_time: 30,
+          chapter_name: "",
+        });
+        setSelectedSection(null);
+      }
     }
-  }, [logToEdit, form, isOpen]);
+  }, [logToEdit, isOpen, form]);
+
+  // Derived Data
+  const currentBook = React.useMemo(() =>
+    booksData.books.find((b) => b.name === selectedBookName),
+    [selectedBookName]);
+
+  const hasSections = !!currentBook?.sections;
+
+  const currentSections = React.useMemo(() =>
+    currentBook?.sections || [],
+    [currentBook]);
+
+  const filteredChapters = React.useMemo(() => {
+    if (!currentBook) return [];
+
+    if (currentBook.chapters) {
+      return currentBook.chapters;
+    }
+
+    if (currentBook.sections) {
+      if (!selectedSection) return [];
+      const sec = currentBook.sections.find(s => s.name === selectedSection);
+      return sec ? sec.chapters : [];
+    }
+
+    return [];
+  }, [currentBook, selectedSection]);
+
 
   const addMutation = useMutation({
     mutationFn: (data: BookLogCreate) => addBookLog(activityId, data),
@@ -113,10 +190,22 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    let finalChapter = values.chapter_name;
+
+    // Construct Composite Name if Section exists
+    if (selectedSection) {
+      if (values.chapter_name) {
+        finalChapter = `${selectedSection} - ${values.chapter_name}`;
+      } else {
+        // If only section is selected but no chapter
+        finalChapter = selectedSection;
+      }
+    }
+
     const payload = {
       name: values.name,
       reading_time: values.reading_time,
-      chapter_name: values.chapter_name || null,
+      chapter_name: finalChapter || null,
     };
 
     if (isEdit) {
@@ -138,6 +227,8 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+
+            {/* Book Selection */}
             <FormField
               control={form.control}
               name="name"
@@ -163,11 +254,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[var(--radix-popover-trigger-width)] p-0"
-                      onWheel={(e) => e.stopPropagation()}
-                      onTouchMove={(e) => e.stopPropagation()}
-                    >
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                       <Command className="h-[300px] flex flex-col">
                         <CommandInput placeholder="Search book..." className="h-9 shrink-0" />
                         <CommandList className="flex-1 overflow-y-auto">
@@ -179,7 +266,8 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
                                 key={book.name}
                                 onSelect={() => {
                                   form.setValue("name", book.name);
-                                  form.setValue("chapter_name", ""); // Reset chapter when book changes
+                                  form.setValue("chapter_name", "");
+                                  setSelectedSection(null);
                                   setBookSearchOpen(false);
                                 }}
                               >
@@ -202,6 +290,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               )}
             />
 
+            {/* Time Picker */}
             <FormField
               control={form.control}
               name="reading_time"
@@ -216,6 +305,60 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               )}
             />
 
+            {/* Section / Canto Selection (Conditional) */}
+            {hasSections && (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Section / Canto</FormLabel>
+                <Popover open={sectionSearchOpen} onOpenChange={setSectionSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={sectionSearchOpen}
+                      className={cn(
+                        "h-12 w-full justify-between rounded-xl px-4 font-normal",
+                        !selectedSection && "text-muted-foreground"
+                      )}
+                      disabled={!selectedBookName}
+                    >
+                      {selectedSection || "Select section..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <Command className="h-[300px] flex flex-col">
+                      <CommandInput placeholder="Search section..." className="h-9 shrink-0" />
+                      <CommandList className="flex-1 overflow-y-auto">
+                        <CommandEmpty>No section found.</CommandEmpty>
+                        <CommandGroup>
+                          {currentSections.map((sec) => (
+                            <CommandItem
+                              value={sec.name}
+                              key={sec.name}
+                              onSelect={() => {
+                                setSelectedSection(sec.name);
+                                form.setValue("chapter_name", ""); // Clear chapter when section changes
+                                setSectionSearchOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  sec.name === selectedSection ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {sec.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+            )}
+
+            {/* Chapter Selection */}
             <FormField
               control={form.control}
               name="chapter_name"
@@ -233,22 +376,21 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
                             "h-12 w-full justify-between rounded-xl px-4 font-normal",
                             !field.value && "text-muted-foreground"
                           )}
-                          disabled={!selectedBookName}
+                          // Disable if no book, or (if book has sections) no section selected
+                          disabled={!selectedBookName || (hasSections && !selectedSection)}
                         >
                           {field.value || "Select chapter..."}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[var(--radix-popover-trigger-width)] p-0"
-                      onWheel={(e) => e.stopPropagation()}
-                      onTouchMove={(e) => e.stopPropagation()}
-                    >
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                       <Command className="h-[300px] flex flex-col">
                         <CommandInput placeholder="Search chapter..." className="h-9 shrink-0" />
                         <CommandList className="flex-1 overflow-y-auto">
-                          <CommandEmpty>No chapter found.</CommandEmpty>
+                          <CommandEmpty>
+                            {hasSections && !selectedSection ? "Select a section first." : "No chapter found."}
+                          </CommandEmpty>
                           <CommandGroup>
                             {filteredChapters.map((chapter) => (
                               <CommandItem

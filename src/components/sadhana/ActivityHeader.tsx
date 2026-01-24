@@ -19,7 +19,7 @@ interface ActivityHeaderProps {
 
 const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateChange }) => {
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
-  
+
   const weekDays = eachDayOfInterval({
     start: subDays(selectedDate, 3),
     end: addDays(selectedDate, 3),
@@ -42,8 +42,8 @@ const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateCha
         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
-                <CalendarIcon className="h-5 w-5" />
-                <span className="sr-only">Open calendar</span>
+              <CalendarIcon className="h-5 w-5" />
+              <span className="sr-only">Open calendar</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
@@ -62,12 +62,12 @@ const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateCha
         <Button variant="ghost" size="icon" onClick={handlePrevDay} className="shrink-0 h-12 w-10">
           <ChevronLeft className="h-6 w-6" />
         </Button>
-        
-        <div className="flex-1 flex justify-between gap-1 overflow-x-auto no-scrollbar py-2">
+
+        <div className="flex-1 flex justify-center gap-6 overflow-x-auto no-scrollbar py-2">
           {weekDays.map((day) => {
             const isSelected = isSameDay(day, selectedDate);
             const isFut = day > startOfDay(new Date());
-            
+
             return (
               <button
                 key={day.toString()}
@@ -75,28 +75,28 @@ const ActivityHeader: React.FC<ActivityHeaderProps> = ({ selectedDate, onDateCha
                 disabled={isFut}
                 className={cn(
                   "flex flex-col items-center min-w-[50px] py-3 rounded-2xl transition-all duration-300",
-                  isSelected 
-                    ? "bg-primary text-primary-foreground shadow-xl ring-4 ring-primary/10 scale-110" 
+                  isSelected
+                    ? "bg-primary text-primary-foreground shadow-xl ring-4 ring-primary/10 scale-110"
                     : "text-muted-foreground hover:bg-muted/50",
                   isFut && "opacity-20 grayscale pointer-events-none"
                 )}
               >
                 <span className={cn("text-[10px] font-bold uppercase tracking-widest mb-1", isSelected ? "text-primary-foreground/70" : "text-muted-foreground/60")}>
-                    {format(day, "MMM")}
+                  {format(day, "MMM")}
                 </span>
                 <span className="text-xl font-black leading-none mb-1">{format(day, "d")}</span>
                 <span className={cn("text-[10px] font-bold uppercase", isSelected ? "text-primary-foreground/70" : "text-muted-foreground/60")}>
-                    {format(day, "EEE")}
+                  {format(day, "EEE")}
                 </span>
               </button>
             );
           })}
         </div>
 
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleNextDay} 
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleNextDay}
           disabled={isToday(selectedDate)}
           className="shrink-0 h-12 w-10"
         >

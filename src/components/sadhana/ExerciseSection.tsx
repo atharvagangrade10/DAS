@@ -58,7 +58,7 @@ const ExerciseSection: React.FC<ExerciseSectionProps> = ({ activity, readOnly })
                 </CardTitle>
                 <CardDescription>Keep the body fit for service.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col items-center">
                 <Card
                     className={cn(
                         "border shadow-none transition-all active:scale-95 cursor-pointer max-w-sm",

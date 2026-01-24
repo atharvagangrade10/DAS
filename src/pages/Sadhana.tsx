@@ -125,7 +125,7 @@ const Sadhana = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-4xl mx-auto w-full">
         <ActivityHeader selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
         <div className="px-4 py-6 space-y-10">

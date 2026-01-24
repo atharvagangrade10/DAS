@@ -185,6 +185,7 @@ export interface BookInsightResponse {
   longest_reading_streak: number;
   primary_book_name: string | null;
   primary_book_return_ratio: number | null;
+  books_read: string[];
 }
 
 export interface AssociationInsightResponse {

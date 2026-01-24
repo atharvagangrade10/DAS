@@ -78,6 +78,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ open, onOpenChange }) => {
       <NavLink to="/my-learning" onClick={handleLinkClick}>
         <GraduationCap className="mr-2 h-4 w-4 inline" />
         My Learning
+      </NavLink>
       <NavLink to="/sadhana" onClick={handleLinkClick}>
         <Zap className="mr-2 h-5 w-5" />
         My Sadhana

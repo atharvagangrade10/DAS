@@ -15,7 +15,7 @@ const Layout = () => {
     <div className="flex h-screen w-full bg-background overflow-hidden relative">
       <SidebarNav open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
       <div className="flex flex-col flex-1 h-full min-w-0">
-        <main className={`flex-1 overflow-y-auto p-4 ${isMobile ? "pt-20 pb-24" : ""}`}>
+        <main className={`flex-1 overflow-y-auto p-4 ${isMobile ? "pt-4 pb-24" : ""}`}>
           <div className="max-w-7xl mx-auto w-full">
             <Outlet />
           </div>

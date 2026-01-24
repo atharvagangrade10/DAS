@@ -119,21 +119,21 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ year, month, participantId })
     const greenCount = allStatuses.filter(s => s === "GREEN").length;
     const redCount = allStatuses.filter(s => s === "RED").length;
 
-    let overallTitle = "Good Progress";
+    let overallTitle = "Steady Sadhana";
     let overallColor = "bg-amber-500";
     let overallBg = "bg-amber-50 border-amber-100";
-    let summaryText = "Your sadhana is active, with some areas settling into rhythm while others are still forming.";
+    let summaryText = "Your bhakti-lata (creeper of devotion) is growing. Some branches are strong, while others need more watering and care.";
 
     if (greenCount >= 4 && redCount === 0) {
-        overallTitle = "Excellent Harmony";
+        overallTitle = "Strong Devotion";
         overallColor = "bg-emerald-500";
         overallBg = "bg-emerald-50 border-emerald-100";
-        summaryText = "Your month shows strong rhythm and discipline. Core habits are stable, with no internal conflicts. You are consistently nourished.";
+        summaryText = "Your sadhana is in a beautiful rhythm. This steadiness pleases Guru and Krishna and protects your spiritual life.";
     } else if (redCount >= 2) {
-        overallTitle = "Needs Anchoring";
+        overallTitle = "Needs Shelter";
         overallColor = "bg-rose-500";
         overallBg = "bg-rose-50 border-rose-100";
-        summaryText = "Multiple areas are showing fragmentation. Focusing on just one key anchor (like Sleep or Chanting) can help stabilize the whole ecosystem.";
+        summaryText = "Several areas of your sadhana are struggling. Please take shelter of the Holy Name and devotees to regain your strength.";
     }
 
     return (

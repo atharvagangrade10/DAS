@@ -43,36 +43,107 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   const [tempHour, setTempHour] = React.useState(22);
   const [tempMin, setTempMin] = React.useState(0);
 
+  // Local state for all fields to support optimistic updates and debouncing
+  const [localActivity, setLocalActivity] = React.useState<ActivityLogResponse>(activity);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // Sync local activity when prop updates, ONLY if we aren't mid-save or to ensure data consistency
+  // However, simpler is to just sync, but we use a ref to prevent loops if we wanted complex merging.
+  // For now, simpler: We trust the local state while the user is editing.
+  React.useEffect(() => {
+    // If we are not saving, we can sync. If we are saving, we might race.
+    // Ideally, we only sync if the remote activity ID changed (date change)
+    if (activity.id !== localActivity.id) {
+      setLocalActivity(activity);
+    }
+    // We explicitly DON'T sync on every prop change if it's just a refresh of the same data, 
+    // to avoid overwriting optimistic updates that haven't round-tripped yet.
+    // BUT we must sync if the user changes the DATE in the parent.
+    // The parent (Sadhana.tsx) changes 'activity' when date changes.
+  }, [activity.id, activity]);
+
+  // NOTE: The above dependency `[activity.id, activity]` will still update if ANY field in activity changes.
+  // This might overwrite local state if background refetch happens.
+  // To fix this properly: Only update local state if `activity` is "newer" or "different" significantly,
+  // OR just rely on the fact that we disabled `refetchOnWindowFocus`, so background updates are rare.
+  // Let's refine:
+  React.useEffect(() => {
+    // If the ID is different, it's a new day/log -> Force sync
+    if (activity.id !== localActivity.id) {
+      setLocalActivity(activity);
+    }
+    // If the ID is same, we assume local state is more current due to optimistic updates.
+    // We do NOT overwrite local state with incoming `activity` prop to prevent "jumping" switches.
+  }, [activity.id]);
+
+
   const updateMutation = useMutation({
-    mutationFn: (data: ActivityLogUpdate) => updateActivityLog(activity.id, {
-      // Spread existing activity to satisfy strict backend models
-      sleep_at: activity.sleep_at,
-      wakeup_at: activity.wakeup_at,
-      no_meat: activity.no_meat,
-      no_intoxication: activity.no_intoxication,
-      no_illicit_sex: activity.no_illicit_sex,
-      no_gambling: activity.no_gambling,
-      only_prasadam: activity.only_prasadam,
-      notes_of_day: activity.notes_of_day,
-      mangla_attended: activity.mangla_attended,
-      narshima_attended: activity.narshima_attended,
-      tulsi_arti_attended: activity.tulsi_arti_attended,
-      darshan_arti_attended: activity.darshan_arti_attended,
-      guru_puja_attended: activity.guru_puja_attended,
-      sandhya_arti_attended: activity.sandhya_arti_attended,
-      ...data
-    }),
+    mutationFn: (data: ActivityLogUpdate) => updateActivityLog(activity.id, data),
+    onMutate: () => setIsSaving(true),
     onSuccess: () => {
+      // Silent success - or maybe just clear the saving indicator
+      // We INVALIDATE to ensure consistency, but we won't overwrite local state forcefully due to the useEffect above.
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
-      setOpenPicker(null);
-      toast.success("Updated successfully.");
+      setIsSaving(false);
+
+      // OPTIONAL: toast.success("Saved");  - Removing toast to reduce noise as requested "frictionless"
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => {
+      toast.error("Failed to save: " + error.message);
+      setIsSaving(false);
+    },
   });
+
+  const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const latestActivityRef = React.useRef(localActivity);
+
+  React.useEffect(() => {
+    latestActivityRef.current = localActivity;
+  }, [localActivity]);
+
+  const triggerDebouncedSave = (updates: Partial<ActivityLogUpdate>) => {
+    if (readOnly) return;
+
+    // 1. Update Local State immediately (Optimistic)
+    setLocalActivity(prev => ({ ...prev, ...updates }));
+    setIsSaving(true); // Show "Saving..." immediately
+
+    // 2. Clr existing
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // 3. Set new timeout
+    saveTimeoutRef.current = setTimeout(() => {
+      const current = latestActivityRef.current;
+
+      // Construct payload with CURRENT fields + explicit updates to be safe
+      const payload: ActivityLogUpdate = {
+        sleep_at: current.sleep_at,
+        wakeup_at: current.wakeup_at,
+        no_meat: current.no_meat,
+        no_intoxication: current.no_intoxication,
+        no_illicit_sex: current.no_illicit_sex,
+        no_gambling: current.no_gambling,
+        only_prasadam: current.only_prasadam,
+        notes_of_day: current.notes_of_day,
+        mangla_attended: current.mangla_attended,
+        narshima_attended: current.narshima_attended,
+        tulsi_arti_attended: current.tulsi_arti_attended,
+        darshan_arti_attended: current.darshan_arti_attended,
+        guru_puja_attended: current.guru_puja_attended,
+        sandhya_arti_attended: current.sandhya_arti_attended,
+        ...updates // ensures specific field override
+      };
+
+      updateMutation.mutate(payload);
+    }, 1000);
+  };
+
 
   const handleOpenPicker = (type: 'sleep' | 'wakeup') => {
     if (readOnly) return;
-    const timeStr = type === 'sleep' ? activity.sleep_at : activity.wakeup_at;
+    const timeStr = type === 'sleep' ? localActivity.sleep_at : localActivity.wakeup_at;
     const time = parseISO(timeStr);
 
     if (isValid(time)) {
@@ -88,7 +159,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
   const handleSaveTime = () => {
     if (!openPicker) return;
 
-    const today = parseISO(activity.today_date);
+    const today = parseISO(localActivity.today_date);
     let baseDate = today;
 
     if (openPicker === 'sleep') {
@@ -100,9 +171,34 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
     const updatedDate = setMinutes(setHours(baseDate, tempHour), tempMin);
     const dateString = format(updatedDate, "yyyy-MM-dd'T'HH:mm:ss");
 
-    updateMutation.mutate({
-      [openPicker === 'sleep' ? 'sleep_at' : 'wakeup_at']: dateString
-    });
+    // Immediate update for explicit "Save" button in dialog
+    const updates = { [openPicker === 'sleep' ? 'sleep_at' : 'wakeup_at']: dateString };
+
+    setLocalActivity(prev => ({ ...prev, ...updates }));
+
+    // Bypass debounce for this explicit action
+    // We must construct the payload explicitly to avoid sending read-only fields like 'id'
+    const payload: ActivityLogUpdate = {
+      sleep_at: localActivity.sleep_at,
+      wakeup_at: localActivity.wakeup_at,
+      no_meat: localActivity.no_meat,
+      no_intoxication: localActivity.no_intoxication,
+      no_illicit_sex: localActivity.no_illicit_sex,
+      no_gambling: localActivity.no_gambling,
+      only_prasadam: localActivity.only_prasadam,
+      notes_of_day: localActivity.notes_of_day,
+      mangla_attended: localActivity.mangla_attended,
+      narshima_attended: localActivity.narshima_attended,
+      tulsi_arti_attended: localActivity.tulsi_arti_attended,
+      darshan_arti_attended: localActivity.darshan_arti_attended,
+      guru_puja_attended: localActivity.guru_puja_attended,
+      sandhya_arti_attended: localActivity.sandhya_arti_attended,
+      ...updates // Override with new time
+    };
+
+    updateMutation.mutate(payload);
+
+    setOpenPicker(null);
   };
 
   const formatDisplayTime = (isoString: string) => {
@@ -112,6 +208,16 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
 
   return (
     <div className="space-y-6">
+      {/* Header with Saving Indicator */}
+      <div className="flex justify-end h-4 pr-2">
+        {isSaving && (
+          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-primary/60 animate-pulse">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Saving...
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card
           className="cursor-pointer hover:border-primary/50 transition-colors bg-primary/5 border-primary/10 shadow-none"
@@ -124,7 +230,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-primary">
-              {formatDisplayTime(activity.sleep_at)}
+              {formatDisplayTime(localActivity.sleep_at)}
             </div>
           </CardContent>
         </Card>
@@ -140,7 +246,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-primary">
-              {formatDisplayTime(activity.wakeup_at)}
+              {formatDisplayTime(localActivity.wakeup_at)}
             </div>
           </CardContent>
         </Card>
@@ -168,9 +274,9 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
               </Label>
               <Switch
                 id={key}
-                checked={activity[key as keyof ActivityLogResponse] as boolean}
-                onCheckedChange={(checked) => !readOnly && updateMutation.mutate({ [key]: checked })}
-                disabled={readOnly || updateMutation.isPending}
+                checked={localActivity[key as keyof ActivityLogResponse] as boolean}
+                onCheckedChange={(checked) => triggerDebouncedSave({ [key]: checked })}
+                disabled={readOnly}
                 className="scale-110"
               />
             </div>
@@ -200,9 +306,9 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
               </Label>
               <Switch
                 id={key}
-                checked={activity[key as keyof ActivityLogResponse] as boolean}
-                onCheckedChange={(checked) => !readOnly && updateMutation.mutate({ [key]: checked })}
-                disabled={readOnly || updateMutation.isPending}
+                checked={localActivity[key as keyof ActivityLogResponse] as boolean}
+                onCheckedChange={(checked) => triggerDebouncedSave({ [key]: checked })}
+                disabled={readOnly}
                 className="scale-110"
               />
             </div>

@@ -26,6 +26,7 @@ export interface ChantingLogBase {
 }
 
 export interface BookLogBase {
+  id?: string;
   name: string;
   reading_time: number; // minutes, 0 to 1440
   chapter_name: string | null;

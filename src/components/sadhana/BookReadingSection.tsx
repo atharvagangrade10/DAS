@@ -28,7 +28,7 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
   };
 
   const deleteMutation = useMutation({
-    mutationFn: (name: string) => deleteBookLog(activity.id, name),
+    mutationFn: (id: string) => deleteBookLog(activity.id, id),
     onSuccess: () => { toast.success("Deleted."); invalidateQueries(); },
   });
 
@@ -59,7 +59,7 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
         ) : (
           activity.book_reading_logs.map((log) => (
             <Card
-              key={log.name}
+              key={log.id || log.name}
               className="border-none shadow-sm transition-all active:scale-95 bg-primary/5 ring-1 ring-primary/20"
               onClick={() => !readOnly && handleEdit(log)}
             >
@@ -76,7 +76,7 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
                     <Button
                       variant="ghost" size="icon"
                       className="absolute -top-2 -right-2 h-6 w-6 sm:h-7 sm:w-7 bg-red-500 rounded-full text-white hover:bg-red-600 shadow-md"
-                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(log.name); }}
+                      onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(log.id || log.name); }}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

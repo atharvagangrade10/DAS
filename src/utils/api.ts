@@ -13,6 +13,7 @@ import {
   RequirementRowUpdate, PendingRequirementSubmission, RequirementRowApproval,
   MyCourse, CourseProgressDetail, StepProgressDetail
 } from "@/types/course";
+import {
   ActivityLogResponse,
   ActivityLogCreate,
   ActivityLogUpdate,
@@ -313,12 +314,12 @@ export const addBookLog = async (activityId: string, data: BookLogCreate): Promi
   return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs`, "POST", data);
 };
 
-export const updateBookLog = async (activityId: string, name: string, data: BookLogUpdate): Promise<BookLogResponse> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs/${encodeURIComponent(name)}`, "PUT", data);
+export const updateBookLog = async (activityId: string, logId: string, data: BookLogUpdate): Promise<BookLogResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs/${logId}`, "PUT", data);
 };
 
-export const deleteBookLog = async (activityId: string, name: string): Promise<void> => {
-  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs/${encodeURIComponent(name)}`, "DELETE");
+export const deleteBookLog = async (activityId: string, logId: string): Promise<void> => {
+  return mutateAuthenticated(`${API_BASE_URL}/activities/${activityId}/book-logs/${logId}`, "DELETE");
 };
 
 export const addAssociationLog = async (activityId: string, data: AssociationLogCreate): Promise<AssociationLogResponse> => {

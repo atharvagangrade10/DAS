@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ActivityLogResponse, ActivityLogCreate } from "@/types/sadhana";
 
 import { toast } from "sonner";
-import { formatSadhanaReport } from "@/utils/sadhanaFormatters";
+import { formatSadhanaReport, copyToClipboard } from "@/utils/sadhanaFormatters";
 import { fetchActivityLogByDate, createActivityLog, updateActivityLog } from "@/utils/api";
 import ActivityHeader from "@/components/sadhana/ActivityHeader";
 import WorshipCard from "@/components/sadhana/WorshipCard";
@@ -129,35 +129,83 @@ const Sadhana = () => {
         <ActivityHeader selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
         <div className="px-4 py-6 space-y-10">
-          <div className="flex justify-between items-center -mb-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Daily Entry</h3>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:justify-between sm:items-center">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 self-start sm:self-auto">Daily Entry</h3>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto w-full sm:w-auto justify-end">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="h-8 rounded-full text-foreground/70 gap-1.5 font-bold hover:bg-primary/5"
-                onClick={() => {
+                className="h-9 rounded-full gap-2 font-bold bg-background shadow-sm border-2 border-primary/10 hover:bg-primary/5 hover:border-primary/20"
+                onClick={async () => {
                   if (activityLog) {
                     const text = formatSadhanaReport(
                       activityLog,
                       targetFinishedTime,
                       prevActivityLog?.sleep_at,
-                      user?.chanting_rounds ?? 16
+                      user?.chanting_rounds ?? 16,
+                      user?.initiated_name || user?.full_name || "Participant"
                     );
-                    navigator.clipboard.writeText(text);
-                    toast.success("Sadhana report copied to clipboard");
+
+                    // Use robust copy utility
+                    const success = await copyToClipboard(text);
+                    if (success) {
+                      toast.success("Sadhana report copied");
+                    } else {
+                      toast.error("Failed to copy. Please try Share instead.");
+                    }
                   }
                 }}
                 disabled={!activityLog}
               >
-                <Copy className="h-4 w-4" />
-                <span className="sr-only sm:not-sr-only sm:inline-block">Copy</span>
+                <Copy className="h-4 w-4 text-primary" />
+                <span className="hidden xs:inline-block">Copy</span>
+              </Button>
+
+              {/* Share Button (Always Visible - Fallback to WhatsApp) */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-full gap-2 font-bold bg-background shadow-sm border-2 border-primary/10 hover:bg-primary/5 hover:border-primary/20"
+                onClick={async () => {
+                  if (activityLog) {
+                    const text = formatSadhanaReport(
+                      activityLog,
+                      targetFinishedTime,
+                      prevActivityLog?.sleep_at,
+                      user?.chanting_rounds ?? 16,
+                      user?.initiated_name || user?.full_name || "Participant"
+                    );
+
+                    // Try Native Share
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: 'Sadhana Report',
+                          text: text,
+                        });
+                        toast.success("Shared successfully");
+                        return; // Exit if native share worked
+                      } catch (err) {
+                        console.error("Native share failed/cancelled, trying fallback", err);
+                      }
+                    }
+
+                    // Fallback to WhatsApp
+                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                    window.open(whatsappUrl, '_blank');
+                    toast.success("Opening WhatsApp...");
+                  }
+                }}
+                disabled={!activityLog}
+              >
+                <Share2 className="h-4 w-4 text-blue-500" />
+                <span className="hidden xs:inline-block">Share</span>
               </Button>
 
               <Link to="/sadhana/insights">
-                <Button variant="ghost" size="sm" className="h-8 rounded-full text-primary gap-1.5 font-bold hover:bg-primary/5">
-                  <BarChart2 className="h-4 w-4" />
-                  View Insights
+                <Button variant="ghost" size="sm" className="h-9 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5">
+                  <BarChart2 className="h-5 w-5" />
                 </Button>
               </Link>
             </div>

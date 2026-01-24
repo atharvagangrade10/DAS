@@ -21,7 +21,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, BookOpen, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
@@ -31,7 +30,9 @@ import DurationPicker from "./DurationPicker";
 import booksDataFile from "./BooksName.json"; // Import raw json
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // --- Types for Local Helper ---
 interface SectionDef {
@@ -67,6 +68,9 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const isEdit = !!logToEdit;
+  const isMobile = useIsMobile();
+
+  // Search States
   const [bookSearchOpen, setBookSearchOpen] = React.useState(false);
   const [sectionSearchOpen, setSectionSearchOpen] = React.useState(false);
   const [chapterSearchOpen, setChapterSearchOpen] = React.useState(false);
@@ -178,7 +182,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: BookLogUpdate) => updateBookLog(activityId, logToEdit!.name, data),
+    mutationFn: (data: BookLogUpdate) => updateBookLog(activityId, logToEdit!.id!, data),
     onSuccess: () => {
       toast.success("Log updated!");
       queryClient.invalidateQueries({ queryKey: ["activityLog"] });
@@ -215,6 +219,103 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
     }
   };
 
+  // Reusable Component for Responsive Selection
+  const ResponsiveSelect = ({
+    open,
+    setOpen,
+    label,
+    placeholder,
+    emptyText,
+    searchPlaceholder,
+    value,
+    items,
+    disabled = false
+  }: {
+    open: boolean,
+    setOpen: (o: boolean) => void,
+    label: string,
+    placeholder: string,
+    emptyText: string,
+    searchPlaceholder: string,
+    value: string | null | undefined,
+    items: { value: string, label: string, onSelect: () => void }[],
+    disabled?: boolean
+  }) => {
+    const TriggerButton = (
+      <Button
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        className={cn(
+          "h-12 w-full justify-between rounded-xl px-4 font-normal",
+          !value && "text-muted-foreground"
+        )}
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+      >
+        <span className="truncate">{value || placeholder}</span>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+    );
+
+    const SelectList = (
+      <Command className={cn(isMobile ? "h-full" : "max-h-[300px]")}>
+        <CommandInput placeholder={searchPlaceholder} className="h-12 text-base" />
+        <CommandList className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">{emptyText}</CommandEmpty>
+          <CommandGroup>
+            {items.map((item) => (
+              <CommandItem
+                key={item.value}
+                value={item.value}
+                onSelect={() => {
+                  item.onSelect();
+                  setOpen(false);
+                }}
+                className="py-3 text-base"
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === item.value ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {item.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+    );
+
+    if (isMobile) {
+      return (
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            {TriggerButton}
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[80vh] p-0 rounded-t-[28px]">
+            <SheetHeader className="p-4 pb-2 border-b">
+              <SheetTitle className="text-center">{label}</SheetTitle>
+            </SheetHeader>
+            {SelectList}
+          </SheetContent>
+        </Sheet>
+      );
+    }
+
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          {TriggerButton}
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" side="bottom" collisionPadding={10}>
+          {SelectList}
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] p-6 rounded-[28px]">
@@ -235,56 +336,26 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Book Title</FormLabel>
-                  <Popover open={bookSearchOpen} onOpenChange={setBookSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={bookSearchOpen}
-                          className={cn(
-                            "h-12 w-full justify-between rounded-xl px-4 font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? booksData.books.find((book) => book.name === field.value)?.name || field.value
-                            : "Select a book..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                      <Command className="h-[300px] flex flex-col">
-                        <CommandInput placeholder="Search book..." className="h-9 shrink-0" />
-                        <CommandList className="flex-1 overflow-y-auto">
-                          <CommandEmpty>No book found.</CommandEmpty>
-                          <CommandGroup>
-                            {booksData.books.map((book) => (
-                              <CommandItem
-                                value={book.name}
-                                key={book.name}
-                                onSelect={() => {
-                                  form.setValue("name", book.name);
-                                  form.setValue("chapter_name", "");
-                                  setSelectedSection(null);
-                                  setBookSearchOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    book.name === field.value ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {book.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <ResponsiveSelect
+                      label="Select Book"
+                      open={bookSearchOpen}
+                      setOpen={setBookSearchOpen}
+                      value={field.value}
+                      placeholder="Select a book..."
+                      searchPlaceholder="Search books..."
+                      emptyText="No book found."
+                      items={booksData.books.map(b => ({
+                        value: b.name,
+                        label: b.name,
+                        onSelect: () => {
+                          form.setValue("name", b.name);
+                          form.setValue("chapter_name", "");
+                          setSelectedSection(null);
+                        }
+                      }))}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -309,52 +380,23 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
             {hasSections && (
               <FormItem className="flex flex-col">
                 <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Section / Canto</FormLabel>
-                <Popover open={sectionSearchOpen} onOpenChange={setSectionSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={sectionSearchOpen}
-                      className={cn(
-                        "h-12 w-full justify-between rounded-xl px-4 font-normal",
-                        !selectedSection && "text-muted-foreground"
-                      )}
-                      disabled={!selectedBookName}
-                    >
-                      {selectedSection || "Select section..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                    <Command className="h-[300px] flex flex-col">
-                      <CommandInput placeholder="Search section..." className="h-9 shrink-0" />
-                      <CommandList className="flex-1 overflow-y-auto">
-                        <CommandEmpty>No section found.</CommandEmpty>
-                        <CommandGroup>
-                          {currentSections.map((sec) => (
-                            <CommandItem
-                              value={sec.name}
-                              key={sec.name}
-                              onSelect={() => {
-                                setSelectedSection(sec.name);
-                                form.setValue("chapter_name", ""); // Clear chapter when section changes
-                                setSectionSearchOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  sec.name === selectedSection ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {sec.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <ResponsiveSelect
+                  label="Select Section"
+                  open={sectionSearchOpen}
+                  setOpen={setSectionSearchOpen}
+                  value={selectedSection}
+                  placeholder="Select section..."
+                  searchPlaceholder="Search section..."
+                  emptyText="No section found."
+                  items={currentSections.map(s => ({
+                    value: s.name,
+                    label: s.name,
+                    onSelect: () => {
+                      setSelectedSection(s.name);
+                      form.setValue("chapter_name", "");
+                    }
+                  }))}
+                />
               </FormItem>
             )}
 
@@ -365,56 +407,23 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Chapter / Verse</FormLabel>
-                  <Popover open={chapterSearchOpen} onOpenChange={setChapterSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={chapterSearchOpen}
-                          className={cn(
-                            "h-12 w-full justify-between rounded-xl px-4 font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                          // Disable if no book, or (if book has sections) no section selected
-                          disabled={!selectedBookName || (hasSections && !selectedSection)}
-                        >
-                          {field.value || "Select chapter..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                      <Command className="h-[300px] flex flex-col">
-                        <CommandInput placeholder="Search chapter..." className="h-9 shrink-0" />
-                        <CommandList className="flex-1 overflow-y-auto">
-                          <CommandEmpty>
-                            {hasSections && !selectedSection ? "Select a section first." : "No chapter found."}
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {filteredChapters.map((chapter) => (
-                              <CommandItem
-                                value={chapter}
-                                key={chapter}
-                                onSelect={() => {
-                                  form.setValue("chapter_name", chapter);
-                                  setChapterSearchOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    chapter === field.value ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {chapter}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <ResponsiveSelect
+                      label="Select Chapter"
+                      open={chapterSearchOpen}
+                      setOpen={setChapterSearchOpen}
+                      value={field.value}
+                      placeholder="Select chapter..."
+                      searchPlaceholder="Search chapter..."
+                      emptyText={hasSections && !selectedSection ? "Select a section first." : "No chapter found."}
+                      disabled={!selectedBookName || (hasSections && !selectedSection)}
+                      items={filteredChapters.map(c => ({
+                        value: c,
+                        label: c,
+                        onSelect: () => form.setValue("chapter_name", c)
+                      }))}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

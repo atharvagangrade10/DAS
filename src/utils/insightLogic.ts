@@ -40,104 +40,104 @@ export const getMinutesFromMidnight = (isoString: string | null): number | null 
 const REFLECTIONS = {
     SLEEP: {
         GREEN: [
-            "Sleep timing is well-aligned, allowing mornings to flow naturally. An excellent foundation.",
-            "Your rest is anchored and consistent, providing deep stability for your sadhana.",
-            "Harmony with the sun is evident. This rhythm naturally supports both energy and clarity."
+            "Your rest is aligned with the mode of goodness, supporting strong morning sadhana.",
+            "Resting early allows you to rise in Brahma-muhurta with clarity and energy.",
+            "This consistent sleep rhythm is the foundation for a focused and attentive day of service."
         ],
         YELLOW: [
-            "Sleep is present but slightly drifting. Tightening the window will return power to your mornings.",
-            "Your rhythm is holding, but late nights are creating subtle drag. A shift earlier would help.",
-            "Consistency is visible, but precision is missing. Anchoring the sleep time will stabilize the rest."
+            "Your schedule is shifting. Try to rest earlier to protect your morning japa.",
+            "Sleep is steady but late. Anchoring your rest time will improve your morning clarity.",
+            "You are getting rest, but improved timing would deepen your mode of goodness stability."
         ],
         RED: [
-            "Rhythm conflict detected. Late hours or high variance are undermining the restorative power of sleep.",
-            "The current pattern battles biology. Prioritizing a stable, earlier sleep time is the path to ease.",
-            "Rest is fragmented. A gentle but firm reset of the sleep anchor is needed to support your energy."
+            "Late nights are affecting your ability to rise early for service. A gentle reset is needed.",
+            "Rest is fragmented. Prioritize early sleep to regain strength for your sadhana.",
+            "The current rhythm makes morning sadhana a struggle. Try wind-down by 9 PM tonight."
         ]
     },
     CHANTING: {
         GREEN: [
-            "Your practice honors your chosen target. Consistency, timing, and volume are all aligned.",
-            "A beautiful integration of the Holy Name. The rhythm is steady, supported by strong morning focus.",
-            "Commitment is fully manifest. Your chanting indicates a practice that is both disciplined and nourished."
+            "Your japa vow is strong and consistent. This is the heart of your spiritual life.",
+            "Steady, attentive chanting is protecting your consciousness. Keep this shelter strong.",
+            "You are consistently honoring the Holy Name. This discipline attracts Krishna's mercy."
         ],
         YELLOW: [
-            "You are holding the vow, but the rhythm is uneven. Greater consistency will deepen the experience.",
-            "Chanting is present, but often late or fluctuating. Bringing it earlier will increase its potency.",
-            "The commitment is there, but the timing slips. Stabilizing the morning block will transform the quality."
+            "You are chanting, but the timing is uneven. Early morning japa is most potent.",
+            "The vow is kept, but splitting rounds late in the day reduces their transformative power.",
+            "You are holding on, but bringing your chanting into the morning block will give you more strength."
         ],
         RED: [
-            "Target not yet integrated. Frequent gaps or late hours are preventing the habit from taking root.",
-            "The rhythm is fractured. Re-committing to a smaller, steady number might help build the foundation.",
-            "Absence or instability is high. A gentle, non-negotiable restarting of the habit is invited."
+            "Your japa vow involves some gaps. Please take shelter of the Holy Name daily.",
+            "Rounds are missed or very late. recommit to a steady number to build your spiritual strength.",
+            "The Holy Name is our only shelter. Try to chant at least a fixed number of rounds early tomorrow."
         ]
     },
     READING: {
         GREEN: [
-            "Reading has become a steady, immersive part of your days. Frequency and depth are aligned.",
-            "Your engagement with sacred texts is providing consistent nourishment and clarity.",
-            "The habit is beautifully integrated. Both the rhythm and the depth of reading are stable."
+            "Hearing (Sravanam) is steady. This transcendental knowledge is purifying your intelligence.",
+            "Daily contact with Shastra is giving you the vision to see the world through scripture.",
+            "Your reading habit is solid. This association with Srila Prabhupada validates of your path."
         ],
         YELLOW: [
-            "You’re returning to reading, but rhythm is still settling. Consistency will unlock deeper absorption.",
-            "Reading is present and real, though the depth is not yet fully anchored.",
-            "The habit is alive but still forming. Reducing fluctuation will help it take root."
+            "You are reading, but a daily rhythm would deepen your absorption in the philosophy.",
+            "Contact with Shastra is present but light. Try to read even one page every single day.",
+            "Reading is happening, but consistency creates the strongest impression on the mind."
         ],
         RED: [
-            "Reading appears occasionally; a gentler, more regular rhythm may help build the habit.",
-            "Current duration is too brief for deep absorption. Aim for small but daily contact.",
-            "Occasional long sessions without continuity are preventing habit stability. Frequency matters more than volume."
+            "Sravanam is the first step of bhakti. Please try to read just 5-10 minutes daily.",
+            "The mind needs the strength of knowledge. Reconnect with Srila Prabhupada's books.",
+            "Without hearing, enthusiasm may wane. Picking up a book today will revive your inspiration."
         ]
     },
     ASSOCIATION: {
         GREEN: [
-            "Association is deep, regular, and directionally clear. It serves as a stable anchor.",
-            "Your connection with spiritual community is strong, providing essential protection.",
-            "The consistency of your exchanges indicates that association is a valued, integral part of your life."
+            "Sadhu-sanga is strong. This association is the root of all spiritual advancement.",
+            "You are staying close to devotees. This fence protects your creeper of devotion.",
+            "Regular sanga is keeping your enthusiasm high and your vision clear."
         ],
         YELLOW: [
-            "You connect meaningfully, but rhythm or depth still varies. Steadier contact will increase the benefit.",
-            "Association is present, but often light. Deepening the exchanges would provide more substantial nourishment.",
-            "Contact exists, but influence feels scattered. Focusing on steady, quality association will help."
+            "You have some association, but more regular devotee care would protect you better.",
+            "Connecting with devotees is happening, but try to make it a deeper, daily refuge.",
+            "Sanga is present but scattered. Intentional exchanges with senior devotees will help you grow."
         ],
         RED: [
-            "Association appears occasionally; steadier contact may help build a supportive net.",
-            "Brief interactions are good, but deeper exchange is needed for true spiritual nourishment.",
-            "Sporadic high-volume days are not a substitute for steady connection. Regularity is key."
+            "Devotional creeper needs the water of association. Please reach out to a devotee this week.",
+            "Isolation can weaken our determination. Try to find even brief association online or in person.",
+            "Sadhana is hard alone. Seek the company of those who inspire your bhakti."
         ]
     },
     ARATI: {
         GREEN: [
-            "Āratī has become a steady part of your daily rhythm, creating a powerful spiritual anchor.",
-            "Your ritual presence is strong and consistent. The morning attendance particularly grounds the day.",
-            "A beautiful balance of attendance. The rhythm of greeting the Deities is well-established."
+            "Your deity worship attendance, especially morning program, is a beautiful standard.",
+            "Taking Darshan of the Deities daily is purifying your vision and grounding your day.",
+            "You are steadily worshipping the Lord. This creates a temple atmosphere in your heart."
         ],
         YELLOW: [
-            "Ritual presence exists, but the consistency is still forming. Anchoring one daily slot will help.",
-            "You are showing up, but the morning anchor is light. Starting the day with the Deities changes everything.",
-            "Ritual exists but depends heavily on a single time slot. Expanding the range can bring more stability."
+            "You are attending, but try to fix one specific arati (like Mangala or Sandhya) as an anchor.",
+            "Darshan is happening, but morning attendance would set a stronger tone for the day.",
+            "Deity worship is present but fluctuating. Regularity pleases the Lord and steadies the mind."
         ],
         RED: [
-            "Āratī appears occasionally; gentle re-anchoring with a single steady slot may help.",
-            "Ritual is currently detached from the morning anchor, reducing its grounding effect on the day.",
-            "Attendance is fragmented. Reconnecting with the temple rhythm, even briefly, can restore the flow."
+            "Deity worship is rare. Even a brief daily darshan or offering a lamp helps fix the mind.",
+            "The morning program is a powerful boost. Try to attend at least once this week.",
+            "Connection with the Deities is fragmented. A simple daily offering can restart the relationship."
         ]
     },
     EXERCISE: {
         GREEN: [
-            "Your body is being supported consistently. Rhythm and duration are healthy.",
-            "A healthy foundation for your energy. The consistency of movement is serving you well.",
-            "Movement has become a steady, reliable support for your physical well-being."
+            "You are maintaining the temple of the body well. This health supports your service.",
+            "Strong physical health is an asset for your service to Guru and Krishna.",
+            "Your body is fit for service. This balance allows you to chant and serve without distraction."
         ],
         YELLOW: [
-            "Movement is present, but rhythm isn’t settled yet. Steadying the pattern will increase the benefit.",
-            "Daily movement is real but light. Slightly longer duration would provide stronger support.",
-            "Consistency varies. Establishing a baseline of daily movement will stabilize your energy."
+            "Movement is there, but more consistency will keep the body fit for service.",
+            "You are active, but a regular routine ensures longevity in your service.",
+            "Health is okay, but steady maintenance is better than sporadic effort for the long term."
         ],
         RED: [
-            "Movement is rare; gentle re-entry could help build the physical support you need.",
-            "Brief movement helps, but minimum viability for health is slightly higher.",
-            "Sporadic intense sessions may strain the body. Consistent, moderate movement is a safer path."
+            "The body is Krishna's temple; please take care of it so you can serve nicely.",
+            "Neglecting the body can impede service later. A simple walk daily can restore balance.",
+            "Physical energy is low. Moderate exercise will actually give you more energy for chanting."
         ]
     }
 };
@@ -167,7 +167,7 @@ export const calculateSleepStatus = (data: SleepInsightResponse | undefined, yea
     const isRed = (effectiveSleepTime >= 1410) || (iqrSleep > 120) || (iqrWake > 120) || (duration < 360) || (earlyWakePct >= 70 && effectiveSleepTime >= 1380);
 
     if (isRed) {
-        let title = "Rhythm Conflict";
+        let title = "Struggle with Rhythm";
         if (effectiveSleepTime >= 1410) title = "Late Sleep Pattern";
         else if (duration < 360) title = "Insufficient Rest";
         else if ((iqrSleep > 120) || (iqrWake > 120)) title = "Unstable Rhythm";
@@ -178,15 +178,15 @@ export const calculateSleepStatus = (data: SleepInsightResponse | undefined, yea
     const isGreen = (effectiveSleepTime >= 1275 && effectiveSleepTime <= 1350) && (iqrSleep <= 60) && (iqrWake <= 60) && (duration >= 390);
 
     if (isGreen) {
-        return { status: "GREEN", title: "Aligned Rhythm", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.SLEEP.GREEN[seed] };
+        return { status: "GREEN", title: "Sattva Guna Rhythm", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.SLEEP.GREEN[seed] };
     }
 
     // Yellow
-    return { status: "YELLOW", title: "Present but Misaligned", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.SLEEP.YELLOW[seed] };
+    return { status: "YELLOW", title: "Trying for Goodness", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.SLEEP.YELLOW[seed] };
 };
 
 export const calculateChantingStatus = (data: ChantingInsightResponse | undefined, year: number, month: number): HealthResult => {
-    if (!data) return { status: "YELLOW", title: "Waiting for Data", colorClass: "text-gray-500", iconColor: "fill-gray-500", bgGradient: "from-gray-50 to-stone-50", reflection: "Log chanting to track commitment." };
+    if (!data) return { status: "YELLOW", title: "Waiting for Data", colorClass: "text-gray-500", iconColor: "fill-gray-500", bgGradient: "from-gray-50 to-stone-50", reflection: "Log chanting to track your vow." };
 
     const T = data.daily_target_rounds || 16;
     const median = data.median_daily_rounds || 0;
@@ -202,9 +202,9 @@ export const calculateChantingStatus = (data: ChantingInsightResponse | undefine
     // Red
     const isRed = (zeroDays >= 5) || (medianRatio < 0.50) || (iqrRatio > 0.50) || (pctAfter930 >= 40);
     if (isRed) {
-        let title = "Target Not Integrated";
-        if (zeroDays >= 5) title = "Frequent Absence";
-        else if (pctAfter930 >= 40) title = "Time Inversion";
+        let title = "Vow Needs Strength";
+        if (zeroDays >= 5) title = "Rounds Missed";
+        else if (pctAfter930 >= 40) title = "Late Chanting";
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.CHANTING.RED[seed] };
     }
 
@@ -213,10 +213,10 @@ export const calculateChantingStatus = (data: ChantingInsightResponse | undefine
     if (isGreen) {
         // Late override
         if (pctAfter930 >= 25) return { status: "YELLOW", title: "Late Night Drag", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: "Good volume, but late chanting is creating drag." };
-        return { status: "GREEN", title: "Aligned", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.CHANTING.GREEN[seed] };
+        return { status: "GREEN", title: "Strong M. Sadhana", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.CHANTING.GREEN[seed] };
     }
 
-    return { status: "YELLOW", title: "Committed but Uneven", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.CHANTING.YELLOW[seed] };
+    return { status: "YELLOW", title: "Keeping the Vow", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.CHANTING.YELLOW[seed] };
 };
 
 export const calculateReadingStatus = (data: BookInsightResponse | undefined, year: number, month: number): HealthResult => {
@@ -229,18 +229,18 @@ export const calculateReadingStatus = (data: BookInsightResponse | undefined, ye
 
     const isRed = (dayRatio < 0.30) || (median < 15) || (iqr > 2 * median && median > 0);
     if (isRed) {
-        let title = "Not Yet a Habit";
-        if (dayRatio < 0.30) title = "Rare Presence";
-        else if (iqr > 2 * median) title = "Burst Pattern";
+        let title = "Needs Sravanam";
+        if (dayRatio < 0.30) title = "Rare Hearing";
+        else if (iqr > 2 * median) title = "Irregular Study";
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.READING.RED[seed] };
     }
 
     const isGreen = (dayRatio >= 0.60) && (iqr <= median) && (median >= 30);
     if (isGreen) {
-        return { status: "GREEN", title: "Habit Integrated", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.READING.GREEN[seed] };
+        return { status: "GREEN", title: "Deep Absorption", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.READING.GREEN[seed] };
     }
 
-    return { status: "YELLOW", title: "Present but Light", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.READING.YELLOW[seed] };
+    return { status: "YELLOW", title: "Hearing Some", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.READING.YELLOW[seed] };
 };
 
 export const calculateAssociationStatus = (data: AssociationInsightResponse | undefined, year: number, month: number): HealthResult => {
@@ -253,15 +253,15 @@ export const calculateAssociationStatus = (data: AssociationInsightResponse | un
 
     const isRed = (dayRatio < 0.20) || (median < 30) || (iqr > 2 * median && median > 0);
     if (isRed) {
-        return { status: "RED", title: "Not Yet Nourishing", colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.ASSOCIATION.RED[seed] };
+        return { status: "RED", title: "Needs Sanga", colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.ASSOCIATION.RED[seed] };
     }
 
     const isGreen = (dayRatio >= 0.40) && (iqr <= median) && (median >= 45);
     if (isGreen) {
-        return { status: "GREEN", title: "Nourishing", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ASSOCIATION.GREEN[seed] };
+        return { status: "GREEN", title: "Strong Fence", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ASSOCIATION.GREEN[seed] };
     }
 
-    return { status: "YELLOW", title: "Present but Light", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.ASSOCIATION.YELLOW[seed] };
+    return { status: "YELLOW", title: "Some Contact", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.ASSOCIATION.YELLOW[seed] };
 };
 
 export const calculateAratiStatus = (data: AratiInsightResponse | undefined, year: number, month: number): HealthResult => {
@@ -274,16 +274,16 @@ export const calculateAratiStatus = (data: AratiInsightResponse | undefined, yea
 
     const isRed = (dayRatio < 0.30) || (morningShare < 0.20);
     if (isRed) {
-        let title = "Fragmented";
-        if (dayRatio < 0.30) title = "Rare Presence";
-        else title = "No Morning Anchor";
+        let title = "Occasional Darshan";
+        if (dayRatio < 0.30) title = "Rare Darshan";
+        else title = "Missing Morning";
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.ARATI.RED[seed] };
     }
 
     const isGreen = (dayRatio >= 0.60) && (morningShare >= 0.40);
-    if (isGreen) return { status: "GREEN", title: "Stable Ritual Rhythm", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ARATI.GREEN[seed] };
+    if (isGreen) return { status: "GREEN", title: "Pujari Standard", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ARATI.GREEN[seed] };
 
-    return { status: "YELLOW", title: "Present but Narrow", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.ARATI.YELLOW[seed] };
+    return { status: "YELLOW", title: "Visiting Deities", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.ARATI.YELLOW[seed] };
 };
 
 export const calculateExerciseStatus = (data: ExerciseInsightResponse | undefined, year: number, month: number): HealthResult => {
@@ -295,10 +295,10 @@ export const calculateExerciseStatus = (data: ExerciseInsightResponse | undefine
     const seed = (year + month) % 3;
 
     const isRed = (dayRatio < 0.25) || (median < 10) || (iqr > 2 * median && median > 0);
-    if (isRed) return { status: "RED", title: "Body Undersupported", colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.EXERCISE.RED[seed] };
+    if (isRed) return { status: "RED", title: "Ignored Temple", colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.EXERCISE.RED[seed] };
 
     const isGreen = (dayRatio >= 0.50) && (iqr <= median) && (median >= 20);
-    if (isGreen) return { status: "GREEN", title: "Body Supported", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.EXERCISE.GREEN[seed] };
+    if (isGreen) return { status: "GREEN", title: "Fit for Service", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.EXERCISE.GREEN[seed] };
 
-    return { status: "YELLOW", title: "Some Movement", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.EXERCISE.YELLOW[seed] };
+    return { status: "YELLOW", title: "Some Maintenance", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.EXERCISE.YELLOW[seed] };
 };

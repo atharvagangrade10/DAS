@@ -13,8 +13,8 @@ import {
   RequirementRowUpdate, PendingRequirementSubmission, RequirementRowApproval,
   MyCourse, CourseProgressDetail, StepProgressDetail
 } from "@/types/course";
-import {
-  ActivityLogResponse,
+ 
+import { ActivityLogResponse,
   ActivityLogCreate,
   ActivityLogUpdate,
   ChantingLogCreate,

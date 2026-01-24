@@ -15,10 +15,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, CalendarDays, History, User, BarChart3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Batch } from "@/types/batch";
+import { Batch, BatchVolunteer } from "@/types/batch";
 import { Participant } from "@/types/participant";
 import { fetchBatchParticipants, fetchParticipantById, fetchBatchVolunteers } from "@/utils/api";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -50,21 +49,17 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
   const isManager = user?.role === 'Manager';
   const isMobile = useIsMobile();
 
-  // Volunteers and Managers are considered "Staff" for this dialog
-  const isStaff = isManager || user?.role === 'Volunteer';
-
-  const [activeTab, setActiveTab] = React.useState(isStaff ? "participants" : "history");
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = React.useState(false);
   const [isVolunteerAssignmentDialogOpen, setIsVolunteerAssignmentDialogOpen] = React.useState(false);
 
-  // Fetch Current Participants (needed by multiple tabs, so kept in parent)
+  // Fetch Current Participants
   const { data: currentMappings, isLoading: isLoadingMappings } = useQuery({
     queryKey: ["batchParticipants", batch.id],
     queryFn: () => fetchBatchParticipants(batch.id),
     enabled: isOpen,
   });
 
-  // Fetch Detailed Participant Profiles for the mappings (also needed by multiple tabs)
+  // Fetch Detailed Participant Profiles
   const { data: participants, isLoading: isLoadingParticipants } = useQuery<
     Participant[]
   >({
@@ -79,24 +74,39 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
     enabled: !!currentMappings,
   });
 
-  // Fetch Volunteers to check if the current user is assigned
-  const { data: batchVolunteers } = useQuery({
+  // Fetch Volunteers
+  const { data: batchVolunteers = [], isLoading: isLoadingVolunteers } = useQuery<BatchVolunteer[], Error>({
     queryKey: ["batchVolunteers", batch.id],
     queryFn: () => fetchBatchVolunteers(batch.id),
     enabled: isOpen,
   });
 
   const isAssignedVolunteer = React.useMemo(() => {
-    if (!user || !batchVolunteers) return false;
+    if (!user || user.role !== 'Volunteer') return false;
     return batchVolunteers.some(v => v.participant_id === user.user_id);
   }, [user, batchVolunteers]);
 
+  // Assigned volunteers and Managers have write access
   const hasWriteAccess = isManager || (user?.role === 'Volunteer' && isAssignedVolunteer);
+
+  const [activeTab, setActiveTab] = React.useState("history");
+
+  // Update active tab logic
+  React.useEffect(() => {
+    if (hasWriteAccess && activeTab === "history") {
+      setActiveTab("participants");
+    }
+  }, [hasWriteAccess]);
+
+
 
   const isParticipant = React.useMemo(() => {
     if (!user || !currentMappings) return false;
     return currentMappings.some(m => m.participant_id === user.user_id);
   }, [user, currentMappings]);
+
+  // Show stats tab if user is a participant OR has write access (Assigned Vol/Manager)
+  const showStatsTab = isParticipant || hasWriteAccess;
 
   return (
     <>
@@ -124,7 +134,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                 "w-full justify-start h-auto p-0 bg-transparent gap-4 flex-wrap",
                 isMobile ? "gap-2" : "gap-6"
               )}>
-                {isStaff && (
+                {hasWriteAccess && (
                   <TabsTrigger
                     value="participants"
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent pb-3 pt-2"
@@ -132,7 +142,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                     <Users className="h-4 w-4 mr-2" /> Participants
                   </TabsTrigger>
                 )}
-                {isStaff && (
+                {hasWriteAccess && (
                   <TabsTrigger
                     value="attendance"
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent pb-3 pt-2"
@@ -154,7 +164,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                 >
                   <History className="h-4 w-4 mr-2" /> History
                 </TabsTrigger>
-                {isParticipant && (
+                {showStatsTab && (
                   <TabsTrigger
                     value="stats"
                     className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent pb-3 pt-2"
@@ -171,7 +181,7 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
                 <ParticipantsTabContent
                   batch={batch}
                   isOpen={activeTab === "participants"}
-                  readOnly={!isManager} // Volunteers can see participants but not add them
+                  readOnly={!hasWriteAccess}
                 />
               </TabsContent>
               <TabsContent value="attendance" className="m-0">
@@ -198,6 +208,8 @@ const BatchManagementDialog: React.FC<BatchManagementDialogProps> = ({
               <TabsContent value="stats" className="m-0">
                 <StatsTabContent
                   batch={batch}
+                  hasWriteAccess={hasWriteAccess}
+                  isParticipant={isParticipant}
                 />
               </TabsContent>
             </div>

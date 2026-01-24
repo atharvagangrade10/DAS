@@ -4,6 +4,15 @@ import { AttendedProgram, Participant } from "@/types/participant";
 import { Program, Session } from "@/types/program";
 import { Yatra, YatraCreate, YatraUpdate, PaymentRecord, ReceiptResponse } from "@/types/yatra";
 import { Batch, BatchCreate, BatchUpdate, BatchAttendanceRecord, BatchVolunteer, BatchStatsResponse, BatchParticipantStats } from "@/types/batch";
+import {
+  Course, CourseCreate, CourseUpdate, Step, StepCreate, StepUpdate, StepOrder,
+  Material, MaterialCreate, EnrollDefaultResponse, MaterialsCompleteResponse,
+  Exam, ExamCreate, ExamSubmission, ExamSubmissionRequest, ExamSubmissionDetails,
+  GradeTheoryRequest, ApproveSubmissionResponse, ExamStartResponse,
+  RequirementTable, RequirementTableCreate, RequirementTableUpdate, RequirementTableSubmission,
+  RequirementRowUpdate, PendingRequirementSubmission, RequirementRowApproval,
+  MyCourse, CourseProgressDetail, StepProgressDetail
+} from "@/types/course";
 import { API_BASE_URL } from "@/config/api";
 import { handleUnauthorized } from "@/context/AuthContext";
 
@@ -434,4 +443,256 @@ export const upsertParticipantPublic = async (data: any, id?: string): Promise<P
 // Map searchParticipant to fetchParticipants for clarity
 export const fetchParticipants = async (query: string): Promise<Participant[]> => {
   return searchParticipantPublic(query);
+};
+
+// ============================================
+// LMS / COURSE API ENDPOINTS
+// ============================================
+
+// --- Course Endpoints ---
+
+export const fetchCourses = async (params?: { is_active?: boolean; is_default?: boolean }): Promise<Course[]> => {
+  const queryString = params
+    ? `?${new URLSearchParams(params as any).toString()}`
+    : '';
+  return fetchAuthenticated(`${API_BASE_URL}/courses${queryString}`);
+};
+
+export const fetchCourseById = async (courseId: string): Promise<Course> => {
+  return fetchAuthenticated(`${API_BASE_URL}/courses/${courseId}`);
+};
+
+export const createCourse = async (data: CourseCreate): Promise<Course> => {
+  return mutateAuthenticated(`${API_BASE_URL}/courses`, "POST", data);
+};
+
+export const updateCourse = async (courseId: string, data: CourseUpdate): Promise<Course> => {
+  return mutateAuthenticated(`${API_BASE_URL}/courses/${courseId}`, "PUT", data);
+};
+
+export const deleteCourse = async (courseId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete course' }));
+    throw new Error(errorData.detail || "Failed to delete course");
+  }
+};
+
+export const setDefaultCourse = async (courseId: string): Promise<void> => {
+  await mutateAuthenticated(`${API_BASE_URL}/courses/${courseId}/set-default`, "PUT", {});
+};
+
+export const enrollDefaultCourse = async (participantId: string): Promise<EnrollDefaultResponse> => {
+  return fetchAuthenticated(`${API_BASE_URL}/courses/enroll-default?participant_id=${participantId}`);
+};
+
+export const reorderSteps = async (courseId: string, stepOrders: StepOrder[]): Promise<void> => {
+  await mutateAuthenticated(`${API_BASE_URL}/courses/${courseId}/steps/reorder`, "POST", { step_orders: stepOrders });
+};
+
+// --- Step Endpoints ---
+
+export const fetchStepById = async (stepId: string, participantId?: string): Promise<Step> => {
+  const queryString = participantId ? `?participant_id=${participantId}` : '';
+  return fetchAuthenticated(`${API_BASE_URL}/steps/${stepId}${queryString}`);
+};
+
+export const createStep = async (data: StepCreate): Promise<Step> => {
+  return mutateAuthenticated(`${API_BASE_URL}/steps`, "POST", data);
+};
+
+export const updateStep = async (stepId: string, data: StepUpdate): Promise<Step> => {
+  return mutateAuthenticated(`${API_BASE_URL}/steps/${stepId}`, "PUT", data);
+};
+
+export const deleteStep = async (stepId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/steps/${stepId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete step' }));
+    throw new Error(errorData.detail || "Failed to delete step");
+  }
+};
+
+export const markMaterialsComplete = async (stepId: string, participantId: string): Promise<MaterialsCompleteResponse> => {
+  return fetchAuthenticated(`${API_BASE_URL}/steps/${stepId}/materials-complete?participant_id=${participantId}`);
+};
+
+export const startStepExam = async (stepId: string, participantId: string): Promise<ExamStartResponse> => {
+  return fetchAuthenticated(`${API_BASE_URL}/steps/${stepId}/exam/start?participant_id=${participantId}`);
+};
+
+export const linkExamToStep = async (stepId: string, formId: string): Promise<void> => {
+  await mutateAuthenticated(`${API_BASE_URL}/steps/${stepId}/exam?form_id=${formId}`, "PUT");
+};
+
+// --- Material Endpoints ---
+
+export const createMaterial = async (stepId: string, data: MaterialCreate): Promise<Material> => {
+  return mutateAuthenticated(`${API_BASE_URL}/steps/${stepId}/materials`, "POST", data);
+};
+
+export const updateMaterial = async (materialId: string, data: Partial<MaterialCreate>): Promise<Material> => {
+  return mutateAuthenticated(`${API_BASE_URL}/materials/${materialId}`, "PUT", data);
+};
+
+export const deleteMaterial = async (materialId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/materials/${materialId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete material' }));
+    throw new Error(errorData.detail || "Failed to delete material");
+  }
+};
+
+export const markMaterialComplete = async (materialId: string, participantId: string): Promise<{ message: string; material_id: string }> => {
+  return fetchAuthenticated(`${API_BASE_URL}/materials/${materialId}/complete?participant_id=${participantId}`);
+};
+
+// --- Exam/Form Endpoints ---
+
+export const fetchForms = async (stepId?: string): Promise<Exam[]> => {
+  const queryString = stepId ? `?step_id=${stepId}` : '';
+  return fetchAuthenticated(`${API_BASE_URL}/forms${queryString}`);
+};
+
+export const fetchFormById = async (formId: string): Promise<Exam> => {
+  return fetchAuthenticated(`${API_BASE_URL}/forms/${formId}`);
+};
+
+export const createExam = async (data: ExamCreate): Promise<Exam> => {
+  return mutateAuthenticated(`${API_BASE_URL}/forms`, "POST", data);
+};
+
+export const updateExam = async (formId: string, data: Partial<ExamCreate>): Promise<Exam> => {
+  return mutateAuthenticated(`${API_BASE_URL}/forms/${formId}`, "PUT", data);
+};
+
+export const deleteExam = async (formId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/forms/${formId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete exam' }));
+    throw new Error(errorData.detail || "Failed to delete exam");
+  }
+};
+
+export const submitExamAnswers = async (submissionId: string, data: ExamSubmissionRequest): Promise<ExamSubmission> => {
+  return mutateAuthenticated(`${API_BASE_URL}/forms/submissions/${submissionId}/submit`, "POST", data);
+};
+
+// --- Exam Submission & Review Endpoints ---
+
+export const fetchPendingSubmissions = async (filters?: { step_id?: string; course_id?: string }): Promise<ExamSubmission[]> => {
+  const params = new URLSearchParams(filters as any).toString();
+  const queryString = params ? `?${params}` : '';
+  return fetchAuthenticated(`${API_BASE_URL}/form-submissions/pending${queryString}`);
+};
+
+export const fetchSubmissionDetails = async (submissionId: string): Promise<ExamSubmissionDetails> => {
+  return fetchAuthenticated(`${API_BASE_URL}/form-submissions/${submissionId}`);
+};
+
+export const gradeTheoryAnswers = async (submissionId: string, managerId: string, data: GradeTheoryRequest): Promise<any> => {
+  return mutateAuthenticated(`${API_BASE_URL}/form-submissions/${submissionId}/grade?manager_id=${managerId}`, "POST", data);
+};
+
+export const approveSubmission = async (submissionId: string, managerId: string, data: { feedback?: string; unlock_next_course?: boolean }): Promise<ApproveSubmissionResponse> => {
+  return mutateAuthenticated(`${API_BASE_URL}/form-submissions/${submissionId}/approve?manager_id=${managerId}`, "POST", data);
+};
+
+export const rejectSubmission = async (submissionId: string, managerId: string, data: { feedback?: string }): Promise<any> => {
+  return mutateAuthenticated(`${API_BASE_URL}/form-submissions/${submissionId}/reject?manager_id=${managerId}`, "POST", data);
+};
+
+export const requestRetake = async (submissionId: string, managerId: string, data: { reason: string }): Promise<any> => {
+  return mutateAuthenticated(`${API_BASE_URL}/form-submissions/${submissionId}/request-retake?manager_id=${managerId}`, "POST", data);
+};
+
+export const fetchParticipantSubmissions = async (participantId: string): Promise<ExamSubmission[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/form-submissions/participant/${participantId}`);
+};
+
+// --- Requirement Table Endpoints ---
+
+export const fetchRequirementTables = async (stepId?: string): Promise<RequirementTable[]> => {
+  const queryString = stepId ? `?step_id=${stepId}` : '';
+  return fetchAuthenticated(`${API_BASE_URL}/requirement-tables${queryString}`);
+};
+
+export const fetchRequirementTableById = async (tableId: string): Promise<RequirementTable> => {
+  return fetchAuthenticated(`${API_BASE_URL}/requirement-tables/${tableId}`);
+};
+
+export const createRequirementTable = async (data: RequirementTableCreate): Promise<RequirementTable> => {
+  return mutateAuthenticated(`${API_BASE_URL}/requirement-tables`, "POST", data);
+};
+
+export const updateRequirementTable = async (tableId: string, data: RequirementTableUpdate): Promise<RequirementTable> => {
+  return mutateAuthenticated(`${API_BASE_URL}/requirement-tables/${tableId}`, "PUT", data);
+};
+
+export const deleteRequirementTable = async (tableId: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/requirement-tables/${tableId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: 'Failed to delete requirement table' }));
+    throw new Error(errorData.detail || "Failed to delete requirement table");
+  }
+};
+
+export const fetchMyRequirementSubmission = async (tableId: string, participantId: string): Promise<RequirementTableSubmission> => {
+  return fetchAuthenticated(`${API_BASE_URL}/requirement-tables/${tableId}/my-submission?participant_id=${participantId}`);
+};
+
+export const updateRequirementRow = async (submissionId: string, participantId: string, data: RequirementRowUpdate): Promise<any> => {
+  return mutateAuthenticated(`${API_BASE_URL}/requirement-tables/submissions/${submissionId}/rows?participant_id=${participantId}`, "POST", data);
+};
+
+export const submitRequirementTable = async (submissionId: string, participantId: string): Promise<any> => {
+  return fetchAuthenticated(`${API_BASE_URL}/requirement-tables/submissions/${submissionId}/submit?participant_id=${participantId}`);
+};
+
+export const fetchPendingRequirementSubmissions = async (stepId?: string): Promise<PendingRequirementSubmission[]> => {
+  const queryString = stepId ? `?step_id=${stepId}` : '';
+  return fetchAuthenticated(`${API_BASE_URL}/requirement-tables/submissions/pending${queryString}`);
+};
+
+export const approveRejectRequirementRow = async (submissionId: string, serialNumber: number, managerId: string, data: RequirementRowApproval): Promise<any> => {
+  return mutateAuthenticated(`${API_BASE_URL}/requirement-tables/submissions/${submissionId}/rows/${serialNumber}/approve?manager_id=${managerId}`, "POST", data);
+};
+
+export const approveEntireRequirementTable = async (submissionId: string, managerId: string): Promise<any> => {
+  return fetchAuthenticated(`${API_BASE_URL}/requirement-tables/submissions/${submissionId}/approve?manager_id=${managerId}`);
+};
+
+// --- Participant Progress Endpoints ---
+
+export const fetchMyCourses = async (participantId: string): Promise<MyCourse[]> => {
+  return fetchAuthenticated(`${API_BASE_URL}/participants/me/courses?participant_id=${participantId}`);
+};
+
+export const fetchCourseProgress = async (courseId: string, participantId: string): Promise<CourseProgressDetail> => {
+  console.log('API: fetchCourseProgress called with courseId:', courseId, 'participantId:', participantId);
+  const result = await fetchAuthenticated(`${API_BASE_URL}/participants/me/progress/${courseId}?participant_id=${participantId}`);
+  console.log('API: fetchCourseProgress result:', result);
+  return result;
+};
+
+export const fetchStepProgress = async (stepId: string, participantId: string): Promise<StepProgressDetail> => {
+  console.log('API: fetchStepProgress called with stepId:', stepId, 'participantId:', participantId);
+  const result = await fetchAuthenticated(`${API_BASE_URL}/participants/me/step/${stepId}/progress?participant_id=${participantId}`);
+  console.log('API: fetchStepProgress result:', result);
+  return result;
 };

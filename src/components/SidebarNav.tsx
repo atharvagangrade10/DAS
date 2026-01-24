@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { GraduationCap } from "lucide-react";
 
 interface NavLinkProps {
   to: string;
@@ -66,6 +67,10 @@ const SidebarNav = () => {
   const navItems = (
     <nav className="flex flex-col space-y-1 p-4 flex-1">
       <NavLink to="/" onClick={handleLinkClick}>Home</NavLink>
+      <NavLink to="/my-learning" onClick={handleLinkClick}>
+        <GraduationCap className="mr-2 h-4 w-4 inline" />
+        My Learning
+      </NavLink>
       <NavLink to="/payments" onClick={handleLinkClick}>Payment History</NavLink>
 
       {isDevoteeFriend && (
@@ -88,6 +93,8 @@ const SidebarNav = () => {
               <NavLink to="/yatra" onClick={handleLinkClick}>Yatra</NavLink>
               <NavLink to="/participants" onClick={handleLinkClick}>Participants</NavLink>
               <NavLink to="/stats" onClick={handleLinkClick}>Stats</NavLink>
+              <NavLink to="/courses" onClick={handleLinkClick}>Courses</NavLink>
+              <NavLink to="/review" onClick={handleLinkClick}>Review</NavLink>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

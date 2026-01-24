@@ -9,20 +9,37 @@ import { fetchBatchParticipantStats } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import ClassStats from "@/components/batch-management/ClassStats";
+
 interface StatsTabContentProps {
     batch: Batch;
     participantId?: string;
+    hasWriteAccess?: boolean;
+    isParticipant?: boolean;
 }
 
-const StatsTabContent: React.FC<StatsTabContentProps> = ({ batch, participantId }) => {
+const StatsTabContent: React.FC<StatsTabContentProps> = ({ batch, participantId, hasWriteAccess, isParticipant }) => {
     const { user } = useAuth();
     const targetParticipantId = participantId || user?.user_id;
 
+    // Use query to check if stats are available for this user (if they are a participant)
     const { data: stats, isLoading, error } = useQuery<BatchParticipantStats, Error>({
         queryKey: ["batchParticipantStats", batch.id, targetParticipantId],
         queryFn: () => fetchBatchParticipantStats(batch.id, targetParticipantId!),
-        enabled: !!batch.id && !!targetParticipantId,
+        enabled: !!batch.id && !!targetParticipantId && (!!participantId || !!isParticipant),
+        retry: false
     });
+
+    // Strategy:
+    // 1. If user is Staff (hasWriteAccess) AND NOT a participant, show Class Stats.
+    // 2. If user is Contextually both (Staff & Participant), show Tabs? Or default to Class Stats with option to see own?
+    //    For simplicity: show Class Stats if hasWriteAccess, as they can see everyone there including themselves.
+    //    BUT user might want quick view of their own.
+    //    Let's prioritize: If hasWriteAccess -> ClassStats. 
+
+    if (hasWriteAccess) {
+        return <ClassStats batchId={batch.id} />;
+    }
 
     if (isLoading) {
         return (
@@ -37,6 +54,7 @@ const StatsTabContent: React.FC<StatsTabContentProps> = ({ batch, participantId 
     }
 
     if (error) {
+        // If error is 404 or similar, and user is not participant, handle gracefully
         return (
             <div className="text-center py-12 text-destructive bg-destructive/10 rounded-lg">
                 <p>Error loading statistics: {error.message}</p>

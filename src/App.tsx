@@ -18,6 +18,9 @@ import RegisterFullForm from "./pages/RegisterFullForm";
 import PublicSetPassword from "./pages/PublicSetPassword";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import Sadhana from "./pages/Sadhana"; // New import
+import SadhanaInsights from "./pages/SadhanaInsights";
+
 import Layout from "./components/Layout";
 import LoaderPage from "./components/LoaderPage";
 import React from "react";
@@ -106,6 +109,10 @@ const App = () => {
                 <Route index element={<Index />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="payments" element={<PaymentHistory />} />
+                <Route path="sadhana" element={<Sadhana />} /> {/* New Sadhana Route */}
+                <Route path="sadhana/insights" element={<SadhanaInsights />} />
+
+
 
                 {/* Devotee Friend / Manager Routes */}
                 <Route path="friends" element={<DevoteeFriendRoute><Friends /></DevoteeFriendRoute>} />

@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MenuIcon, LogOut, User, Settings } from "lucide-react";
+import { MenuIcon, LogOut, User, Settings, Zap } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,9 +50,17 @@ const NavLink: React.FC<NavLinkProps> = ({ to, children, onClick }) => {
   );
 };
 
-const SidebarNav = () => {
+interface SidebarNavProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const SidebarNav: React.FC<SidebarNavProps> = ({ open, onOpenChange }) => {
   const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setIsOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
   const [isProfileDialogOpen, setIsProfileDialogOpen] = React.useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -70,6 +78,9 @@ const SidebarNav = () => {
       <NavLink to="/my-learning" onClick={handleLinkClick}>
         <GraduationCap className="mr-2 h-4 w-4 inline" />
         My Learning
+      <NavLink to="/sadhana" onClick={handleLinkClick}>
+        <Zap className="mr-2 h-5 w-5" />
+        My Sadhana
       </NavLink>
       <NavLink to="/payments" onClick={handleLinkClick}>Payment History</NavLink>
 
@@ -171,13 +182,7 @@ const SidebarNav = () => {
     <>
       {isMobile ? (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border shadow-sm">
-              <MenuIcon className="h-6 w-6" />
-              <span className="sr-only">Toggle navigation</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0 border-r shadow-xl">
+          <SheetContent side="right" className="w-72 p-0 border-l shadow-xl">
             {sidebarContent}
           </SheetContent>
         </Sheet>

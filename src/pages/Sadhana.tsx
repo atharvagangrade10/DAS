@@ -1,0 +1,203 @@
+"use client";
+
+import React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, startOfDay, subDays, setHours, setMinutes, parse, getHours, getMinutes } from "date-fns";
+import { Loader2, AlertTriangle, BarChart2, Copy, Share2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Link } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
+import { ActivityLogResponse, ActivityLogCreate } from "@/types/sadhana";
+
+import { toast } from "sonner";
+import { formatSadhanaReport } from "@/utils/sadhanaFormatters";
+import { fetchActivityLogByDate, createActivityLog, updateActivityLog } from "@/utils/api";
+import ActivityHeader from "@/components/sadhana/ActivityHeader";
+import WorshipCard from "@/components/sadhana/WorshipCard";
+import ChantingSection from "@/components/sadhana/ChantingSection";
+import AssociationSection from "@/components/sadhana/AssociationSection";
+import BookReadingSection from "@/components/sadhana/BookReadingSection";
+import NotesSection from "@/components/sadhana/NotesSection";
+import ExerciseSection from "@/components/sadhana/ExerciseSection";
+
+
+const Sadhana = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedDate, setSelectedDate] = React.useState<Date>(startOfDay(new Date()));
+  const [targetFinishedTime, setTargetFinishedTime] = React.useState<string>("");
+  const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+
+  const todayStart = startOfDay(new Date());
+  const isFuture = selectedDate > todayStart;
+
+  // 1. Fetch Activity Log
+  const { data: activityLog, isLoading, error } = useQuery<ActivityLogResponse, Error>({
+    queryKey: ["activityLog", dateStr],
+    queryFn: async () => {
+      if (!user?.user_id) throw new Error("User not authenticated.");
+      return fetchActivityLogByDate(user.user_id, dateStr);
+    },
+    enabled: !!user?.user_id && !isFuture,
+    retry: (failureCount, error) => {
+      if (error.message.includes("Status: 404")) return false;
+      return failureCount < 3;
+    },
+  });
+
+  // 1.1 Fetch Previous Day Activity Log (for Sleep)
+  const prevDateStr = format(subDays(selectedDate, 1), "yyyy-MM-dd");
+  const { data: prevActivityLog } = useQuery<ActivityLogResponse, Error>({
+    queryKey: ["activityLog", prevDateStr],
+    queryFn: async () => {
+      if (!user?.user_id) throw new Error("User not authenticated.");
+      return fetchActivityLogByDate(user.user_id, prevDateStr);
+    },
+    enabled: !!user?.user_id,
+    retry: false, // Don't retry if not found
+  });
+
+  React.useEffect(() => {
+    if (activityLog?.finished_by) {
+      setTargetFinishedTime(format(new Date(activityLog.finished_by), "h:mm a"));
+    } else {
+      setTargetFinishedTime("");
+    }
+  }, [activityLog?.finished_by]);
+
+  // 2. Fallback Creation
+  const createMutation = useMutation({
+    mutationFn: (data: ActivityLogCreate) => createActivityLog(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["activityLog", dateStr] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateActivityLog(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["activityLog"] });
+      toast.success("Activity log updated successfully.");
+    },
+  });
+
+  const handleTargetFinishedTimeChange = (time: string) => {
+    setTargetFinishedTime(time);
+    if (!activityLog) return;
+
+    try {
+      const parsedTime = parse(time, "h:mm a", new Date());
+      const fullDate = setMinutes(setHours(selectedDate, getHours(parsedTime)), getMinutes(parsedTime));
+
+      updateMutation.mutate({
+        id: activityLog.id,
+        data: { finished_by: format(fullDate, "yyyy-MM-dd'T'HH:mm:ss") }
+      });
+    } catch (e) {
+      console.error("Failed to parse time", e);
+    }
+  };
+
+  React.useEffect(() => {
+    const isNotFoundError = error?.message.includes("Status: 404") || error?.message.toLowerCase().includes("not found");
+    if (user?.user_id && !isLoading && !isFuture && !activityLog && isNotFoundError && !createMutation.isPending) {
+      createMutation.mutate({
+        participant_id: user.user_id,
+        today_date: dateStr,
+        sleep_at: setHours(setMinutes(subDays(selectedDate, 1), 0), 22).toISOString(),
+        wakeup_at: setHours(setMinutes(selectedDate, 0), 4).toISOString(),
+        no_meat: true,
+        no_intoxication: true,
+        no_illicit_sex: true,
+        no_gambling: true,
+        only_prasadam: true,
+        notes_of_day: null,
+        mangla_attended: false,
+        narshima_attended: false,
+        tulsi_arti_attended: false,
+        darshan_arti_attended: false,
+        guru_puja_attended: false,
+        sandhya_arti_attended: false,
+        exercise_time: 0,
+      });
+    }
+  }, [user?.user_id, isLoading, activityLog, error, dateStr, isFuture, createMutation, selectedDate]);
+
+  return (
+    <div className="min-h-screen bg-background text-foreground pb-20">
+      <div className="max-w-4xl mx-auto w-full">
+        <ActivityHeader selectedDate={selectedDate} onDateChange={setSelectedDate} />
+
+        <div className="px-4 py-6 space-y-10">
+          <div className="flex justify-between items-center -mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Daily Entry</h3>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full text-foreground/70 gap-1.5 font-bold hover:bg-primary/5"
+                onClick={() => {
+                  if (activityLog) {
+                    const text = formatSadhanaReport(
+                      activityLog,
+                      targetFinishedTime,
+                      prevActivityLog?.sleep_at,
+                      user?.chanting_rounds ?? 16
+                    );
+                    navigator.clipboard.writeText(text);
+                    toast.success("Sadhana report copied to clipboard");
+                  }
+                }}
+                disabled={!activityLog}
+              >
+                <Copy className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only sm:inline-block">Copy</span>
+              </Button>
+
+              <Link to="/sadhana/insights">
+                <Button variant="ghost" size="sm" className="h-8 rounded-full text-primary gap-1.5 font-bold hover:bg-primary/5">
+                  <BarChart2 className="h-4 w-4" />
+                  View Insights
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {isLoading || createMutation.isPending ? (
+
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Hare Krishna...</p>
+            </div>
+          ) : isFuture ? (
+            <div className="text-center py-20 space-y-4">
+              <AlertTriangle className="h-10 w-10 mx-auto text-amber-500 opacity-20" />
+              <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Future Date Selected</h3>
+            </div>
+          ) : activityLog ? (
+            <>
+              <WorshipCard activity={activityLog} readOnly={isFuture} />
+              <ChantingSection
+                activity={activityLog}
+                readOnly={isFuture}
+                targetFinishedTime={targetFinishedTime}
+                onTargetFinishedTimeChange={handleTargetFinishedTimeChange}
+              />
+              <AssociationSection activity={activityLog} readOnly={isFuture} />
+              <ExerciseSection activity={activityLog} readOnly={isFuture} />
+              <BookReadingSection activity={activityLog} readOnly={isFuture} />
+
+              <NotesSection activity={activityLog} readOnly={isFuture} />
+
+              <div className="pt-10 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-30">Your daily journey continues</p>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Sadhana;

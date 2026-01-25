@@ -218,7 +218,7 @@ const Sadhana = () => {
                 disabled={!activityLog}
               >
                 <Share2 className="h-4 w-4 text-blue-500" />
-                <span className="hidden xs:inline-block">Share</span>
+                <span className="inline-block">Share</span>
               </Button>
 
               <Link to="/sadhana/insights">

@@ -9,68 +9,76 @@ export const formatSadhanaReport = (
     participantName: string = "Participant",
     isSanjeevaniAttended: boolean = false
 ): string => {
-    const dateStr = format(parseISO(activity.today_date), "d MMM yyyy");
+    const dateStr = format(parseISO(activity.today_date), "dd/MM/yyyy");
 
     // Sleep & Wakeup
-    const wakeupTime = activity.wakeup_at ? format(parseISO(activity.wakeup_at), "h:mm a") : "N/A";
+    const wakeupTime = activity.wakeup_at ? format(parseISO(activity.wakeup_at), "hh:mm a") : "N/A";
     let sleepTime = "N/A";
 
     if (lastDaySleepWithTime) {
-        sleepTime = format(parseISO(lastDaySleepWithTime), "h:mm a");
+        sleepTime = format(parseISO(lastDaySleepWithTime), "hh:mm a");
     } else if (activity.sleep_at) {
-        sleepTime = format(parseISO(activity.sleep_at), "h:mm a");
+        sleepTime = format(parseISO(activity.sleep_at), "hh:mm a");
     }
 
     // Chanting
-    const totalRounds = activity.chanting_logs.reduce((acc, log) => acc + log.rounds, 0);
+    // const totalRounds = activity.chanting_logs.reduce((acc, log) => acc + log.rounds, 0); // Not used in this specific format line if we match exact request
     const roundsBefore730 = activity.chanting_logs
         .filter(log => log.slot === "before_7_30_am")
         .reduce((acc, log) => acc + log.rounds, 0);
 
-    let chantingLine = `📿 *Chanting:* ${totalRounds}/${targetRounds}`;
-    if (roundsBefore730 > 0) {
-        chantingLine += ` (Before 7:30 AM: ${roundsBefore730})`;
-    }
-    if (targetFinishedTime) {
-        chantingLine += ` - Finished by ${targetFinishedTime}`;
-    }
+    const finishTimeStr = targetFinishedTime ? targetFinishedTime : "Not Completed";
 
     // Reading
     const totalReading = activity.book_reading_logs.reduce((acc, log) => acc + log.reading_time, 0);
-    const readingDetails = activity.book_reading_logs
-        .map(log => `${log.name} (${log.reading_time}m)`)
-        .join(", ");
 
-    // Association -> Shravan
+    // Association -> Hearing
     const totalAssociation = activity.association_logs.reduce((acc, log) => acc + log.duration, 0);
+    // Format association to hours/min if needed, or just mins. Example says "2 hr hearing". 
+    // Let's keep it in minutes or convert if > 60.
+    let hearingStr = `${totalAssociation} min`;
+    if (totalAssociation >= 60) {
+        const hrs = Math.floor(totalAssociation / 60);
+        const mins = totalAssociation % 60;
+        hearingStr = `${hrs} hr ${mins > 0 ? `${mins} min` : ""} hearing`;
+    } else {
+        hearingStr = `${totalAssociation} min hearing`;
+    }
 
     // Morning Program
-    const attendedItems = [];
-    if (activity.mangla_attended) attendedItems.push("Mangala Arati");
-    if (activity.guru_puja_attended) attendedItems.push("Guru Puja");
-    if (activity.darshan_arti_attended) attendedItems.push("Darshan Arati");
-    if (activity.tulsi_arti_attended) attendedItems.push("Tulsi Arati");
-    if (activity.narshima_attended) attendedItems.push("Narasimha Arati");
-    if (isSanjeevaniAttended) attendedItems.push("Sanjeevani Class");
-
-    // Fallback if checked but not specific? Or just only show what is explicit.
-    // User requested "Morning Program: Mangala Arati, Guru Puja" format.
-    const morningProgram = attendedItems.length > 0 ? attendedItems.join(", ") : "None";
+    const ma = activity.mangla_attended ? "Y" : "N";
+    const na = activity.narshima_attended ? "Y" : "N";
+    const ta = activity.tulsi_arti_attended ? "Y" : "N";
+    const da = activity.darshan_arti_attended ? "Y" : "N";
+    const gp = activity.guru_puja_attended ? "Y" : "N";
+    const sc = isSanjeevaniAttended ? "Y" : "N"; // Using Y/N for consistency
 
     const lines = [
-        `*Sadhana Report - ${dateStr}*`,
+        `📊 *DAILY SADHANA REPORT*`,
+        `🗓 *Date:* ${dateStr}`,
         "",
-        `🌅 *Wake Up:* ${wakeupTime}`,
-        chantingLine,
-        `📚 *Reading:* ${totalReading} mins${readingDetails ? `  - ${readingDetails}` : ""}`,
-        `🤝 *Shravan:* ${totalAssociation} mins`,
-        `🧘 *Exercise:* ${activity.exercise_time} mins`,
-        `🛌 *Sleep:* ${sleepTime}`,
+        `🌅 *Wake Up Time:* ${wakeupTime}`,
+        `🪔 *MORNING PROGRAM:*`,
         "",
-        `*Morning Program:* ${morningProgram}`,
+        `Mangla Arti: ${ma}`,
+        `Narshima Arti: ${na}`,
+        `Tulsi Arti: ${ta}`,
+        `Sanjeevani: ${sc}`,
+        `Darshan Arti: ${da}`,
+        `Guru Puja: ${gp}`,
         "",
-        "Your Servant,",
-        participantName
+        "",
+        `📿 *No. of Rounds Completed By 07:30 AM:* ${roundsBefore730}`,
+        "",
+        `📿 *${targetRounds} Rounds Completed By:* ${finishTimeStr}`,
+        "",
+        `🛌 *Last Day Sleeping Time:* ${sleepTime}`,
+        `☀️ *Surya Namaskar* : ${activity.exercise_time} min`,
+        `📚 *Reading:* ${totalReading} min`,
+        `🎧 *Hearing:* ${hearingStr}`,
+        "",
+        "Your Servant",
+        `(${participantName})`
     ];
 
     return lines.join("\n");

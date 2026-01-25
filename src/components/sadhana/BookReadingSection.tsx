@@ -45,10 +45,20 @@ const BookReadingSection: React.FC<BookReadingSectionProps> = ({ activity, readO
     <section className="space-y-3">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">Book Reading</h3>
-        <button className="text-xs font-black text-primary flex items-center gap-1" onClick={handleAdd}>
-          <Plus className="h-3 w-3" /> Add Books
-        </button>
+        {!readOnly && (
+          <Button onClick={handleAdd} size="sm" className="hidden sm:flex rounded-full font-bold h-7 text-xs">
+            <Plus className="h-3 w-3 mr-1" />
+            Add Books
+          </Button>
+        )}
       </div>
+
+      {!readOnly && (
+        <Button onClick={handleAdd} variant="outline" className="w-full sm:hidden rounded-full border-dashed border-2 font-bold text-primary mb-2">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Books
+        </Button>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {activity.book_reading_logs.length === 0 ? (

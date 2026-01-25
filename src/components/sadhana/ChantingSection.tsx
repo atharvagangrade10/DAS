@@ -42,7 +42,32 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({
 }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [selectedSlot, setSelectedSlot] = React.useState<ChantingSlot | null>(null);
+  // Determine slot based on current time
+  const getCurrentTimeSlot = (): ChantingSlot => {
+    const now = new Date();
+    const hour = getHours(now);
+    const minute = getMinutes(now);
+
+    // after_12_00_am: 00:00 to 04:00
+    if (hour >= 0 && hour < 4) return "after_12_00_am";
+
+    // before_7_30_am: 04:00 to 07:30
+    if (hour < 7 || (hour === 7 && minute < 30)) return "before_7_30_am";
+
+    // 7_30_to_12_00_pm: 07:30 to 12:00
+    if (hour < 12) return "7_30_to_12_00_pm";
+
+    // 12_00_to_6_00_pm: 12:00 to 18:00
+    if (hour < 18) return "12_00_to_6_00_pm";
+
+    // 6_00_to_12_00_am: 18:00 to 24:00
+    return "6_00_to_12_00_am";
+  };
+
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  // Default to current time slot
+  const [selectedSlot, setSelectedSlot] = React.useState<ChantingSlot>(getCurrentTimeSlot());
+
   const [tempRounds, setTempRounds] = React.useState("16");
   const [tempRating, setTempRating] = React.useState("8");
 
@@ -56,7 +81,7 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["activityLog"] });
-    setSelectedSlot(null);
+    setIsDialogOpen(false);
   };
 
   const addMutation = useMutation({
@@ -74,12 +99,31 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({
     onSuccess: () => { toast.success("Deleted."); invalidateQueries(); },
   });
 
-  const handleOpenDialog = (slot: ChantingSlot) => {
-    if (readOnly) return;
+  const updateFormForSlot = (slot: ChantingSlot) => {
     const log = activity.chanting_logs.find(l => l.slot === slot);
-    setTempRounds((log?.rounds || 16).toString());
-    setTempRating((log?.rating || 8).toString());
-    setSelectedSlot(slot);
+    if (log) {
+      setTempRounds(log.rounds.toString());
+      setTempRating(log.rating.toString());
+    } else {
+      // Defaults for new entry
+      setTempRounds("16");
+      setTempRating("8");
+    }
+  };
+
+  const handleOpenDialog = (slot?: ChantingSlot) => {
+    if (readOnly) return;
+
+    const targetSlot = slot || getCurrentTimeSlot();
+    setSelectedSlot(targetSlot);
+    updateFormForSlot(targetSlot);
+    setIsDialogOpen(true);
+  };
+
+  const handleSlotChange = (value: string) => {
+    const newSlot = value as ChantingSlot;
+    setSelectedSlot(newSlot);
+    updateFormForSlot(newSlot);
   };
 
   const handleSave = () => {
@@ -125,11 +169,26 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({
             </CardTitle>
             <CardDescription>Track your daily rounds.</CardDescription>
           </div>
-          <div className="text-right">
-            <span className="text-2xl font-black text-primary">{totalRounds}</span>
-            <span className="text-sm font-bold text-muted-foreground ml-1">/ {targetRounds}</span>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <span className="text-2xl font-black text-primary">{totalRounds}</span>
+              <span className="text-sm font-bold text-muted-foreground ml-1">/ {targetRounds}</span>
+            </div>
+            {!readOnly && (
+              <Button onClick={() => handleOpenDialog()} size="sm" className="hidden sm:flex rounded-full font-bold">
+                <Plus className="h-4 w-4 mr-2" />
+                Record
+              </Button>
+            )}
           </div>
         </div>
+
+        {!readOnly && (
+          <Button onClick={() => handleOpenDialog()} variant="outline" className="w-full sm:hidden rounded-full border-dashed border-2 font-bold text-primary">
+            <Plus className="h-4 w-4 mr-2" />
+            Record Chanting
+          </Button>
+        )}
 
         {!readOnly && onTargetFinishedTimeChange && (
           <div className="flex items-center gap-2 mt-2 bg-muted/30 p-3 rounded-lg border border-dashed justify-between">
@@ -191,13 +250,33 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({
         })}
       </CardContent>
 
-      <Dialog open={!!selectedSlot} onOpenChange={() => setSelectedSlot(null)}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Record Chanting</DialogTitle>
             <DialogDescription>Enter rounds and quality for the selected slot.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label>Time Slot</Label>
+              <Select value={selectedSlot} onValueChange={handleSlotChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHANTING_SLOT_CONFIG.map(slot => {
+                    const isCompleted = activity.chanting_logs.some(l => l.slot === slot.value);
+                    return (
+                      <SelectItem key={slot.value} value={slot.value}>
+                        <span>{slot.label}</span>
+                        {isCompleted && <span className="ml-2 text-xs text-green-600 font-bold">( Recorded )</span>}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label>Rounds Chanted</Label>
               <Select value={tempRounds} onValueChange={setTempRounds}>
@@ -227,7 +306,7 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({
           </div>
           <DialogFooter className="flex flex-row gap-2">
             {activity.chanting_logs.some(l => l.slot === selectedSlot) && (
-              <Button variant="destructive" size="icon" onClick={() => deleteMutation.mutate(selectedSlot!)}>
+              <Button variant="destructive" size="icon" onClick={() => deleteMutation.mutate(selectedSlot)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}

@@ -242,7 +242,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly, userId })
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-muted-foreground/60">
-              <Moon className="h-3 w-3" /> Slept At
+              <Moon className="h-3 w-3" /> Last Day Slept at
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -34,7 +34,7 @@ const TimeStepper: React.FC<TimeStepperProps> = ({ hour, minute, onChange }) => 
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = parseInt(e.target.value);
     if (isNaN(val)) return;
-    
+
     // Clamp 1-12
     if (val < 1) val = 1;
     if (val > 12) val = 12;
@@ -62,7 +62,7 @@ const TimeStepper: React.FC<TimeStepperProps> = ({ hour, minute, onChange }) => 
             <Plus className="h-4 w-4" />
           </Button>
           <div className="flex flex-col items-center">
-            <input 
+            <input
               type="number"
               className="w-16 bg-transparent text-4xl font-black tabular-nums text-center border-none focus:outline-none focus:ring-0"
               value={displayHour.toString().padStart(2, '0')}
@@ -83,7 +83,7 @@ const TimeStepper: React.FC<TimeStepperProps> = ({ hour, minute, onChange }) => 
             <Plus className="h-4 w-4" />
           </Button>
           <div className="flex flex-col items-center">
-            <input 
+            <input
               type="number"
               className="w-16 bg-transparent text-4xl font-black tabular-nums text-center border-none focus:outline-none focus:ring-0"
               value={minute.toString().padStart(2, '0')}
@@ -98,20 +98,20 @@ const TimeStepper: React.FC<TimeStepperProps> = ({ hour, minute, onChange }) => 
 
         {/* AM/PM Toggle */}
         <div className="flex flex-col gap-2 mb-2">
-            <Button 
-                variant={!isPM ? "default" : "outline"} 
-                className={cn("h-10 w-14 font-black rounded-xl", !isPM && "shadow-lg")}
-                onClick={() => isPM && toggleAMPM()}
-            >
-                AM
-            </Button>
-            <Button 
-                variant={isPM ? "default" : "outline"} 
-                className={cn("h-10 w-14 font-black rounded-xl", isPM && "shadow-lg")}
-                onClick={() => !isPM && toggleAMPM()}
-            >
-                PM
-            </Button>
+          <Button
+            variant={!isPM ? "default" : "outline"}
+            className={cn("h-10 w-14 font-black rounded-xl", !isPM && "shadow-lg")}
+            onClick={() => isPM && toggleAMPM()}
+          >
+            AM
+          </Button>
+          <Button
+            variant={isPM ? "default" : "outline"}
+            className={cn("h-10 w-14 font-black rounded-xl", isPM && "shadow-lg")}
+            onClick={() => !isPM && toggleAMPM()}
+          >
+            PM
+          </Button>
         </div>
       </div>
     </div>

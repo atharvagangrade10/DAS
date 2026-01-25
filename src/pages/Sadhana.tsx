@@ -12,7 +12,7 @@ import { ActivityLogResponse, ActivityLogCreate } from "@/types/sadhana";
 
 import { toast } from "sonner";
 import { formatSadhanaReport, copyToClipboard } from "@/utils/sadhanaFormatters";
-import { fetchActivityLogByDate, createActivityLog, updateActivityLog } from "@/utils/api";
+import { fetchActivityLogByDate, createActivityLog, updateActivityLog, fetchBatchAttendance } from "@/utils/api";
 import ActivityHeader from "@/components/sadhana/ActivityHeader";
 import WorshipCard from "@/components/sadhana/WorshipCard";
 import ChantingSection from "@/components/sadhana/ChantingSection";
@@ -58,6 +58,22 @@ const Sadhana = () => {
     enabled: !!user?.user_id,
     retry: false, // Don't retry if not found
   });
+
+  // 1.2 Fetch Sanjeevani Class Attendance
+  // Batch ID for Sanjeevani: 695e8a0f91d5274d0da3bf1d
+  const { data: sanjeevaniAttendance } = useQuery({
+    queryKey: ["batchAttendance", "695e8a0f91d5274d0da3bf1d", dateStr],
+    queryFn: () => fetchBatchAttendance("695e8a0f91d5274d0da3bf1d", dateStr),
+    enabled: !!user?.user_id && !isFuture,
+  });
+
+  const isSanjeevaniAttended = React.useMemo(() => {
+    if (!sanjeevaniAttendance || !user?.user_id) return false;
+    // Check if user is in the list and status is Present
+    return sanjeevaniAttendance.some((record: any) =>
+      record.participant_id === user.user_id && record.status === "Present"
+    );
+  }, [sanjeevaniAttendance, user?.user_id]);
 
   React.useEffect(() => {
     if (activityLog?.finished_by) {
@@ -144,7 +160,8 @@ const Sadhana = () => {
                       targetFinishedTime,
                       prevActivityLog?.sleep_at,
                       user?.chanting_rounds ?? 16,
-                      user?.initiated_name || user?.full_name || "Participant"
+                      user?.initiated_name || user?.full_name || "Participant",
+                      isSanjeevaniAttended
                     );
 
                     // Use robust copy utility
@@ -174,7 +191,8 @@ const Sadhana = () => {
                       targetFinishedTime,
                       prevActivityLog?.sleep_at,
                       user?.chanting_rounds ?? 16,
-                      user?.initiated_name || user?.full_name || "Participant"
+                      user?.initiated_name || user?.full_name || "Participant",
+                      isSanjeevaniAttended
                     );
 
                     // Try Native Share

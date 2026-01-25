@@ -6,7 +6,8 @@ export const formatSadhanaReport = (
     targetFinishedTime?: string | null,
     lastDaySleepWithTime?: string | null,
     targetRounds: number = 16,
-    participantName: string = "Participant"
+    participantName: string = "Participant",
+    isSanjeevaniAttended: boolean = false
 ): string => {
     const dateStr = format(parseISO(activity.today_date), "d MMM yyyy");
 
@@ -50,6 +51,7 @@ export const formatSadhanaReport = (
     if (activity.darshan_arti_attended) attendedItems.push("Darshan Arati");
     if (activity.tulsi_arti_attended) attendedItems.push("Tulsi Arati");
     if (activity.narshima_attended) attendedItems.push("Narasimha Arati");
+    if (isSanjeevaniAttended) attendedItems.push("Sanjeevani Class");
 
     // Fallback if checked but not specific? Or just only show what is explicit.
     // User requested "Morning Program: Mangala Arati, Guru Puja" format.

@@ -224,7 +224,7 @@ const Sadhana = () => {
             </div>
           ) : activityLog ? (
             <>
-              <WorshipCard activity={activityLog} readOnly={isFuture} />
+              <WorshipCard activity={activityLog} readOnly={isFuture} userId={user?.user_id} />
               <ChantingSection
                 activity={activityLog}
                 readOnly={isFuture}

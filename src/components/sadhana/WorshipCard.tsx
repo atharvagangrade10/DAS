@@ -7,8 +7,8 @@ import { ActivityLogResponse, ActivityLogUpdate } from "@/types/sadhana";
 import { format, parseISO, setHours, setMinutes, isValid, subDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateActivityLog } from "@/utils/api";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { updateActivityLog, fetchBatchAttendance } from "@/utils/api";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import TimeStepper from "./TimeStepper";
 interface WorshipCardProps {
   activity: ActivityLogResponse;
   readOnly: boolean;
+  userId?: string;
 }
 
 const RegulativePrinciples = [
@@ -37,8 +38,24 @@ const TemplePrograms = [
   { key: 'sandhya_arti_attended', label: 'Sandhya Arti' },
 ] as const;
 
-const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
+const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly, userId }) => {
   const queryClient = useQueryClient();
+
+  // Fetch Sanjeevani Class Attendance
+  // Batch ID for Sanjeevani: 695e8a0f91d5274d0da3bf1d
+  const { data: sanjeevaniAttendance } = useQuery({
+    queryKey: ["batchAttendance", "695e8a0f91d5274d0da3bf1d", activity.today_date],
+    queryFn: () => fetchBatchAttendance("695e8a0f91d5274d0da3bf1d", activity.today_date),
+    enabled: !!userId,
+  });
+
+  const isSanjeevaniAttended = React.useMemo(() => {
+    if (!sanjeevaniAttendance || !userId) return false;
+    // Check if user is in the list and status is Present
+    return sanjeevaniAttendance.some((record: any) =>
+      record.participant_id === userId && record.status === "Present"
+    );
+  }, [sanjeevaniAttendance, userId]);
   const [openPicker, setOpenPicker] = React.useState<'sleep' | 'wakeup' | null>(null);
   const [tempHour, setTempHour] = React.useState(22);
   const [tempMin, setTempMin] = React.useState(0);
@@ -281,6 +298,23 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly }) => {
               />
             </div>
           ))}
+
+          {/* Sanjeevani Class Display - Read Only from Attendance Records */}
+          <div
+            className={cn(
+              "flex items-center justify-between px-6 py-4 transition-colors",
+              TemplePrograms.length % 2 === 0 ? "bg-muted/30" : "bg-white"
+            )}
+          >
+            <Label className="text-base font-bold text-primary/80">
+              Sanjeevani Class
+            </Label>
+            <Switch
+              checked={isSanjeevaniAttended}
+              disabled={true}
+              className="scale-110"
+            />
+          </div>
         </CardContent>
       </Card>
 

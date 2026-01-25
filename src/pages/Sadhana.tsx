@@ -249,7 +249,11 @@ const Sadhana = () => {
                 targetFinishedTime={targetFinishedTime}
                 onTargetFinishedTimeChange={handleTargetFinishedTimeChange}
               />
-              <AssociationSection activity={activityLog} readOnly={isFuture} />
+              <AssociationSection
+                activity={activityLog}
+                readOnly={isFuture}
+                initiatedName={user?.initiated_name}
+              />
               <ExerciseSection activity={activityLog} readOnly={isFuture} />
               <BookReadingSection activity={activityLog} readOnly={isFuture} />
 

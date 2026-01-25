@@ -15,19 +15,27 @@ import DurationPicker from "./DurationPicker";
 interface AssociationSectionProps {
   activity: ActivityLogResponse;
   readOnly: boolean;
+  initiatedName?: string | null;
 }
 
-const ASSOCIATION_CONFIG: { type: AssociationType, label: string, icon: React.ElementType }[] = [
+const ASSOCIATION_CONFIG_BASE: { type: AssociationType, label: string, icon: React.ElementType }[] = [
   { type: "PRABHUPADA", label: "Srila Prabhupada", icon: Headphones },
   { type: "GURU", label: "Guru Maharaja", icon: Headphones },
   { type: "OTHER_ISKCON_DEVOTEE", label: "Other ISKCON Devotees", icon: Users },
 ];
 
-const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readOnly }) => {
+const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readOnly, initiatedName }) => {
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = React.useState<AssociationType | null>(null);
   const [duration, setDuration] = React.useState(30);
   const [devoteeName, setDevoteeName] = React.useState("");
+
+  const filteredConfig = React.useMemo(() => {
+    return ASSOCIATION_CONFIG_BASE.filter(item => {
+      if (item.type === "GURU" && !initiatedName) return false;
+      return true;
+    });
+  }, [initiatedName]);
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["activityLog"] });
@@ -91,7 +99,7 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
         <CardDescription>Time spent in hearing and service.</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-3">
-        {ASSOCIATION_CONFIG.map(({ type, label, icon: Icon }) => {
+        {filteredConfig.map(({ type, label, icon: Icon }) => {
           const log = activity.association_logs.find(l => l.type === type);
           const isFilled = !!log;
 

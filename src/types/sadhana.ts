@@ -3,17 +3,15 @@
 // --- Enums/Union Types ---
 export type ChantingSlot =
   | "before_7_30_am"
-  | "7_30_to_8_30_am"
-  | "8_30_to_10_am"
-  | "before_9_30_pm"
-  | "after_9_30_pm";
+  | "7_30_to_12_00_pm"
+  | "12_00_to_6_00_pm"
+  | "6_00_to_12_00_am"
+  | "after_12_00_am";
 
 export type AssociationType =
   | "PRABHUPADA"
   | "GURU"
-  | "OTHER"
-  | "PREACHING"
-  | "OTHER_ACTIVITIES";
+  | "OTHER_ISKCON_DEVOTEE";
 
 // -------------------------------------------------
 // BASE LOG SCHEMAS
@@ -35,6 +33,7 @@ export interface BookLogBase {
 export interface AssociationLogBase {
   type: AssociationType;
   duration: number; // minutes, 0 to 1440
+  devotee_name?: string | null;
 }
 
 // -------------------------------------------------
@@ -89,6 +88,7 @@ export interface BookLogUpdate {
 export interface AssociationLogUpdate {
   type?: AssociationType;
   duration?: number;
+  devotee_name?: string | null;
 }
 
 export interface ActivityLogUpdate {
@@ -173,7 +173,10 @@ export interface ChantingInsightResponse {
   percent_days_meeting_target: number;
   zero_round_days: number;
   percent_rounds_before_7_30_am: number;
-  percent_rounds_after_9_30_pm: number;
+  percent_rounds_7_30_to_12_00: number;
+  percent_rounds_12_00_to_6_00: number;
+  percent_rounds_6_00_to_12_00: number;
+  percent_rounds_after_12_00_am: number;
   median_rating: number | null;
   iqr_rating: number | null;
 }
@@ -196,6 +199,7 @@ export interface AssociationInsightResponse {
   iqr_daily_association_minutes: number | null;
   median_minutes_by_type: Record<AssociationType, number>;
   association_days_by_type: Record<AssociationType, number>;
+  unique_devotee_names: string[];
 }
 
 export interface AratiInsightResponse {

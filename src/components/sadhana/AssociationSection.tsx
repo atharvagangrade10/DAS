@@ -20,19 +20,19 @@ interface AssociationSectionProps {
 const ASSOCIATION_CONFIG: { type: AssociationType, label: string, icon: React.ElementType }[] = [
   { type: "PRABHUPADA", label: "Srila Prabhupada", icon: Headphones },
   { type: "GURU", label: "Guru Maharaja", icon: Headphones },
-  { type: "OTHER", label: "Other Devotees", icon: Users },
-  { type: "PREACHING", label: "Preaching", icon: Mic },
-  { type: "OTHER_ACTIVITIES", label: "Other", icon: Activity },
+  { type: "OTHER_ISKCON_DEVOTEE", label: "Other ISKCON Devotees", icon: Users },
 ];
 
 const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readOnly }) => {
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = React.useState<AssociationType | null>(null);
   const [duration, setDuration] = React.useState(30);
+  const [devoteeName, setDevoteeName] = React.useState("");
 
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: ["activityLog"] });
     setSelectedType(null);
+    setDevoteeName("");
   };
 
   const addMutation = useMutation({
@@ -53,16 +53,25 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
   const handleOpenDialog = (type: AssociationType) => {
     const log = activity.association_logs.find(l => l.type === type);
     setDuration(log?.duration || 30);
+    setDevoteeName(log?.devotee_name || "");
     setSelectedType(type);
   };
 
   const handleSave = () => {
     if (!selectedType) return;
     const log = activity.association_logs.find(l => l.type === selectedType);
+
+    // Clean payload
+    const payload: AssociationLogUpdate | AssociationLogCreate = {
+      type: selectedType,
+      duration,
+      devotee_name: (selectedType === "OTHER_ISKCON_DEVOTEE" && devoteeName.trim()) ? devoteeName.trim() : null
+    };
+
     if (log) {
-      updateMutation.mutate({ type: selectedType, data: { duration } });
+      updateMutation.mutate({ type: selectedType, data: { duration, devotee_name: payload.devotee_name } });
     } else {
-      addMutation.mutate({ type: selectedType, duration });
+      addMutation.mutate(payload as AssociationLogCreate);
     }
   };
 
@@ -116,8 +125,20 @@ const AssociationSection: React.FC<AssociationSectionProps> = ({ activity, readO
             <DialogDescription>Use presets or the stepper to set your time.</DialogDescription>
           </DialogHeader>
 
-          <div className="py-6">
+          <div className="py-6 space-y-6">
             <DurationPicker value={duration} onChange={setDuration} />
+
+            {selectedType === "OTHER_ISKCON_DEVOTEE" && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Devotee Name</label>
+                <input
+                  className="flex h-12 w-full rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="e.g. HG Gauranga Das"
+                  value={devoteeName}
+                  onChange={(e) => setDevoteeName(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter className="flex flex-row gap-2">

@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { fetchMonthlyAratiInsight } from "@/utils/sadhanaInsightsApi";
+import { calculateAratiStatus } from "@/utils/insightLogic";
 import { Loader2, Flame, Circle } from "lucide-react";
 import { AratiInsightResponse } from "@/types/sadhana";
 
@@ -77,105 +78,6 @@ const AratiTypeCard = ({
             </div>
         </div>
     );
-};
-
-// --- RYG LOGIC HELPERS ---
-
-type HealthStatus = "GREEN" | "YELLOW" | "RED";
-
-interface HealthResult {
-    status: HealthStatus;
-    title: string;
-    colorClass: string;
-    iconColor: string;
-    bgGradient: string;
-    reflection: string;
-}
-
-const calculateAratiStatus = (data: AratiInsightResponse | undefined): HealthResult => {
-    if (!data) return {
-        status: "YELLOW",
-        title: "Waiting for Data",
-        colorClass: "text-gray-500",
-        iconColor: "fill-gray-500",
-        bgGradient: "from-gray-50 to-stone-50",
-        reflection: "Keep attending arati to build your ritual rhythm."
-    };
-
-    const totalDays = data.days_count || 30; // Denominator for presence
-    const attendedDays = data.total_arati_attendance_days || 0;
-    const dayRatio = attendedDays / totalDays;
-
-    // Calculate Shares
-    // We need 'Morning Share' = (Mangala + Morning) / Total Instances
-    const mangala = data.mangla_attended_days || 0;
-    const morning = data.morning_arati_days || 0; // "Morning Program"
-    // Other types for total
-    const narasimha = data.narasimha_attended_days || 0;
-    const tulsi = data.tulsi_arati_attended_days || 0;
-    const darshan = data.darshan_arati_attended_days || 0;
-    const guru = data.guru_puja_attended_days || 0;
-    const sandhya = data.sandhya_arati_attended_days || 0;
-
-    const totalInstances = mangala + morning + narasimha + tulsi + darshan + guru + sandhya;
-
-    // Morning Share
-    const morningCount = mangala + morning;
-    const morningShare = totalInstances > 0 ? (morningCount / totalInstances) : 0;
-
-    // Primary Share (Max of any type / Total)
-    const maxTypeCount = Math.max(mangala, morning, narasimha, tulsi, darshan, guru, sandhya);
-    const primaryShare = totalInstances > 0 ? (maxTypeCount / totalInstances) : 0;
-
-    // --- RED CONDITIONS ---
-    // Rare Presence (< 0.30) OR No Morning Anchor (< 20%)
-    const isRed = (dayRatio < 0.30) || (morningShare < 0.20);
-
-    if (isRed) {
-        let ref = "Fragmented or Rare.";
-        if (dayRatio < 0.30) ref = "Ārati appears occasionally; gentle re-anchoring may help.";
-        else if (morningShare < 0.20) ref = "Ritual is detached from the morning anchor, reducing its grounding effect.";
-
-        return {
-            status: "RED",
-            title: "Fragmented or Rare",
-            colorClass: "text-rose-500",
-            iconColor: "fill-rose-500",
-            bgGradient: "from-rose-50 to-red-50",
-            reflection: ref
-        };
-    }
-
-    // --- GREEN CONDITIONS ---
-    // Presence >= 0.60 AND Morning Share >= 40% (Primary Share <= 70% is supporting, not strict gate for Green, unless "ALL mandatory" implies 1 & 2. 3 is supporting.)
-    const isGreenCandidate = (dayRatio >= 0.60) && (morningShare >= 0.40);
-
-    if (isGreenCandidate) {
-        return {
-            status: "GREEN",
-            title: "Stable Ritual Rhythm",
-            colorClass: "text-emerald-500",
-            iconColor: "fill-emerald-500",
-            bgGradient: "from-emerald-50 to-green-50",
-            reflection: "Ārati has become a steady part of your daily rhythm."
-        };
-    }
-
-    // --- YELLOW CONDITIONS ---
-    // Fallback
-    let yellowReason = "Present but Narrow.";
-    if (dayRatio >= 0.30 && dayRatio < 0.60) yellowReason = "Ritual presence exists, but consistency is still forming.";
-    else if (morningShare >= 0.20 && morningShare < 0.40) yellowReason = "Ritual presence exists, but the morning anchor is light.";
-    else if (primaryShare > 0.70) yellowReason = "Ritual exists but is heavily dependent on a single time slot.";
-
-    return {
-        status: "YELLOW",
-        title: "Present but Narrow",
-        colorClass: "text-amber-500",
-        iconColor: "fill-amber-500",
-        bgGradient: "from-amber-50 to-yellow-50",
-        reflection: yellowReason
-    };
 };
 
 const AratiTab: React.FC<AratiTabProps> = ({ year, month, participantId }) => {

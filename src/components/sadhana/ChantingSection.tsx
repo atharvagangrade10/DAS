@@ -27,11 +27,11 @@ interface ChantingSectionProps {
 }
 
 const CHANTING_SLOT_CONFIG: { value: ChantingSlot, label: string }[] = [
-  { value: "before_7_30_am", label: "Before 7:30 AM" },
-  { value: "7_30_to_8_30_am", label: "7:30 - 8:30 AM" },
-  { value: "8_30_to_10_am", label: "8:30 - 10:00 AM" },
-  { value: "before_9_30_pm", label: "Before 9:30 PM" },
-  { value: "after_9_30_pm", label: "Late Night" },
+  { value: "before_7_30_am", label: "Early Morning (Before 7:30)" },
+  { value: "7_30_to_12_00_pm", label: "Morning (7:30 - 12:00)" },
+  { value: "12_00_to_6_00_pm", label: "Afternoon (12:00 - 6:00)" },
+  { value: "6_00_to_12_00_am", label: "Evening (6:00 - 12:00)" },
+  { value: "after_12_00_am", label: "Late Night (After 12:00)" },
 ];
 
 const ChantingSection: React.FC<ChantingSectionProps> = ({

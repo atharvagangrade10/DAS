@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { fetchMonthlyExerciseInsight } from "@/utils/sadhanaInsightsApi";
+import { calculateExerciseStatus } from "@/utils/insightLogic";
 import { Loader2, Dumbbell, Circle } from "lucide-react";
 import { ExerciseInsightResponse } from "@/types/sadhana";
 
@@ -38,96 +39,6 @@ const SleekMetricCard = ({
             </p>
         </div>
     );
-};
-
-// --- REFLECTION PRESETS ---
-const REFLECTIONS = {
-    GREEN: [
-        "Your body is being supported consistently. Rhythm and duration are healthy.",
-        "A healthy foundation for your energy. The consistency of movement is serving you well.",
-        "Movement has become a steady, reliable support for your physical well-being."
-    ],
-    YELLOW: [
-        "Movement is present, but rhythm isn’t settled yet. Steadying the pattern will increase the benefit.",
-        "Daily movement is real but light. Slightly longer duration would provide stronger support.",
-        "Consistency varies. Establishing a baseline of daily movement will stabilize your energy."
-    ],
-    RED: [
-        "Movement is rare; gentle re-entry could help build the physical support you need.",
-        "Brief movement helps, but minimum viability for health is slightly higher.",
-        "Sporadic intense sessions may strain the body. Consistent, moderate movement is a safer path."
-    ]
-};
-
-const calculateExerciseStatus = (data: ExerciseInsightResponse | undefined, year: number, month: number): HealthResult => {
-    if (!data) return {
-        status: "YELLOW",
-        title: "Waiting for Data",
-        colorClass: "text-gray-500",
-        iconColor: "fill-gray-500",
-        bgGradient: "from-gray-50 to-stone-50",
-        reflection: "Log your movement to track body support."
-    };
-
-    const days = data.exercise_days || 0;
-    const totalDays = data.days_count || 30;
-    const dayRatio = days / totalDays;
-
-    const median = data.median_exercise_minutes || 0;
-    const iqr = data.iqr_exercise_minutes || 999;
-
-    // Seed
-    const seed = (year + month) % 3;
-
-    // --- RED CONDITIONS ---
-    const isRed =
-        (dayRatio < 0.25) ||          // Rare Movement
-        (median < 10) ||              // Too Little to Support Health
-        (iqr > 2 * median && median > 0); // Burst Pattern
-
-    if (isRed) {
-        let title = "Body Undersupported";
-        if (dayRatio < 0.25) title = "Rare Movement";
-        else if (median < 10) title = "Too Little Support";
-        else if (iqr > 2 * median) title = "Burst Pattern";
-
-        return {
-            status: "RED",
-            title: title,
-            colorClass: "text-rose-500",
-            iconColor: "fill-rose-500",
-            bgGradient: "from-rose-50 to-red-50",
-            reflection: REFLECTIONS.RED[seed]
-        };
-    }
-
-    // --- GREEN CONDITIONS ---
-    // Mandatory 1-3
-    const isGreenCandidate =
-        (dayRatio >= 0.50) &&
-        (iqr <= median) &&
-        (median >= 20);
-
-    if (isGreenCandidate) {
-        return {
-            status: "GREEN",
-            title: "Body Supported",
-            colorClass: "text-emerald-500",
-            iconColor: "fill-emerald-500",
-            bgGradient: "from-emerald-50 to-green-50",
-            reflection: REFLECTIONS.GREEN[seed]
-        };
-    }
-
-    // --- YELLOW CONDITIONS ---
-    return {
-        status: "YELLOW",
-        title: "Some Movement",
-        colorClass: "text-amber-500",
-        iconColor: "fill-amber-500",
-        bgGradient: "from-amber-50 to-yellow-50",
-        reflection: REFLECTIONS.YELLOW[seed]
-    };
 };
 
 const ExerciseTab: React.FC<ExerciseTabProps> = ({ year, month, participantId }) => {

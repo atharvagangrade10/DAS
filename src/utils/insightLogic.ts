@@ -108,19 +108,19 @@ const REFLECTIONS = {
     },
     ARATI: {
         GREEN: [
-            "Your deity worship attendance, especially morning program, is a beautiful standard.",
+            "Your arati attendance, especially morning program, is a beautiful standard.",
             "Taking Darshan of the Deities daily is purifying your vision and grounding your day.",
-            "You are steadily worshipping the Lord. This creates a temple atmosphere in your heart."
+            "You are steadily attending the Lord's program. This creates a temple atmosphere in your heart."
         ],
         YELLOW: [
             "You are attending, but try to fix one specific arati (like Mangala or Sandhya) as an anchor.",
-            "Darshan is happening, but morning attendance would set a stronger tone for the day.",
-            "Deity worship is present but fluctuating. Regularity pleases the Lord and steadies the mind."
+            "Darshan is happening, but consistent morning attendance would set a stronger tone for the day.",
+            "Arati attendance is present but fluctuating. Regularity in seeing the Lord steadies the mind."
         ],
         RED: [
-            "Deity worship is rare. Even a brief daily darshan or offering a lamp helps fix the mind.",
+            "Arati attendance is rare. Even a brief daily darshan helps fix the mind.",
             "The morning program is a powerful boost. Try to attend at least once this week.",
-            "Connection with the Deities is fragmented. A simple daily offering can restart the relationship."
+            "Connection with the Deities is fragmented. A simple daily visit for arati can restart the relationship."
         ]
     },
     EXERCISE: {
@@ -192,7 +192,7 @@ export const calculateChantingStatus = (data: ChantingInsightResponse | undefine
     const median = data.median_daily_rounds || 0;
     const iqr = data.iqr_daily_rounds || 999;
     const zeroDays = data.zero_round_days || 0;
-    const pctAfter930 = data.percent_rounds_after_9_30_pm || 0;
+    const pctAfter12 = data.percent_rounds_after_12_00_am || 0;
     const pctBefore730 = data.percent_rounds_before_7_30_am || 0;
 
     const medianRatio = median / (T || 1);
@@ -200,19 +200,17 @@ export const calculateChantingStatus = (data: ChantingInsightResponse | undefine
     const seed = (year + month) % 3;
 
     // Red
-    const isRed = (zeroDays >= 5) || (medianRatio < 0.50) || (iqrRatio > 0.50) || (pctAfter930 >= 40);
+    const isRed = (zeroDays >= 5) || (medianRatio < 0.50) || (iqrRatio > 0.50) || (pctAfter12 >= 20);
     if (isRed) {
         let title = "Vow Needs Strength";
         if (zeroDays >= 5) title = "Rounds Missed";
-        else if (pctAfter930 >= 40) title = "Late Chanting";
+        else if (pctAfter12 >= 20) title = "Late Chanting";
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.CHANTING.RED[seed] };
     }
 
     // Green
-    const isGreen = (zeroDays <= 1) && (medianRatio >= 0.75) && (iqrRatio <= 0.25) && (pctBefore730 >= 50) && (pctAfter930 <= 20);
+    const isGreen = (zeroDays <= 1) && (medianRatio >= 0.75) && (iqrRatio <= 0.25) && (pctBefore730 >= 50) && (pctAfter12 === 0);
     if (isGreen) {
-        // Late override
-        if (pctAfter930 >= 25) return { status: "YELLOW", title: "Late Night Drag", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: "Good volume, but late chanting is creating drag." };
         return { status: "GREEN", title: "Strong M. Sadhana", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.CHANTING.GREEN[seed] };
     }
 
@@ -281,7 +279,7 @@ export const calculateAratiStatus = (data: AratiInsightResponse | undefined, yea
     }
 
     const isGreen = (dayRatio >= 0.60) && (morningShare >= 0.40);
-    if (isGreen) return { status: "GREEN", title: "Pujari Standard", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ARATI.GREEN[seed] };
+    if (isGreen) return { status: "GREEN", title: "Regular Darshan", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ARATI.GREEN[seed] };
 
     return { status: "YELLOW", title: "Visiting Deities", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.ARATI.YELLOW[seed] };
 };
@@ -295,7 +293,7 @@ export const calculateExerciseStatus = (data: ExerciseInsightResponse | undefine
     const seed = (year + month) % 3;
 
     const isRed = (dayRatio < 0.25) || (median < 10) || (iqr > 2 * median && median > 0);
-    if (isRed) return { status: "RED", title: "Ignored Temple", colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.EXERCISE.RED[seed] };
+    if (isRed) return { status: "RED", title: "Neglecting Body", colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.EXERCISE.RED[seed] };
 
     const isGreen = (dayRatio >= 0.50) && (iqr <= median) && (median >= 20);
     if (isGreen) return { status: "GREEN", title: "Fit for Service", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.EXERCISE.GREEN[seed] };

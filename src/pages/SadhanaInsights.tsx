@@ -99,7 +99,7 @@ const SadhanaInsights = () => {
             case "association": return <AssociationTab {...props} />;
             case "arati": return <AratiTab {...props} />;
             case "exercise": return <ExerciseTab {...props} />;
-            case "leaderboard": return <LeaderboardTab />;
+            case "leaderboard": return <LeaderboardTab {...props} />;
             default: return <OverviewTab {...props} />;
         }
     };

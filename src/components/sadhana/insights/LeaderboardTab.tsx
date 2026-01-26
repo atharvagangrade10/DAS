@@ -9,13 +9,18 @@ import { Loader2, Trophy, Medal, Crown, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const LeaderboardTab = () => {
+interface LeaderboardTabProps {
+    year?: number;
+    month?: number;
+}
+
+const LeaderboardTab = ({ year, month }: LeaderboardTabProps) => {
     const { user } = useAuth();
     const [visibleCount, setVisibleCount] = React.useState(10);
 
     const { data: rankings, isLoading, error } = useQuery<ParticipantRankingResponse[], Error>({
-        queryKey: ["rankings", user?.user_id],
-        queryFn: () => fetchParticipantRankings(user?.user_id),
+        queryKey: ["rankings", user?.user_id, year, month],
+        queryFn: () => fetchParticipantRankings(user?.user_id, year, month),
         enabled: !!user?.user_id,
     });
 

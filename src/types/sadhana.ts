@@ -261,3 +261,11 @@ export interface ScoresInsightResponse {
   avg_exercise_score: number;
   avg_total_score: number;
 }
+
+export interface ParticipantRankingResponse {
+  rank: number;
+  participant_id: string;
+  full_name: string;
+  avg_total_score: number | null;
+  profile_photo_url: string | null;
+}

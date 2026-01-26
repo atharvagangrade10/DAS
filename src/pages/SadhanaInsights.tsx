@@ -23,6 +23,7 @@ import ReadingTab from "../components/sadhana/insights/ReadingTab";
 import AssociationTab from "../components/sadhana/insights/AssociationTab";
 import AratiTab from "../components/sadhana/insights/AratiTab";
 import ExerciseTab from "../components/sadhana/insights/ExerciseTab";
+import LeaderboardTab from "../components/sadhana/insights/LeaderboardTab";
 
 const TABS = [
     { id: "overview", label: "Overview" },
@@ -32,6 +33,7 @@ const TABS = [
     { id: "association", label: "Association" },
     { id: "arati", label: "Ārati" },
     { id: "exercise", label: "Exercise" },
+    { id: "leaderboard", label: "Leaderboard" },
 ];
 
 const MONTHS = [
@@ -97,6 +99,7 @@ const SadhanaInsights = () => {
             case "association": return <AssociationTab {...props} />;
             case "arati": return <AratiTab {...props} />;
             case "exercise": return <ExerciseTab {...props} />;
+            case "leaderboard": return <LeaderboardTab />;
             default: return <OverviewTab {...props} />;
         }
     };

@@ -157,31 +157,53 @@ export const calculateSleepStatus = (data: SleepInsightResponse | undefined, yea
         else effectiveSleepTime = h * 60 + m;
     }
 
+    const duration = data.median_sleep_duration_minutes || 0;
+    const wakeMins = getMinutesFromMidnight(data.median_wakeup_time);
+
     const iqrSleep = data.iqr_sleep_minutes || 999;
     const iqrWake = data.iqr_wakeup_minutes || 999;
-    const duration = data.median_sleep_duration_minutes || 0;
     const earlyWakePct = data.percent_wakeup_before_5am || 0;
     const seed = (year + month) % 3;
 
-    // Red: Late (>=11:30pm/1410m), Unstable (>120m iqr), or Insufficient (<6h/360m)
-    const isRed = (effectiveSleepTime >= 1410) || (iqrSleep > 120) || (iqrWake > 120) || (duration < 360) || (earlyWakePct >= 70 && effectiveSleepTime >= 1380);
+    // --- RED CHECKS (Any of these triggers Red) ---
+    // 1. Original: Late Sleep >= 11:30 PM (1410m)
+    // 2. Original: Unstable Rhythm (IQR > 120)
+    // 3. Original: Burnout (Wake < 5am & Sleep > 11:00 PM)
+    // 4. NEW: Duration Check (< 6h or > 7h) (User: "6 hours to 7 hours is good else bad")
+    // 5. NEW: Late Wakeup (>= 7:00 AM)
 
-    if (isRed) {
+    const isLateSleep = effectiveSleepTime >= 1410;
+    const isUnstable = iqrSleep > 120 || iqrWake > 120;
+    const isBurnout = earlyWakePct >= 70 && effectiveSleepTime >= 1380;
+    const isBadDuration = duration < 360 || duration > 420;
+    const isLateWake = wakeMins !== null && wakeMins >= 420; // 420 = 7:00 AM
+
+    if (isLateSleep || isUnstable || isBurnout || isBadDuration || isLateWake) {
         let title = "Struggle with Rhythm";
-        if (effectiveSleepTime >= 1410) title = "Late Sleep Pattern";
-        else if (duration < 360) title = "Insufficient Rest";
-        else if ((iqrSleep > 120) || (iqrWake > 120)) title = "Unstable Rhythm";
+        if (isBadDuration) title = duration < 360 ? "Insufficient Rest" : "Oversleeping";
+        else if (isLateWake) title = "Late Rising";
+        else if (effectiveSleepTime >= 1410) title = "Late Sleep Pattern";
+        else if (isUnstable) title = "Unstable Rhythm";
+
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.SLEEP.RED[seed] };
     }
 
-    // Green: Sleep 9:15-10:30pm (1275-1350), IQR <= 60, Duration >= 6.5h (390)
-    const isGreen = (effectiveSleepTime >= 1275 && effectiveSleepTime <= 1350) && (iqrSleep <= 60) && (iqrWake <= 60) && (duration >= 390);
+    // --- GREEN CHECKS (Must meet ALL) ---
+    // 1. Original: Sleep 9:15-10:30 PM (1275-1350)
+    // 2. Original: Stable Rhythm (IQR <= 60)
+    // 3. NEW: Wakeup < 5:00 AM (User: "before 5am is green")
+    // (Duration 6-7h is implied because we passed Red check)
 
-    if (isGreen) {
+    const isGoodSleepTime = effectiveSleepTime >= 1275 && effectiveSleepTime <= 1350;
+    const isStable = iqrSleep <= 60 && iqrWake <= 60;
+    const isEarlyWake = wakeMins !== null && wakeMins < 300; // 300 = 5:00 AM
+
+    if (isGoodSleepTime && isStable && isEarlyWake) {
         return { status: "GREEN", title: "Sattva Guna Rhythm", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.SLEEP.GREEN[seed] };
     }
 
-    // Yellow
+    // --- YELLOW ---
+    // Meets duration (6-7h) and wakes before 7am, but misses other Green criteria (e.g. sleep time slightly off, or waking 5-7am)
     return { status: "YELLOW", title: "Trying for Goodness", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.SLEEP.YELLOW[seed] };
 };
 
@@ -200,16 +222,27 @@ export const calculateChantingStatus = (data: ChantingInsightResponse | undefine
     const seed = (year + month) % 3;
 
     // Red
-    const isRed = (zeroDays >= 5) || (medianRatio < 0.50) || (iqrRatio > 0.50) || (pctAfter12 >= 20);
+    // Quantity < 80% (User: "instead of 50 % ... take 80 percent")
+    // Variation > 3 (User: "variation for red is 3")
+    // Late Rounds (Keeping original 20%)
+    const isRed = (zeroDays >= 5) || (medianRatio < 0.80) || (iqr > 3) || (pctAfter12 >= 20);
+
     if (isRed) {
         let title = "Vow Needs Strength";
         if (zeroDays >= 5) title = "Rounds Missed";
         else if (pctAfter12 >= 20) title = "Late Chanting";
+        else if (iqr > 3) title = "Unstable Rhythm";
+        else if (medianRatio < 0.80) title = "Low Round Count";
+
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.CHANTING.RED[seed] };
     }
 
     // Green
-    const isGreen = (zeroDays <= 1) && (medianRatio >= 0.75) && (iqrRatio <= 0.25) && (pctBefore730 >= 50) && (pctAfter12 === 0);
+    // Variation <= 1 (User: "green 1")
+    // Morning Focus >= 75% (User: "morning focus should take 75%")
+    // Quantity >= 75% (Original - kept, though Red now covers < 80, so effectively Green implies >= 80)
+    const isGreen = (zeroDays <= 1) && (medianRatio >= 0.75) && (iqr <= 1) && (pctBefore730 >= 75) && (pctAfter12 === 0);
+
     if (isGreen) {
         return { status: "GREEN", title: "Strong M. Sadhana", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.CHANTING.GREEN[seed] };
     }
@@ -225,15 +258,15 @@ export const calculateReadingStatus = (data: BookInsightResponse | undefined, ye
     const iqr = data.iqr_daily_reading_minutes || 999;
     const seed = (year + month) % 3;
 
-    const isRed = (dayRatio < 0.30) || (median < 15) || (iqr > 2 * median && median > 0);
+    const isRed = (dayRatio < 0.30) || (median < 15) || (iqr > median && median > 0);
     if (isRed) {
         let title = "Needs Sravanam";
         if (dayRatio < 0.30) title = "Rare Hearing";
-        else if (iqr > 2 * median) title = "Irregular Study";
+        else if (iqr > median) title = "Irregular Study";
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.READING.RED[seed] };
     }
 
-    const isGreen = (dayRatio >= 0.60) && (iqr <= median) && (median >= 30);
+    const isGreen = (dayRatio >= 0.75) && (iqr <= median) && (median >= 30);
     if (isGreen) {
         return { status: "GREEN", title: "Deep Absorption", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.READING.GREEN[seed] };
     }
@@ -249,12 +282,12 @@ export const calculateAssociationStatus = (data: AssociationInsightResponse | un
     const iqr = data.iqr_daily_association_minutes || 999;
     const seed = (year + month) % 3;
 
-    const isRed = (dayRatio < 0.20) || (median < 30) || (iqr > 2 * median && median > 0);
+    const isRed = (dayRatio < 0.20) || (median < 20) || (iqr > median && median > 0);
     if (isRed) {
         return { status: "RED", title: "Needs Sanga", colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.ASSOCIATION.RED[seed] };
     }
 
-    const isGreen = (dayRatio >= 0.40) && (iqr <= median) && (median >= 45);
+    const isGreen = (dayRatio >= 0.75) && (iqr <= median) && (median >= 30);
     if (isGreen) {
         return { status: "GREEN", title: "Strong Fence", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ASSOCIATION.GREEN[seed] };
     }
@@ -266,19 +299,31 @@ export const calculateAratiStatus = (data: AratiInsightResponse | undefined, yea
     if (!data) return { status: "YELLOW", title: "Waiting for Data", colorClass: "text-gray-500", iconColor: "fill-gray-500", bgGradient: "from-gray-50 to-stone-50", reflection: "Log arati." };
 
     const dayRatio = (data.total_arati_attendance_days || 0) / (data.days_count || 30);
+    const japaRatio = (data.japa_sanga_attended_days || 0) / (data.days_count || 30);
     const totalInstances = (data.mangla_attended_days || 0) + (data.morning_arati_days || 0) + (data.narasimha_attended_days || 0) + (data.tulsi_arati_attended_days || 0) + (data.darshan_arati_attended_days || 0) + (data.guru_puja_attended_days || 0) + (data.sandhya_arati_attended_days || 0);
     const morningShare = totalInstances > 0 ? ((data.mangla_attended_days || 0) + (data.morning_arati_days || 0)) / totalInstances : 0;
     const seed = (year + month) % 3;
 
-    const isRed = (dayRatio < 0.30) || (morningShare < 0.20);
+    // Red Checks
+    // Original: dayRatio < 0.30 (Rare Darshan)
+    // Original: morningShare < 0.20 (Missing Morning)
+    // NEW: Japa Sanga < 40% (User: "40 for yellow and else red" -> < 40 is Red)
+    const isRed = (dayRatio < 0.30) || (morningShare < 0.20) || (japaRatio < 0.40);
+
     if (isRed) {
         let title = "Occasional Darshan";
-        if (dayRatio < 0.30) title = "Rare Darshan";
+        if (japaRatio < 0.40) title = "Needs Japa Sanga";
+        else if (dayRatio < 0.30) title = "Rare Darshan";
         else title = "Missing Morning";
         return { status: "RED", title, colorClass: "text-rose-500", iconColor: "fill-rose-500", bgGradient: "from-rose-50 to-red-50", reflection: REFLECTIONS.ARATI.RED[seed] };
     }
 
-    const isGreen = (dayRatio >= 0.60) && (morningShare >= 0.40);
+    // Green Checks
+    // Original: dayRatio >= 0.60
+    // Original: morningShare >= 0.40
+    // NEW: Japa Sanga >= 50% (User: "50 % for green")
+    const isGreen = (dayRatio >= 0.60) && (morningShare >= 0.40) && (japaRatio >= 0.50);
+
     if (isGreen) return { status: "GREEN", title: "Regular Darshan", colorClass: "text-emerald-500", iconColor: "fill-emerald-500", bgGradient: "from-emerald-50 to-green-50", reflection: REFLECTIONS.ARATI.GREEN[seed] };
 
     return { status: "YELLOW", title: "Visiting Deities", colorClass: "text-amber-500", iconColor: "fill-amber-500", bgGradient: "from-amber-50 to-yellow-50", reflection: REFLECTIONS.ARATI.YELLOW[seed] };

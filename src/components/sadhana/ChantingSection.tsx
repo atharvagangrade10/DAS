@@ -19,6 +19,8 @@ import TimeStepper from "./TimeStepper";
 import { parse, getHours, getMinutes, setHours, setMinutes, format, isValid } from "date-fns";
 
 
+
+
 interface ChantingSectionProps {
   activity: ActivityLogResponse;
   readOnly: boolean;
@@ -126,10 +128,16 @@ const ChantingSection: React.FC<ChantingSectionProps> = ({
     updateFormForSlot(newSlot);
   };
 
+
+  // ... inside handleSave ...
   const handleSave = () => {
     if (!selectedSlot) return;
+
+    const rounds = parseInt(tempRounds);
+
     const log = activity.chanting_logs.find(l => l.slot === selectedSlot);
-    const data = { rounds: parseInt(tempRounds), rating: parseInt(tempRating) };
+    const data = { rounds, rating: parseInt(tempRating) };
+
     if (log) {
       updateMutation.mutate({ slot: selectedSlot, data });
     } else {

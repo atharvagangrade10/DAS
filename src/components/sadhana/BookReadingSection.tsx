@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SCORE_RULES } from "@/utils/scoreUtils";
 import AddBookLogDialog from "./AddBookLogDialog";
 
 interface BookReadingSectionProps {

@@ -5,7 +5,8 @@ import {
     BookInsightResponse,
     AssociationInsightResponse,
     AratiInsightResponse,
-    ExerciseInsightResponse
+    ExerciseInsightResponse,
+    ScoresInsightResponse
 } from "@/types/sadhana";
 
 import { API_BASE_URL as BASE_URL } from "@/config/api";
@@ -33,4 +34,8 @@ export const fetchMonthlyAratiInsight = async (participantId: string, year: numb
 export const fetchMonthlyExerciseInsight = async (participantId: string, year: number, month: number): Promise<ExerciseInsightResponse> => {
     // Matching backend route spelling: /insights/excercise/
     return fetchAuthenticated(`${BASE_URL}/activities/insights/excercise/${participantId}/${year}/${month}`);
+};
+
+export const fetchMonthlyScoresInsight = async (participantId: string, year: number, month: number): Promise<ScoresInsightResponse> => {
+    return fetchAuthenticated(`${BASE_URL}/activities/insights/scores/${participantId}/${year}/${month}`);
 };

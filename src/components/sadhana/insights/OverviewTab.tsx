@@ -9,7 +9,8 @@ import {
     fetchMonthlyBookInsight,
     fetchMonthlyAssociationInsight,
     fetchMonthlyAratiInsight,
-    fetchMonthlyExerciseInsight
+    fetchMonthlyExerciseInsight,
+    fetchMonthlyScoresInsight
 } from "@/utils/sadhanaInsightsApi";
 import { Loader2, BedDouble, BookOpen, Heart, Flame, Dumbbell, Sparkles } from "lucide-react";
 import { formatTime12h } from "@/utils/format";
@@ -105,6 +106,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ year, month, participantId })
     const { data: association } = useQuery({ queryKey: ["insight", "association", targetUserId, year, month], queryFn: () => fetchMonthlyAssociationInsight(targetUserId, year, month) });
     const { data: arati } = useQuery({ queryKey: ["insight", "arati", targetUserId, year, month], queryFn: () => fetchMonthlyAratiInsight(targetUserId, year, month) });
     const { data: exercise } = useQuery({ queryKey: ["insight", "exercise", targetUserId, year, month], queryFn: () => fetchMonthlyExerciseInsight(targetUserId, year, month) });
+    const { data: scores } = useQuery({ queryKey: ["insight", "scores", targetUserId, year, month], queryFn: () => fetchMonthlyScoresInsight(targetUserId, year, month) });
 
     // --- Calculate Statuses ---
     const sSleep = calculateSleepStatus(sleep, year, month);
@@ -155,6 +157,93 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ year, month, participantId })
                     <p className="text-gray-700 leading-relaxed text-sm sm:text-base max-w-4xl font-medium opacity-90">
                         {summaryText}
                     </p>
+
+                    {/* MANAGER ONLY SCORE VIEW */}
+                    {user?.role === "Manager" && (
+                        <div className="mt-8 pt-6 border-t border-black/10">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Sparkles className="h-4 w-4 text-amber-600" />
+                                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Manager Insight: Scores</h3>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Chanting</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_chanting_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Reading</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_book_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Association</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_association_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Exercise</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_exercise_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Arati</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_arati_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Regulations</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_regulation_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Sleep</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_sleep_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/50 rounded-xl p-4 border border-black/5">
+                                    <div className="text-xs text-gray-500 font-medium mb-1">Wakeup</div>
+                                    <div className="text-2xl font-light text-[#0D1B2A]">
+                                        {(scores?.avg_wakeup_score || 0).toFixed(1)}
+                                        <span className="text-xs text-gray-400 ml-1">pts</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border-2 border-amber-200">
+                                    <div className="text-xs text-amber-700 font-bold mb-1 uppercase tracking-wide">Total Avg</div>
+                                    <div className="text-3xl font-bold text-amber-900">
+                                        {(scores?.avg_total_score || 0).toFixed(1)}
+                                        <span className="text-sm text-amber-600 ml-1">pts</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-gray-500 mt-4 italic">
+                                * Average daily scores for the month. Scores calculated by backend based on logged activities.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 

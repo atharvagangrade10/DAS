@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import DurationPicker from "./DurationPicker";
 
+
 interface ExerciseSectionProps {
     activity: ActivityLogResponse;
     readOnly: boolean;
@@ -38,7 +39,9 @@ const ExerciseSection: React.FC<ExerciseSectionProps> = ({ activity, readOnly })
     };
 
     const handleSave = () => {
-        updateMutation.mutate({ exercise_time: duration });
+        updateMutation.mutate({
+            exercise_time: duration
+        });
     };
 
     const formatTime = (mins: number) => {

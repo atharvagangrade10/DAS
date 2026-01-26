@@ -21,6 +21,7 @@ export interface ChantingLogBase {
   slot: ChantingSlot;
   rounds: number; // 1 to 108
   rating: number | null; // 1 to 10
+  score?: number; // Calculated score
 }
 
 export interface BookLogBase {
@@ -28,12 +29,14 @@ export interface BookLogBase {
   name: string;
   reading_time: number; // minutes, 0 to 1440
   chapter_name: string | null;
+  score?: number;
 }
 
 export interface AssociationLogBase {
   type: AssociationType;
   duration: number; // minutes, 0 to 1440
   devotee_name?: string | null;
+  score?: number;
 }
 
 // -------------------------------------------------
@@ -64,9 +67,17 @@ export interface ActivityLogCreate {
   darshan_arti_attended: boolean;
   guru_puja_attended: boolean;
   sandhya_arti_attended: boolean;
+  japa_sanga?: boolean;
 
   exercise_time: number; // minutes
   finished_by?: string | null; // datetime string (ISO format)
+  // Scores might be calculated backend-side on create/update, so optional in Create/Update?
+  // "Updated create_activity to handle japa_sanga and scores."
+  sleep_score?: number;
+  wakeup_score?: number;
+  arati_score?: number;
+  regulation_score?: number;
+  exercise_score?: number;
 }
 
 // -------------------------------------------------
@@ -77,18 +88,21 @@ export interface ChantingLogUpdate {
   slot?: ChantingSlot;
   rounds?: number;
   rating?: number | null;
+  score?: number;
 }
 
 export interface BookLogUpdate {
   name?: string;
   reading_time?: number;
   chapter_name?: string | null;
+  score?: number;
 }
 
 export interface AssociationLogUpdate {
   type?: AssociationType;
   duration?: number;
   devotee_name?: string | null;
+  score?: number;
 }
 
 export interface ActivityLogUpdate {
@@ -108,9 +122,16 @@ export interface ActivityLogUpdate {
   darshan_arti_attended?: boolean;
   guru_puja_attended?: boolean;
   sandhya_arti_attended?: boolean;
+  japa_sanga?: boolean;
 
   exercise_time?: number;
   finished_by?: string | null; // datetime string (ISO format)
+
+  sleep_score?: number;
+  wakeup_score?: number;
+  arati_score?: number;
+  regulation_score?: number;
+  exercise_score?: number;
 }
 
 // -------------------------------------------------
@@ -143,9 +164,14 @@ export interface ActivityLogResponse {
   darshan_arti_attended: boolean;
   guru_puja_attended: boolean;
   sandhya_arti_attended: boolean;
+  japa_sanga?: boolean; // Optional for backward compatibility, though backend likely returns it
 
   exercise_time: number;
   finished_by: string | null; // datetime string (ISO format)
+
+  sleep_score: number | null;
+  arati_score: number | null;
+  exercise_score: number | null;
 
   chanting_logs: ChantingLogResponse[];
   book_reading_logs: BookLogResponse[];
@@ -212,6 +238,7 @@ export interface AratiInsightResponse {
   guru_puja_attended_days: number;
   sandhya_arati_attended_days: number;
   morning_arati_days: number;
+  japa_sanga_attended_days?: number;
 }
 
 export interface ExerciseInsightResponse {
@@ -220,4 +247,17 @@ export interface ExerciseInsightResponse {
   percent_days_exercised: number;
   median_exercise_minutes: number | null;
   iqr_exercise_minutes: number | null;
+}
+
+export interface ScoresInsightResponse {
+  days_count: number;
+  avg_chanting_score: number;
+  avg_book_score: number;
+  avg_association_score: number;
+  avg_regulation_score: number;
+  avg_arati_score: number;
+  avg_sleep_score: number;
+  avg_wakeup_score: number;
+  avg_exercise_score: number;
+  avg_total_score: number;
 }

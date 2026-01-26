@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { fetchMonthlyAratiInsight } from "@/utils/sadhanaInsightsApi";
+import { fetchBatchParticipantStats } from "@/utils/api";
 import { calculateAratiStatus } from "@/utils/insightLogic";
 import { Loader2, Flame, Circle } from "lucide-react";
 import { AratiInsightResponse } from "@/types/sadhana";
@@ -84,9 +85,18 @@ const AratiTab: React.FC<AratiTabProps> = ({ year, month, participantId }) => {
     const { user } = useAuth();
     const targetUserId = participantId || user?.user_id!;
 
+    // Sanjeevani Batch ID
+    const SANJEEVANI_BATCH_ID = "695e8a0f91d5274d0da3bf1d";
+
     const { data: arati, isLoading } = useQuery({
         queryKey: ["insight", "arati", targetUserId, year, month],
         queryFn: () => fetchMonthlyAratiInsight(targetUserId, year, month),
+        enabled: !!targetUserId,
+    });
+
+    const { data: sanjeevaniStats } = useQuery({
+        queryKey: ["batchParticipantStats", SANJEEVANI_BATCH_ID, targetUserId],
+        queryFn: () => fetchBatchParticipantStats(SANJEEVANI_BATCH_ID, targetUserId),
         enabled: !!targetUserId,
     });
 
@@ -146,8 +156,38 @@ const AratiTab: React.FC<AratiTabProps> = ({ year, month, participantId }) => {
 
             {/* Breakdown Title */}
             <div>
-                <h4 className="text-base text-gray-600 font-medium mb-4">Āratī Type Breakdown</h4>
+                <h4 className="text-base text-gray-600 font-medium mb-4">Programs & Classes</h4>
                 <div className="space-y-4">
+
+                    {/* Sanjeevani Class Card - Total Stats */}
+                    {sanjeevaniStats && (
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group">
+                            <div className="absolute right-0 top-0 h-full w-1.5 bg-gradient-to-b from-blue-500 to-indigo-600" />
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 className="text-base sm:text-lg font-bold text-[#0D1B2A] tracking-tight mb-1 flex items-center gap-2">
+                                        Sanjeevani Class
+                                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[10px] sm:text-xs font-bold text-blue-600 uppercase tracking-wide">
+                                            Total
+                                        </span>
+                                    </h4>
+                                    <p className="text-xs text-gray-400 font-medium">
+                                        {sanjeevaniStats.attendance_ratio} sessions attended
+                                    </p>
+                                </div>
+                                <span className="text-2xl sm:text-3xl font-light text-[#0D1B2A]">
+                                    {Math.round(sanjeevaniStats.attendance_percentage)}%
+                                </span>
+                            </div>
+
+                            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-blue-500 to-indigo-600"
+                                    style={{ width: `${sanjeevaniStats.attendance_percentage}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     <AratiTypeCard
                         title="Maṅgala Āratī"
@@ -167,6 +207,13 @@ const AratiTab: React.FC<AratiTabProps> = ({ year, month, participantId }) => {
                         title="Tulasī Āratī"
                         description="Worship of the sacred plant"
                         percentage={getPct(arati?.tulsi_arati_attended_days)}
+                        colorClass="bg-[#0D1B2A]"
+                    />
+
+                    <AratiTypeCard
+                        title="Japa Sanga"
+                        description="Joint chanting session"
+                        percentage={getPct(arati?.japa_sanga_attended_days)}
                         colorClass="bg-[#0D1B2A]"
                     />
 

@@ -22,7 +22,7 @@ export const formatSadhanaReport = (
     }
 
     // Chanting
-    // const totalRounds = activity.chanting_logs.reduce((acc, log) => acc + log.rounds, 0); // Not used in this specific format line if we match exact request
+    const totalRounds = activity.chanting_logs.reduce((acc, log) => acc + log.rounds, 0);
     const roundsBefore730 = activity.chanting_logs
         .filter(log => log.slot === "before_7_30_am")
         .reduce((acc, log) => acc + log.rounds, 0);
@@ -31,6 +31,7 @@ export const formatSadhanaReport = (
 
     // Reading
     const totalReading = activity.book_reading_logs.reduce((acc, log) => acc + log.reading_time, 0);
+    const bookNames = activity.book_reading_logs.map(log => log.name).filter(Boolean).join(", ");
 
     // Association -> Hearing
     const totalAssociation = activity.association_logs.reduce((acc, log) => acc + log.duration, 0);
@@ -69,12 +70,14 @@ export const formatSadhanaReport = (
         "",
         "",
         `📿 *No. of Rounds Completed By 07:30 AM:* ${roundsBefore730}`,
+        `📿 *Total Rounds:* ${totalRounds}`,
         "",
         `📿 *${targetRounds} Rounds Completed By:* ${finishTimeStr}`,
         "",
         `🛌 *Last Day Sleeping Time:* ${sleepTime}`,
         `☀️ *Surya Namaskar* : ${activity.exercise_time} min`,
         `📚 *Reading:* ${totalReading} min`,
+        ...(bookNames ? [`📚 *Book Name:* ${bookNames}`] : []),
         `🎧 *Hearing:* ${hearingStr}`,
         "",
         "Your Servant",

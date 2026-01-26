@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { updateActivityLog, fetchBatchAttendance } from "@/utils/api";
+
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,7 @@ const TemplePrograms = [
   { key: 'mangla_attended', label: 'Mangala Arti' },
   { key: 'narshima_attended', label: 'Narasimha Arti' },
   { key: 'tulsi_arti_attended', label: 'Tulsi Arti' },
+  { key: 'japa_sanga', label: 'Japa Sanga' },
   { key: 'darshan_arti_attended', label: 'Darshan Arti' },
   { key: 'guru_puja_attended', label: 'Guru Puja' },
   { key: 'sandhya_arti_attended', label: 'Sandhya Arti' },
@@ -134,6 +136,8 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly, userId })
     saveTimeoutRef.current = setTimeout(() => {
       const current = latestActivityRef.current;
 
+
+      // Calculate Scores
       // Construct payload with CURRENT fields + explicit updates to be safe
       const payload: ActivityLogUpdate = {
         sleep_at: current.sleep_at,
@@ -150,6 +154,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly, userId })
         darshan_arti_attended: current.darshan_arti_attended,
         guru_puja_attended: current.guru_puja_attended,
         sandhya_arti_attended: current.sandhya_arti_attended,
+        japa_sanga: current.japa_sanga, // Manual Switch
         ...updates // ensures specific field override
       };
 
@@ -193,6 +198,12 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly, userId })
 
     setLocalActivity(prev => ({ ...prev, ...updates }));
 
+    // Calculate Scores for immediate save
+    const tempLogForScore = {
+      ...localActivity,
+      ...updates,
+      japa_sanga: localActivity.japa_sanga
+    };
     // Bypass debounce for this explicit action
     // We must construct the payload explicitly to avoid sending read-only fields like 'id'
     const payload: ActivityLogUpdate = {
@@ -210,6 +221,7 @@ const WorshipCard: React.FC<WorshipCardProps> = ({ activity, readOnly, userId })
       darshan_arti_attended: localActivity.darshan_arti_attended,
       guru_puja_attended: localActivity.guru_puja_attended,
       sandhya_arti_attended: localActivity.sandhya_arti_attended,
+      japa_sanga: localActivity.japa_sanga,
       ...updates // Override with new time
     };
 

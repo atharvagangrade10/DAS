@@ -75,7 +75,7 @@ const LeaderboardTab = () => {
                     <Trophy className="h-5 w-5 text-amber-600" />
                     <span className="text-sm font-bold text-amber-800">Sadhana Leaderboard</span>
                 </div>
-                <p className="text-xs text-gray-500">Based on average daily scores this month</p>
+                <p className="text-xs text-gray-500">Based on this month sadhana</p>
             </div>
 
             {/* Top 3 Podium */}

@@ -41,6 +41,10 @@ export const fetchMonthlyScoresInsight = async (participantId: string, year: num
     return fetchAuthenticated(`${BASE_URL}/activities/insights/scores/${participantId}/${year}/${month}`);
 };
 
-export const fetchParticipantRankings = async (): Promise<ParticipantRankingResponse[]> => {
-    return fetchAuthenticated(`${BASE_URL}/activities/rankings`);
+export const fetchParticipantRankings = async (participantId?: string): Promise<ParticipantRankingResponse[]> => {
+    let url = `${BASE_URL}/activities/rankings`;
+    if (participantId) {
+        url += `?participant_id=${participantId}`;
+    }
+    return fetchAuthenticated(url);
 };

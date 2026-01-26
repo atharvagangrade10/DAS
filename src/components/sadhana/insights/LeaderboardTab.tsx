@@ -4,16 +4,19 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { fetchParticipantRankings } from "@/utils/sadhanaInsightsApi";
+import { ParticipantRankingResponse } from "@/types/sadhana";
 import { Loader2, Trophy, Medal, Crown, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const LeaderboardTab = () => {
     const { user } = useAuth();
+    const [visibleCount, setVisibleCount] = React.useState(10);
 
-    const { data: rankings, isLoading, error } = useQuery({
-        queryKey: ["rankings"],
-        queryFn: fetchParticipantRankings,
+    const { data: rankings, isLoading, error } = useQuery<ParticipantRankingResponse[], Error>({
+        queryKey: ["rankings", user?.user_id],
+        queryFn: () => fetchParticipantRankings(user?.user_id),
+        enabled: !!user?.user_id,
     });
 
     if (isLoading) {
@@ -33,11 +36,12 @@ const LeaderboardTab = () => {
         );
     }
 
-    if (!rankings || rankings.length === 0) {
+    if (!rankings || !Array.isArray(rankings) || rankings.length === 0) {
         return (
             <div className="text-center py-20 text-gray-500">
                 <Trophy className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p className="text-sm font-medium">No rankings available yet</p>
+                <p className="text-xs mt-2">Check back later once more activity is logged.</p>
             </div>
         );
     }
@@ -56,16 +60,17 @@ const LeaderboardTab = () => {
         return "bg-white border-gray-100";
     };
 
-    const getInitials = (name: string) => {
+    const getInitials = (name: string | null | undefined) => {
+        if (!name) return "?";
         return name
             .split(" ")
+            .filter(Boolean)
             .map(n => n[0])
             .join("")
             .toUpperCase()
             .slice(0, 2);
     };
 
-    const [visibleCount, setVisibleCount] = React.useState(10);
 
     return (
         <div className="space-y-6">
@@ -79,24 +84,26 @@ const LeaderboardTab = () => {
             </div>
 
             {/* Top 3 Podium */}
-            {rankings.length >= 3 && (
+            {rankings.length > 0 && (
                 <div className="flex items-end justify-center gap-4 mb-8">
                     {/* 2nd Place */}
-                    <div className="flex flex-col items-center">
-                        <Avatar className="h-16 w-16 border-4 border-gray-300 shadow-lg">
-                            <AvatarImage src={rankings[1]?.profile_photo_url || undefined} />
-                            <AvatarFallback className="bg-gray-100 text-gray-600 font-bold">
-                                {getInitials(rankings[1]?.full_name || "?")}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="bg-gray-200 w-20 h-16 rounded-t-lg mt-2 flex items-center justify-center">
-                            <span className="text-2xl font-bold text-gray-600">2</span>
+                    {rankings.length >= 2 && (
+                        <div className="flex flex-col items-center">
+                            <Avatar className="h-16 w-16 border-4 border-gray-300 shadow-lg">
+                                <AvatarImage src={rankings[1]?.profile_photo_url || undefined} />
+                                <AvatarFallback className="bg-gray-100 text-gray-600 font-bold">
+                                    {getInitials(rankings[1]?.full_name)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="bg-gray-200 w-20 h-16 rounded-t-lg mt-2 flex items-center justify-center">
+                                <span className="text-2xl font-bold text-gray-600">2</span>
+                            </div>
+                            <p className="text-xs font-medium text-gray-700 mt-2 text-center max-w-[80px] truncate">
+                                {rankings[1]?.full_name}
+                            </p>
+                            <p className="text-xs text-gray-500">{(rankings[1]?.avg_total_score ?? 0).toFixed(1)} pts</p>
                         </div>
-                        <p className="text-xs font-medium text-gray-700 mt-2 text-center max-w-[80px] truncate">
-                            {rankings[1]?.full_name}
-                        </p>
-                        <p className="text-xs text-gray-500">{(rankings[1]?.avg_total_score || 0).toFixed(1)} pts</p>
-                    </div>
+                    )}
 
                     {/* 1st Place */}
                     <div className="flex flex-col items-center -mt-4">
@@ -104,7 +111,7 @@ const LeaderboardTab = () => {
                         <Avatar className="h-20 w-20 border-4 border-amber-400 shadow-xl">
                             <AvatarImage src={rankings[0]?.profile_photo_url || undefined} />
                             <AvatarFallback className="bg-amber-100 text-amber-700 font-bold text-lg">
-                                {getInitials(rankings[0]?.full_name || "?")}
+                                {getInitials(rankings[0]?.full_name)}
                             </AvatarFallback>
                         </Avatar>
                         <div className="bg-gradient-to-b from-amber-400 to-amber-500 w-24 h-24 rounded-t-lg mt-2 flex items-center justify-center shadow-lg">
@@ -113,25 +120,27 @@ const LeaderboardTab = () => {
                         <p className="text-sm font-bold text-gray-800 mt-2 text-center max-w-[100px] truncate">
                             {rankings[0]?.full_name}
                         </p>
-                        <p className="text-sm font-semibold text-amber-600">{(rankings[0]?.avg_total_score || 0).toFixed(1)} pts</p>
+                        <p className="text-sm font-semibold text-amber-600">{(rankings[0]?.avg_total_score ?? 0).toFixed(1)} pts</p>
                     </div>
 
                     {/* 3rd Place */}
-                    <div className="flex flex-col items-center">
-                        <Avatar className="h-16 w-16 border-4 border-orange-300 shadow-lg">
-                            <AvatarImage src={rankings[2]?.profile_photo_url || undefined} />
-                            <AvatarFallback className="bg-orange-100 text-orange-600 font-bold">
-                                {getInitials(rankings[2]?.full_name || "?")}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="bg-gradient-to-b from-orange-200 to-orange-300 w-20 h-12 rounded-t-lg mt-2 flex items-center justify-center">
-                            <span className="text-2xl font-bold text-orange-700">3</span>
+                    {rankings.length >= 3 && (
+                        <div className="flex flex-col items-center">
+                            <Avatar className="h-16 w-16 border-4 border-orange-300 shadow-lg">
+                                <AvatarImage src={rankings[2]?.profile_photo_url || undefined} />
+                                <AvatarFallback className="bg-orange-100 text-orange-600 font-bold">
+                                    {getInitials(rankings[2]?.full_name)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="bg-gradient-to-b from-orange-200 to-orange-300 w-20 h-12 rounded-t-lg mt-2 flex items-center justify-center">
+                                <span className="text-2xl font-bold text-orange-700">3</span>
+                            </div>
+                            <p className="text-xs font-medium text-gray-700 mt-2 text-center max-w-[80px] truncate">
+                                {rankings[2]?.full_name}
+                            </p>
+                            <p className="text-xs text-gray-500">{(rankings[2]?.avg_total_score ?? 0).toFixed(1)} pts</p>
                         </div>
-                        <p className="text-xs font-medium text-gray-700 mt-2 text-center max-w-[80px] truncate">
-                            {rankings[2]?.full_name}
-                        </p>
-                        <p className="text-xs text-gray-500">{(rankings[2]?.avg_total_score || 0).toFixed(1)} pts</p>
-                    </div>
+                    )}
                 </div>
             )}
 
@@ -188,9 +197,9 @@ const LeaderboardTab = () => {
                                             participant.rank === 2 ? "text-gray-600" :
                                                 participant.rank === 3 ? "text-orange-600" : "text-gray-500"
                                     )}>
-                                        {(participant.avg_total_score || 0).toFixed(1)}
+                                        {(participant?.avg_total_score ?? 0).toFixed(1)}
                                     </p>
-                                    <p className="text-[10px] text-gray-400">avg pts</p>
+                                    <p className="text-[10px] text-gray-400">pts</p>
                                 </div>
                             </div>
                         );

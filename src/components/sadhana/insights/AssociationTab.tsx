@@ -171,9 +171,7 @@ const AssociationTab: React.FC<AssociationTabProps> = ({ year, month, participan
         switch (type) {
             case "PRABHUPADA": return "Srila Prabhupada";
             case "GURU": return "Spiritual Master";
-            case "PREACHING": return "Preaching";
-            case "OTHER_ACTIVITIES": return "Seva";
-            case "OTHER": return "Satsanga"; // Mapping 'OTHER' to typical Satsanga usually
+            case "OTHER_ISKCON_DEVOTEE": return "Other ISKCON Devotees";
             default: return type.charAt(0) + type.slice(1).toLowerCase().replace(/_/g, ' ');
         }
     };
@@ -282,6 +280,27 @@ const AssociationTab: React.FC<AssociationTabProps> = ({ year, month, participan
                                         style={{ width: `${stat.percentage}%` }}
                                     />
                                 </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Unique Devotees Section - Based on Books Library Design */}
+            {association?.unique_devotee_names && association.unique_devotee_names.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md hover:shadow-xl transition-all duration-200 border border-gray-100">
+                    <div className="text-xs sm:text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest">
+                        Devotees Associated With (This Month)
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        {association.unique_devotee_names.map((name, i) => (
+                            <div key={i} className="flex items-center gap-3 p-4 bg-stone-50 rounded-xl border border-stone-100/50 hover:bg-[#0D1B2A] hover:text-white hover:border-[#0D1B2A] transition-all duration-300 group cursor-default">
+                                <span className="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded-full bg-stone-200 text-stone-500 text-[10px] font-bold group-hover:bg-white/20 group-hover:text-white transition-colors">
+                                    {i + 1}
+                                </span>
+                                <span className="text-sm font-medium tracking-wide">
+                                    {name}
+                                </span>
                             </div>
                         ))}
                     </div>

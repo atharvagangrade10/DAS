@@ -5,7 +5,9 @@ import {
     BookInsightResponse,
     AssociationInsightResponse,
     AratiInsightResponse,
-    ExerciseInsightResponse
+    ExerciseInsightResponse,
+    ScoresInsightResponse,
+    ParticipantRankingResponse
 } from "@/types/sadhana";
 
 import { API_BASE_URL as BASE_URL } from "@/config/api";
@@ -33,4 +35,22 @@ export const fetchMonthlyAratiInsight = async (participantId: string, year: numb
 export const fetchMonthlyExerciseInsight = async (participantId: string, year: number, month: number): Promise<ExerciseInsightResponse> => {
     // Matching backend route spelling: /insights/excercise/
     return fetchAuthenticated(`${BASE_URL}/activities/insights/excercise/${participantId}/${year}/${month}`);
+};
+
+export const fetchMonthlyScoresInsight = async (participantId: string, year: number, month: number): Promise<ScoresInsightResponse> => {
+    return fetchAuthenticated(`${BASE_URL}/activities/insights/scores/${participantId}/${year}/${month}`);
+};
+
+export const fetchParticipantRankings = async (participantId?: string, year?: number, month?: number): Promise<ParticipantRankingResponse[]> => {
+    let url = `${BASE_URL}/activities/rankings`;
+    const params = new URLSearchParams();
+    if (participantId) params.append("participant_id", participantId);
+    if (year) params.append("year", year.toString());
+    if (month) params.append("month", month.toString());
+
+    const queryString = params.toString();
+    if (queryString) {
+        url += `?${queryString}`;
+    }
+    return fetchAuthenticated(url);
 };

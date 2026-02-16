@@ -34,6 +34,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+
 // --- Types for Local Helper ---
 interface SectionDef {
   name: string;
@@ -209,7 +210,7 @@ const AddBookLogDialog: React.FC<AddBookLogDialogProps> = ({
     const payload = {
       name: values.name,
       reading_time: values.reading_time,
-      chapter_name: finalChapter || null,
+      chapter_name: finalChapter || null
     };
 
     if (isEdit) {

@@ -100,10 +100,9 @@ const calculateChantingStatus = (data: ChantingInsightResponse | undefined): Hea
     const iqr = data.iqr_daily_rounds || 999;
     const zeroDays = data.zero_round_days || 0;
 
-    // Percentages are typically 0-100 in API response, need to verify. 
-    // Usually API returns e.g. 50.0 for 50%.
+    // Percentages are typically 0-100 in API response.
     const pctBefore730 = data.percent_rounds_before_7_30_am || 0;
-    const pctAfter930 = data.percent_rounds_after_9_30_pm || 0;
+    const pctAfter12 = data.percent_rounds_after_12_00_am || 0;
 
     // Ratios
     const medianRatio = median / (T || 1);
@@ -114,14 +113,14 @@ const calculateChantingStatus = (data: ChantingInsightResponse | undefined): Hea
         (zeroDays >= 5) ||           // Absence Pattern
         (medianRatio < 0.50) ||      // Low Target Integration (< 50% of T)
         (iqrRatio > 0.50) ||         // High Instability
-        (pctAfter930 >= 40);         // Time Inversion
+        (pctAfter12 >= 20);          // Severe Late Night pattern
 
     if (isRed) {
         let ref = "Target not yet integrated.";
         if (zeroDays >= 5) ref = "Frequent absence is preventing the formation of a steady habit.";
         else if (medianRatio < 0.50) ref = "Current volume is significantly below your chosen commitment.";
         else if (iqrRatio > 0.50) ref = "High fluctuation in daily rounds suggests the habit is not yet anchored.";
-        else if (pctAfter930 >= 40) ref = "Majority of chanting is happening late, inverting the ideal rhythm.";
+        else if (pctAfter12 >= 20) ref = "Significant chanting after midnight risks health and morning focus.";
 
         return {
             status: "RED",
@@ -140,22 +139,9 @@ const calculateChantingStatus = (data: ChantingInsightResponse | undefined): Hea
         (medianRatio >= 0.75) &&
         (iqrRatio <= 0.25) &&
         (pctBefore730 >= 50) &&
-        (pctAfter930 <= 20);
-    // (discipline >= 70% is supporting, not strict gate for Green per prompt hierarchy, but 1-4 are MANDATORY)
+        (pctAfter12 === 0);
 
     if (isGreenCandidate) {
-        // --- OVERRIDE RULE ---
-        if (pctAfter930 >= 25) {
-            return {
-                status: "YELLOW",
-                title: "Committed but Uneven",
-                colorClass: "text-amber-500",
-                iconColor: "fill-amber-500",
-                bgGradient: "from-amber-50 to-yellow-50",
-                reflection: "Good volume and consistency, but late-night chanting is creating drag on the rhythm."
-            };
-        }
-
         return {
             status: "GREEN",
             title: "Aligned with Commitment",
@@ -173,10 +159,7 @@ const calculateChantingStatus = (data: ChantingInsightResponse | undefined): Hea
     if (medianRatio >= 0.50 && medianRatio < 0.75) yellowReason = "You are holding the habit, but volume is typically below your full target.";
     else if (iqrRatio > 0.25 && iqrRatio <= 0.50) yellowReason = "Daily fluctuation is moderate; tighter consistency will deepen the experience.";
     else if (pctBefore730 < 50 && pctBefore730 >= 25) yellowReason = "Morning chanting is present but not dominant; shifting earlier will increase potency.";
-    else if (pctAfter930 > 20 && pctAfter930 < 40) yellowReason = "Late chanting is becoming frequent, risking the quality of your rest and focus.";
-
-    // Discipline Without Stability check? (High meeting target % but low median/high iqr)
-    // Implicitly covered by falling through to Yellow if Green fails
+    else if (pctAfter12 > 0) yellowReason = "Some rounds are pushing past midnight; try to wrap up earlier for better rest.";
 
     return {
         status: "YELLOW",
@@ -207,6 +190,9 @@ const ChantingTab: React.FC<ChantingTabProps> = ({ year, month, participantId })
     }
 
     const health = calculateChantingStatus(chanting);
+
+    // Helpers for display
+    const formatPct = (val?: number) => val ? `${Math.round(val)}%` : "0%";
 
     return (
         <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -247,19 +233,8 @@ const ChantingTab: React.FC<ChantingTabProps> = ({ year, month, participantId })
 
                 <SleekMetricCard
                     label="% Days Meeting Target"
-                    value={chanting?.percent_days_meeting_target ? `${Math.round(chanting.percent_days_meeting_target)}%` : "0%"}
+                    value={chanting?.percent_days_meeting_target ? formatPct(chanting.percent_days_meeting_target) : "0%"}
                     subtext="Days you reached your goal"
-                />
-                <SleekMetricCard
-                    label="Morning Strength"
-                    value={chanting?.percent_rounds_before_7_30_am ? `${Math.round(chanting.percent_rounds_before_7_30_am)}%` : "0%"}
-                    subtext="% of rounds chanted before 7:30 AM"
-                />
-
-                <SleekMetricCard
-                    label="Late Chanting"
-                    value={chanting?.percent_rounds_after_9_30_pm ? `${Math.round(chanting.percent_rounds_after_9_30_pm)}%` : "0%"}
-                    subtext="% of rounds chanted after 9:30 PM"
                 />
                 <SleekMetricCard
                     label="Zero-Round Days"
@@ -271,6 +246,32 @@ const ChantingTab: React.FC<ChantingTabProps> = ({ year, month, participantId })
                     value={chanting?.days_count}
                     subtext="Total entries this month"
                 />
+            </div>
+
+            {/* Time Distribution Breakdown */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-gray-100">
+                <div className="text-xs sm:text-sm font-bold text-gray-400 mb-6 uppercase tracking-widest">
+                    Time Distribution
+                </div>
+                <div className="space-y-4">
+                    {[
+                        { label: "Early Morning (< 7:30 AM)", val: chanting?.percent_rounds_before_7_30_am, color: "bg-emerald-400" },
+                        { label: "Morning (7:30 - 12:00)", val: chanting?.percent_rounds_7_30_to_12_00, color: "bg-sky-400" },
+                        { label: "Afternoon (12:00 - 6:00)", val: chanting?.percent_rounds_12_00_to_6_00, color: "bg-yellow-400" },
+                        { label: "Evening (6:00 - 12:00)", val: chanting?.percent_rounds_6_00_to_12_00, color: "bg-orange-400" },
+                        { label: "Late Night (> 12:00 AM)", val: chanting?.percent_rounds_after_12_00_am, color: "bg-rose-500" },
+                    ].map((slot) => (
+                        <div key={slot.label} className="space-y-1">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span className={slot.label.includes("Late Night") ? "text-rose-600 font-bold" : "text-gray-700"}>{slot.label}</span>
+                                <span className="text-gray-900 font-bold">{formatPct(slot.val)}</span>
+                            </div>
+                            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                <div className={`h-full ${slot.color} transition-all duration-500`} style={{ width: formatPct(slot.val) }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Quality Metrics */}

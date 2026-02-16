@@ -29,19 +29,19 @@ const DurationPicker: React.FC<DurationPickerProps> = ({ value, onChange, label 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value);
     if (!isNaN(val)) {
-        onChange(Math.max(0, val));
+      onChange(Math.max(0, val));
     }
   };
 
   return (
     <div className="space-y-4 w-full">
       {label && <p className="text-sm font-medium text-muted-foreground">{label}</p>}
-      
+
       {/* Main Display & Stepper */}
       <div className="flex items-center justify-between bg-muted/30 p-2 rounded-2xl border">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="h-12 w-12 rounded-xl"
           onClick={() => adjust(-1)}
           type="button"
@@ -50,24 +50,24 @@ const DurationPicker: React.FC<DurationPickerProps> = ({ value, onChange, label 
         </Button>
 
         <div className="flex flex-col items-center flex-1">
-            <div className="flex items-center gap-2 text-primary">
-                <Clock className="h-4 w-4 opacity-50" />
-                <div className="flex items-baseline">
-                    <input 
-                      type="number"
-                      className="w-16 bg-transparent text-2xl font-black tracking-tight text-center border-none focus:outline-none focus:ring-0"
-                      value={value}
-                      onChange={handleInputChange}
-                    />
-                    <span className="text-xs font-bold uppercase text-muted-foreground/60 ml-[-4px]">mins</span>
-                </div>
+          <div className="flex items-center gap-2 text-primary">
+            <Clock className="h-4 w-4 opacity-50" />
+            <div className="flex items-baseline">
+              <input
+                type="number"
+                className="w-16 bg-transparent text-2xl font-black tracking-tight text-center border-none focus:outline-none focus:ring-0"
+                value={value}
+                onChange={handleInputChange}
+              />
+              <span className="text-xs font-bold uppercase text-muted-foreground/60 ml-[-4px]">mins</span>
             </div>
-            <span className="text-[10px] uppercase font-bold text-muted-foreground/60">Total Duration</span>
+          </div>
+          <span className="text-[10px] uppercase font-bold text-muted-foreground/60">Total Duration</span>
         </div>
 
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="h-12 w-12 rounded-xl"
           onClick={() => adjust(1)}
           type="button"
@@ -84,13 +84,13 @@ const DurationPicker: React.FC<DurationPickerProps> = ({ value, onChange, label 
             variant={value === preset ? "default" : "outline"}
             size="sm"
             className={cn(
-                "h-10 rounded-lg text-[10px] font-bold uppercase p-0",
-                value === preset ? "shadow-md scale-105 transition-transform" : "opacity-60"
+              "h-10 rounded-lg text-[10px] font-bold uppercase p-0",
+              value === preset ? "shadow-md scale-105 transition-transform" : "opacity-60"
             )}
             onClick={() => onChange(preset)}
             type="button"
           >
-            {preset >= 60 ? `${preset/60}h` : `${preset}m`}
+            {preset >= 60 ? `${preset / 60}h` : `${preset}m`}
           </Button>
         ))}
       </div>

@@ -1,7 +1,7 @@
 {
     "books": [
         {
-            "name": "Bhagavad-gita As It Is (1972)",
+            "name": "Bhagavad-gita As It Is",
             "chapters": [
                 "Foreword",
                 "Preface",
@@ -299,7 +299,7 @@
             ]
         },
         {
-            "name": "Sri Caitanya-caritamrta - 1975 Edition",
+            "name": "Sri Caitanya-caritamrta",
             "sections": [
                 {
                     "name": "Adi-lila",
@@ -384,7 +384,7 @@
             ]
         },
         {
-            "name": "Teachings of Lord Caitanya - 1968 Edition",
+            "name": "Teachings of Lord Caitanya",
             "chapters": [
                 "Preface",
                 "Prologue",
@@ -425,7 +425,7 @@
             ]
         },
         {
-            "name": "The Nectar of Devotion - 1970 Edition",
+            "name": "The Nectar of Devotion",
             "chapters": [
                 "Preface",
                 "Introduction",
@@ -490,7 +490,7 @@
             ]
         },
         {
-            "name": "Easy Journey to Other Planets - 1972 Edition",
+            "name": "Easy Journey to Other Planets",
             "chapters": [
                 "Preface",
                 "Chapter 1: Antimaterial Worlds",
@@ -512,12 +512,12 @@
             ]
         },
         {
-            "name": "KRSNA, The Supreme Personality of Godhead - 1970 Edition",
+            "name": "KRSNA, The Supreme Personality of Godhead",
             "sections": [
                 {
                     "name": "Volume 1",
                     "chapters": [
-                        "To My Father, Gour Mohan De (1849-1930)",
+                        "To My Father, Gour Mohan De",
                         "Words from Apple",
                         "Introduction by A.C. Bhaktivedanta Swami Prabhupada",
                         "Chapter 1: Advent of Lord Krsna",
@@ -724,22 +724,22 @@
             "name": "Life Comes From Life",
             "chapters": [
                 "Foreword",
-                "The First Morning Walk: April 18, 1973",
-                "The Second Morning Walk: April 19, 1973",
-                "The Third Morning Walk: April 28, 1973",
-                "The Fourth Morning Walk: April 29, 1973",
-                "The Fifth Morning Walk: May 3, 1973",
-                "The Sixth Morning Walk: May 7, 1973",
-                "The Seventh Morning Walk: May 8, 1973",
-                "The Eighth Morning Walk: May 11, 1973",
-                "The Ninth Morning Walk: May 13, 1973",
-                "The Tenth Morning Walk: May 14, 1973",
-                "The Eleventh Morning Walk: May 15, 1973",
-                "The Twelfth Morning Walk: May 17, 1973",
-                "The Thirteenth Morning Walk: December 2, 1973",
-                "The Fourteenth Morning Walk: December 3, 1973",
-                "The Fifteenth Morning Walk: December 7, 1973",
-                "The Sixteenth Morning Walk: December 10, 1973"
+                "The First Morning Walk",
+                "The Second Morning Walk",
+                "The Third Morning Walk",
+                "The Fourth Morning Walk",
+                "The Fifth Morning Walk",
+                "The Sixth Morning Walk",
+                "The Seventh Morning Walk",
+                "The Eighth Morning Walk",
+                "The Ninth Morning Walk",
+                "The Tenth Morning Walk",
+                "The Eleventh Morning Walk",
+                "The Twelfth Morning Walk",
+                "The Thirteenth Morning Walk",
+                "The Fourteenth Morning Walk",
+                "The Fifteenth Morning Walk",
+                "The Sixteenth Morning Walk"
             ]
         },
         {
@@ -814,14 +814,58 @@
             "name": "Light of the Bhagavata",
             "chapters": [
                 "Preface",
-                "Chapter 1: (Light of the Bhagavata 1)",
-                "Chapter 2: (Light of the Bhagavata 2)",
-                "... (chapters 3–47 omitted for brevity) ...",
-                "Chapter 48: (Light of the Bhagavata 48)"
+                "Chapter 1",
+                "Chapter 2",
+                "Chapter 3",
+                "Chapter 4",
+                "Chapter 5",
+                "Chapter 6",
+                "Chapter 7",
+                "Chapter 8",
+                "Chapter 9",
+                "Chapter 10",
+                "Chapter 11",
+                "Chapter 12",
+                "Chapter 13",
+                "Chapter 14",
+                "Chapter 15",
+                "Chapter 16",
+                "Chapter 17",
+                "Chapter 18",
+                "Chapter 19",
+                "Chapter 20",
+                "Chapter 21",
+                "Chapter 22",
+                "Chapter 23",
+                "Chapter 24",
+                "Chapter 25",
+                "Chapter 26",
+                "Chapter 27",
+                "Chapter 28",
+                "Chapter 29",
+                "Chapter 30",
+                "Chapter 31",
+                "Chapter 32",
+                "Chapter 33",
+                "Chapter 34",
+                "Chapter 35",
+                "Chapter 36",
+                "Chapter 37",
+                "Chapter 38",
+                "Chapter 39",
+                "Chapter 40",
+                "Chapter 41",
+                "Chapter 42",
+                "Chapter 43",
+                "Chapter 44",
+                "Chapter 45",
+                "Chapter 46",
+                "Chapter 47",
+                "Chapter 48"
             ]
         },
         {
-            "name": "Sri Isopanisad - 1974 Edition",
+            "name": "Sri Isopanisad",
             "chapters": [
                 "Introduction",
                 "Invocation",
